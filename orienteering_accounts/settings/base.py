@@ -19,7 +19,7 @@ config = AutoConfig(os.environ.get('DJANGO_CONFIG_ENV_DIR'))
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-PROJECT_NAME = config('PROJECT_NAME', default='liber_marketplace_connector')
+PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -93,8 +93,8 @@ ENVIRONMENT = config('PROJECT_ENVIRONMENT_TYPE', default='')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRESQL_DATABASE', default='postgres'),
-        'USER': config('POSTGRESQL_USER', default='postgres'),
+        'NAME': config('POSTGRESQL_DATABASE', default='orienteering_accounts'),
+        'USER': config('POSTGRESQL_USER', default='orienteering_accounts'),
         'HOST': config('POSTGRESQL_HOST', default='db'),
         'PORT': config('POSTGRESQL_PORT', default='5432'),
         'PASSWORD': config('POSTGRESQL_PASSWORD', default=''),
