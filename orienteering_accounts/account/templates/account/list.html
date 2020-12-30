@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block main_content %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Registrační číslo" %}</th>
+          <th scope="col">{% trans "Křestní jméno" %}</th>
+          <th scope="col">{% trans "Příjmení" %}</th>
+          <th scope="col">{% trans "Pohlaví" %}</th>
+          <th scope="col">{% trans "Ročník" %}</th>
+          <th scope="col">{% trans "SI" %}</th>
+          <th scope="col">{% trans "Licence" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in object_list %}
+        <tr>
+          <td >{{ account.registration_number }}</td>
+          <td>{{ account.first_name }}</td>
+          <td>{{ account.last_name }}</td>
+          <td>{{ account.get_gender_display }}</td>
+          <td>{{ account.born_year }}</td>
+          <td>{{ account.SI }}</td>
+          <td>{{ account.licence }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

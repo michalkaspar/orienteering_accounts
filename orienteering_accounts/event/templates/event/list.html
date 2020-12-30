@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block main_content %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Název" %}</th>
+          <th scope="col">{% trans "Datum" %}</th>
+          <th scope="col">{% trans "Organizátor" %}</th>
+          <th scope="col">{% trans "Oblast" %}</th>
+          <th scope="col">{% trans "Typ závodu" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in object_list %}
+        <tr>
+          <td>{{ event.name }}</td>
+          <td>{{ event.date }}</td>
+          <td>{{ event.organizer_1.abbr }}</td>
+          <td>{{ event.region }}</td>
+          <td>{{ event.level.name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

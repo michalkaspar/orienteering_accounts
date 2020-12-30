@@ -1,0 +1,33 @@
+{% load static i18n %}
+<!doctype html>
+<html lang="cs-cs">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>{% block title %} | {% trans 'SKOB Zlín - správa účtů' %}{% endblock title %}</title>
+
+        {% block metas %}
+        <meta name="description" content="Dashboard UI Kit">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {% endblock metas %}
+
+        {% block favicons %}
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+        {% endblock favicons %}
+
+        {% block stylesheets %}
+        <!-- Stylesheet -->
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        {% endblock stylesheets %}
+
+        {% block scripts %}
+            <script src="{% static 'js/bootstrap.min.js' %}"></script>
+        {% endblock scripts %}
+    </head>
+    <body>
+    {% block main_content %}
+
+    {% endblock main_content %}
+    </body>
+</html>
