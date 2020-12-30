@@ -164,6 +164,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 STATIC_URL = '/static/'
 
 STATICFILES_FINDERS = (
@@ -171,9 +173,9 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Celery
+MEDIA_URL = '/media/'
 
 
 ###########
@@ -184,7 +186,6 @@ LOG_DIR = config('PROJECT_LOG_DIR', '/tmp')
 os.makedirs(LOG_DIR, exist_ok=True)
 
 LOG_FILE = config('PROJECT_LOG_FILE', os.path.join(LOG_DIR, 'app.log'))
-CELERY_LOG_FILE = config('PROJECT_CELERY_LOG_FILE', os.path.join(LOG_DIR, 'celery.log'))
 
 LOGGING = {
     'version': 1,
