@@ -1,0 +1,87 @@
+{% load forms %}
+
+{% if field.is_switch_input %}
+  <div class="c-switch">
+    {{field}}
+    <label class="c-switch__label" for="field.auto_id">{{field.label}}</label>
+  </div>
+{% else %}
+
+  <div class="{% if not icon %}u-mb-small{% endif %} {% if field.is_checkbox %}c-choice c-choice--checkbox{% else %}c-field{% endif %} {% if icon %}has-icon-right{% endif%} mb-3">
+      {% if multi %}
+          {% for field, label_classes in fields %}
+          {% if forloop.first or field.is_checkbox %}{% if label %}{{ field|label_tag:label_classes }}{% endif %}{% endif %}{{ field }}
+          {% if display_errors and field.errors %}
+              <small class="c-field__message u-color-danger">
+                  <i class="fa fa-times-circle"></i>{{ field.errors|join:", " }}
+              </small>
+          {% endif %}
+          {% endfor %}
+          {% if help_text_bf %}
+            <span class="c-tooltip c-tooltip--right d-flex align-items-center" aria-label="{{ field.help_text|striptags }}">
+              <i class="fa fa-question-circle u-ml-xsmall u-opacity-medium"></i>
+            </span>
+          {% endif %}
+      {% else %}
+          {% if label_on_left %}
+            {% if label %}
+              {{ field|label_tag:css_classes }}
+            {% endif %}
+            <div class="input-help-wrapper">
+                {% if icon %}
+                <span class="c-field__icon">
+                    {% if icon == 'fa-search' %}
+                    <button type="submit">
+                        <i class="fa fas {{ icon }}"></i>
+                    </button>
+                    {% else %}
+                    <i class="fa fas {{ icon }}"></i>
+                    {% endif %}
+                </span>
+                {% endif %}
+              {{ field }}
+              {% if field.help_text %}
+                <span class="input-help c-tooltip c-tooltip--right d-flex align-items-center" aria-label="{{ field.help_text|striptags }}">
+                  <i class="fa fa-question-circle u-ml-xsmall u-opacity-medium"></i>
+                </span>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="input-help-wrapper">
+                {% if icon %}
+                <span class="c-field__icon">
+                    {% if icon == 'fa-search' %}
+                    <button type="submit">
+                        <i class="fa fas {{ icon }}"></i>
+                    </button>
+                    {% else %}
+                    <i class="fa fas {{ icon }}"></i>
+                    {% endif %}
+                </span>
+                {% endif %}
+              {{ field }}
+              {% if label %}
+                {{ field|label_tag:css_classes }}
+              {% endif %}
+              {% if field.help_text %}
+                <span class="c-tooltip c-tooltip--right d-flex align-items-center" aria-label="{{ field.help_text|striptags }}">
+                  <i class="fa fa-question-circle u-ml-xsmall u-opacity-medium"></i>
+                </span>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {% if display_errors and field.errors %}
+            <small class="c-field__message u-color-danger">
+                <i class="fa fa-times-circle"></i>{{ field.errors|join:", " }}
+            </small>
+          {% endif %}
+
+          {% if help_text %}
+            <span class="c-tooltip c-tooltip--right d-flex align-items-center" aria-label="{{ field.help_text|striptags }}">
+              <i class="fa fa-question-circle u-ml-xsmall u-opacity-medium"></i>
+            </span>
+          {% endif %}
+      {% endif %}
+  </div>
+{% endif %}

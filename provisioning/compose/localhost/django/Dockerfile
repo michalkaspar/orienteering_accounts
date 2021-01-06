@@ -12,10 +12,10 @@ RUN mkdir -p /app/scripts /app/static /app/run /app/log
 WORKDIR /app
 
 COPY provisioning/docker/entrypoints /app/scripts/
-COPY requirements /app/requirements/
+COPY requirements.txt /app/
 
 RUN pip install --upgrade pip
-RUN pip install -r /app/requirements/${environment}.txt
+RUN pip install -r /app/requirements.txt
 
 RUN useradd --no-create-home -s /bin/bash  peasant
 RUN chown -R peasant:peasant /app

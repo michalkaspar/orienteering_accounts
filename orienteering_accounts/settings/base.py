@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'orienteering_accounts',
+    'orienteering_accounts.core',
     'orienteering_accounts.account',
     'orienteering_accounts.event',
     'orienteering_accounts.entry'
@@ -93,8 +94,8 @@ ENVIRONMENT = config('PROJECT_ENVIRONMENT_TYPE', default='')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRESQL_DATABASE', default='orienteering_accounts'),
-        'USER': config('POSTGRESQL_USER', default='orienteering_accounts'),
+        'NAME': config('POSTGRESQL_DATABASE', default='postgres'),
+        'USER': config('POSTGRESQL_USER', default='postgres'),
         'HOST': config('POSTGRESQL_HOST', default='db'),
         'PORT': config('POSTGRESQL_PORT', default='5432'),
         'PASSWORD': config('POSTGRESQL_PASSWORD', default=''),

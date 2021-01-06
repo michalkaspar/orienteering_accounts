@@ -1,8 +1,8 @@
-from django.views.generic import ListView
+from django_filters.views import FilterView
+from orienteering_accounts.account.filters import AccountFilter
 
-from orienteering_accounts.account.models import Account
 
-
-class AccountList(ListView):
+class AccountList(FilterView):
     template_name = 'account/list.html'
-    queryset = Account.objects.all()
+    filterset_class = AccountFilter
+

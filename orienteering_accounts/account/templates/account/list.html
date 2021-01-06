@@ -1,6 +1,23 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "base.html" %}{% load i18n forms %}
 
 {% block main_content %}
+
+    <h1>{% trans "Seznam ůčtů" %}</h1>
+
+    <form method="get">
+          <div class="row">
+            <div class="col">
+              {% form_field filter.form.registration_number %}
+            </div>
+            <div class="col">
+              {% form_field filter.form.last_name %}
+            </div>
+            <div class="col">
+              <input class="btn btn-success" type="submit" />
+            </div>
+          </div>
+    </form>
+
     <table class="table">
       <thead>
         <tr>
@@ -14,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for account in object_list %}
+        {% for account in filter.qs %}
         <tr>
           <td >{{ account.registration_number }}</td>
           <td>{{ account.first_name }}</td>
