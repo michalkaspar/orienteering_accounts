@@ -97,3 +97,17 @@ class ORISClient:
             entries.append(Entry(**entry_dict))
 
         return entries
+
+    @classmethod
+    def set_club_entry_rights(cls, user_id: int, club_key: int = settings.CLUB_KEY, can_entry_self: bool = None, can_entry_others: bool = None):
+        params = {
+            'clubuser': user_id,
+            'clubkey': club_key
+        }
+
+        if can_entry_self:
+            params.update(self=can_entry_self)
+        if can_entry_others:
+            params.update(other=can_entry_others)
+
+        return cls.make_post_request('setClubEntryRights', params=params)

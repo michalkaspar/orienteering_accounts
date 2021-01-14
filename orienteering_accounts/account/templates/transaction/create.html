@@ -15,7 +15,8 @@
           <label class="form-check-label" for="transaction_type">{% trans "Příjem" %}</label>
         </div>
         {% form_field form.amount %}
-        {% form_field form.description %}
+        {% form_field form.purpose %}
+        {% form_field form.note %}
         {% form_field form.account label=False %}
         <input class="btn-success" type="submit" value="Save">
     </form>

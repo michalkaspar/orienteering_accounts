@@ -1,7 +1,14 @@
+from datetime import datetime
+from decimal import Decimal
+
 from django.db import models
+from django.db.models import Sum, Count, QuerySet
+from django.db.models.functions import Coalesce
 from django.utils.translation import ugettext_lazy as _
 
+from orienteering_accounts.core.models import BaseModel
 from orienteering_accounts.oris import models as oris_models
+from orienteering_accounts.oris.client import ORISClient
 
 
 class Account(models.Model):
@@ -17,6 +24,7 @@ class Account(models.Model):
     last_name: str = models.CharField(max_length=50, verbose_name=_('Příjmení'))
     si: str = models.CharField(max_length=30, verbose_name=_('SI'))
     born_year: int = models.PositiveIntegerField(verbose_name=_('Ročník'))
+    is_late_with_club_membership_payment = models.BooleanField(default=False)
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
@@ -35,9 +43,34 @@ class Account(models.Model):
     def full_name(self):
         return f'{self.first_name} {self.last_name}'
 
+    @property
+    def balance(self) -> Decimal:
+        return Decimal(str(self.transactions.aggregate(balance=Coalesce(Sum('amount'), 0))['balance']))
 
-class Transaction(models.Model):
+    def add_entry_rights_in_oris(self):
+        ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=True)
+
+    def remove_entry_rights_in_oris(self):
+        ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=False)
+
+    @classmethod
+    def get_accounts_without_paid_club_membership(cls, deadline: datetime) -> QuerySet['Account']:
+        paid_accounts_ids = cls.objects.filter(
+            transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+            transactions__created__lte=deadline,
+            transactions__created__year=deadline.year
+        ).values_list('pk', flat=True).distinct()
+
+        return cls.objects.exclude(id__in=paid_accounts_ids)
+
+
+class Transaction(BaseModel):
+
+    class TransactionPurpose(models.TextChoices):
+        CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
+        OTHER = 'JINÉ', _('Jiné')
 
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
-    description = models.TextField(verbose_name=_('Popis (Oddílový příspěvek, dres, startovné apod...)'))
+    purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
+    note = models.TextField(verbose_name=_('Poznámka'), blank=True)

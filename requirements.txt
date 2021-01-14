@@ -3,6 +3,8 @@ django-extensions==2.1.6
 django-filter==2.4.0
 django-redis==4.11.0
 ipython==7.5.0
+freezegun==1.0.0
+model-bakery==1.2.1
 psycopg2==2.8.2
 pydantic==1.7.2
 python-decouple==3.1

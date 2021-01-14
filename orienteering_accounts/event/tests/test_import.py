@@ -14,4 +14,4 @@ class ImportTestCase(TestCase):
     def test_import_events_from_oris(self, mock_get_events):
         call_command('import_events_from_oris')
         mock_get_events.assert_called()
-        self.assertEquals(Event.objects.count(), 2)
+        self.assertEquals(Event.objects.count(), 1)

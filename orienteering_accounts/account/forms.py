@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from django import forms
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -15,7 +18,14 @@ class TransactionAddForm(forms.ModelForm):
 
     class Meta:
         model = Transaction
-        fields = ['amount', 'description', 'account']
+        fields = ['amount', 'note', 'account', 'purpose']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['note'].required = True
+        self.fields['amount'].validators = [MinValueValidator(Decimal(0))]
+
+    def clean(self):
+        if self.cleaned_data['transaction_type'] == TransactionAddForm.TransactionType.COST:
+            self.cleaned_data['amount'] *= -1
+        return super().clean()

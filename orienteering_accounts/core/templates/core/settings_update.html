@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block main_content %}
+    <h1>{% trans "Nastavení systému" %}</h1>
+    <form method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input class="btn btn-success" type="submit" value="{% trans "Uložit" %}">
+    </form>
+{% endblock %}
