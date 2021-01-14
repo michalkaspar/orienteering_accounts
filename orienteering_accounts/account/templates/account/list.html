@@ -22,9 +22,8 @@
       <thead>
         <tr>
           <th scope="col">{% trans "Registrační číslo" %}</th>
-          <th scope="col">{% trans "Křestní jméno" %}</th>
           <th scope="col">{% trans "Příjmení" %}</th>
-          <th scope="col">{% trans "Pohlaví" %}</th>
+          <th scope="col">{% trans "Křestní jméno" %}</th>
           <th scope="col">{% trans "SI" %}</th>
           <th scope="col">{% trans "Licence" %}</th>
         </tr>
@@ -32,12 +31,11 @@
       <tbody>
         {% for account in filter.qs %}
         <tr>
-          <td >{{ account.registration_number }}</td>
-          <td>{{ account.first_name }}</td>
-          <td>{{ account.last_name }}</td>
-          <td>{{ account.get_gender_display }}</td>
-          <td>{{ account.si }}</td>
-          <td>{{ account.licence }}</td>
+            <td ><a href="{% url "accounts:detail" account.pk%}">{{ account.registration_number }}</a></td>
+            <td>{{ account.last_name }}</td>
+            <td>{{ account.first_name }}</td>
+            <td>{{ account.si }}</td>
+            <td>{{ account.licence }}</td>
         </tr>
         {% endfor %}
       </tbody>

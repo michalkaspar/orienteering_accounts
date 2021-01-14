@@ -31,3 +31,13 @@ class Account(models.Model):
             defaults=registered_user.dict()
         )
 
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+
+class Transaction(models.Model):
+
+    account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
+    description = models.TextField(verbose_name=_('Popis (Oddílový příspěvek, dres, startovné apod...)'))

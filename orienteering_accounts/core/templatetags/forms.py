@@ -79,15 +79,6 @@ def form_field(bound_field, css_classes='', icon='', label_on_left=True, label=T
         bound_field.is_checkbox = isinstance(bound_field.field.widget, forms.CheckboxInput)
         bound_field.custom_validation = False
 
-        if bound_field.errors and bound_field.is_mulit_lang:
-            if bound_field.field.required_languages != [lang[0] for lang in settings.LANGUAGES]:
-                bound_field.custom_validation = True
-                for i, subwidget in enumerate(bound_field.field.widget.widgets):
-                    if not bound_field.field.field_errors[i]:
-                        subwidget.attrs['ignore_errors'] = True
-                    else:
-                        subwidget.errors = bound_field.field.field_errors[i]
-
         if bound_field.is_checkbox:
             css_classes += ' c-choice__label'
             label_on_left = False

@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block main_content %}
+    <h1>{% trans "Detal účtu" %}</h1>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <h2>{{ object.full_name }}</h2>
+            </div>
+            <div class="col-sm">
+                <a class="btn btn-success" href="{% url "accounts:transaction_add" object.pk %}">{% trans "Přidat transakci" %}</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Registrační číslo" %}: {{ object.registration_number }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Pohlaví" %}: {{ object.gender }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Licence" %}: {{ object.licence }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Křestní jméno" %}: {{ object.first_name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Příjmení" %}: {{ object.last_name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "SI Čip" %}: {{ object.si }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                {% trans "Ročník" %}: {{ object.born_year }}
+            </div>
+        </div>
+        <div class="row">
+            {% for transaction in object.transactions.all %}
+                trololo
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

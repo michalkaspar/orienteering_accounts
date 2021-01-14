@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load i18n forms %}
+
+{% block main_content %}
+    <h1>{% trans "Nová transakce" %}</h1>
+    <h2>{% trans "Uživatel" %}: {{ account.full_name }}</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="COST" checked>
+          <label class="form-check-label" for="transaction_type">{% trans "Výdaj" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="INCOME">
+          <label class="form-check-label" for="transaction_type">{% trans "Příjem" %}</label>
+        </div>
+        {% form_field form.amount %}
+        {% form_field form.description %}
+        {% form_field form.account label=False %}
+        <input class="btn-success" type="submit" value="Save">
+    </form>
+{% endblock %}
