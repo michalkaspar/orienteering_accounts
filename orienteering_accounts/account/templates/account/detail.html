@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load i18n transaction core %}
+{% extends "base.html" %}{% load i18n transaction core account %}
 
 {% block main_content %}
     <h1>{% trans "Detail účtu" %}</h1>
@@ -8,9 +8,16 @@
             <div class="col">
                 <h2>{{ object.full_name }}</h2>
             </div>
-            <div class="col">
-                <a class="btn btn-success" href="{% url "accounts:transaction_add" object.pk %}">{% trans "Přidat transakci" %}</a>
-            </div>
+            {% ifperm edit_account %}
+                <div class="col">
+                    <a class="btn btn-secondary" href="{% url "accounts:edit" object.pk %}">{% trans "Upravit" %}</a>
+                </div>
+            {% endifperm %}
+            {% ifperm add_transaction %}
+                <div class="col">
+                    <a class="btn btn-success" href="{% url "accounts:transaction_add" object.pk %}">{% trans "Přidat transakci" %}</a>
+                </div>
+            {% endifperm %}
         </div>
         <div class="row">
             <div class="col">

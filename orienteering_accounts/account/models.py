@@ -1,9 +1,12 @@
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-from django.db.models import Sum, Count, QuerySet
+from django.db.models import Sum, QuerySet
 from django.db.models.functions import Coalesce
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from orienteering_accounts.core.models import BaseModel
@@ -11,7 +14,53 @@ from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 
 
-class Account(models.Model):
+class LazyPermission(object):
+    """ Descriptor returns function, that check, if permission is in account's cached permissions """
+    def __get__(self, account, objtype=None):
+        if not hasattr(account, '_cached_perms') and not account.is_superuser:
+            account._cached_perms = {
+                x: True
+                for x in account.role.permissions.all().values_list('code', flat=True)
+            }
+
+        if account.is_superuser:
+            return lambda perm: True
+
+        return lambda perm: account._cached_perms.get(perm, False)
+
+
+class Permission(BaseModel):
+    """ Defines what employee can do """
+    name = models.CharField(
+        max_length=255,
+        verbose_name=_('Název')
+    )
+    code = models.CharField(max_length=256, verbose_name=_('Kód'), db_index=True, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Role(BaseModel):
+    """ Defines, what type of employee has what permissions """
+    name = models.CharField(max_length=256, verbose_name=_('admin-role-name-label'))
+    permissions = models.ManyToManyField(
+        'account.Permission',
+        related_name='roles',
+        blank=True,
+        verbose_name=_('Práva')
+    )
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('accounts:role:list')
+
+
+class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
+
+    USERNAME_FIELD = EMAIL_FIELD = 'registration_number'
 
     class Gender(models.TextChoices):
         MAN = oris_models.Gender.MALE.value, _('Muž')
@@ -31,6 +80,20 @@ class Account(models.Model):
     oris_paid: int = models.PositiveSmallIntegerField(verbose_name=_('ORIS Paid'))
     oris_club_id: int = models.PositiveIntegerField()  # TODO enum
     oris_fee: int = models.PositiveIntegerField()  # TODO enum
+
+    role = models.ForeignKey(
+        'account.Role',
+        null=True,
+        related_name='accounts',
+        on_delete=models.PROTECT,
+        verbose_name=_('Role')
+    )
+
+    ifperm = LazyPermission()
+    objects = BaseUserManager()
+
+    def __str__(self):
+        return self.full_name
 
     @classmethod
     def upsert_from_oris(cls, registered_user):

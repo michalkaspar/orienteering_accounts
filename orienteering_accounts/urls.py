@@ -18,11 +18,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from orienteering_accounts.account.views import AccountLoginView
 from orienteering_accounts.core.views import SettingsEdit
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', AccountLoginView.as_view(), name='login'),
     path('', include('orienteering_accounts.account.urls')),  # TODO temporary
     path('settings/', SettingsEdit.as_view(), name='settings_detail'),
     path('accounts/', include('orienteering_accounts.account.urls')),

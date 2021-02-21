@@ -229,6 +229,12 @@ LOGGING = {
 
 # Project
 
+AUTH_USER_MODEL = 'account.Account'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+
 CLUB_KEY = config('PROJECT_CLUB_KEY', '')
 CLUB_ID = config('PROJECT_CLUB_ID', '')
 

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}{% load i18n core %}
+
+{% block main_content %}
+
+    <h1>{% trans "Seznam rolí" %}</h1>
+
+    <a href="{% url 'accounts:role:add' %}" class="c-btn c-btn--success">{% trans 'Přidat roli' %}</a>
+
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Název role" %}</th>
+          <th scope="col">{% trans "Účty" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for role in object_list %}
+        <tr>
+            <td class="c-table__cell">
+              {% url 'accounts:role:edit' role.pk as action_edit_url %}
+              <a href="{{ action_edit_url }}">{{ role.name }}</a>
+            </td>
+            <td class="c-table__cell">
+                {{ role.accounts.all|join:', ' }}
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

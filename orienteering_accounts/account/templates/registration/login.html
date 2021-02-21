@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% load i18n forms %}
+
+{% block main_content %}
+<div class="container">
+    <div class="row">
+        <h1>{% trans 'Přihlášení' %}</h1>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row">
+            {% form_field form.username %}
+        </div>
+
+        <div class="row">
+            {% form_field form.password %}
+        </div>
+
+        <button class="btn btn-success" type="submit">{% trans 'Odeslat' %}</button>
+
+    </form>
+</div>
+{% endblock %}

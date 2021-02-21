@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% load i18n forms %}
+
+{% block main_content %}
+    <h1>{% block title %}{% endblock %}</h1>
+
+    <div class="container">
+        <div class="row">
+            <form method="post">{% csrf_token %}
+                {% block form_fields %}
+                    {% if form.fields_data %}
+                        {% for field in form.fields_data %}
+                            {% form_field field %}
+                        {% endfor %}
+                    {% else %}
+                        {% for field in form %}
+                            {% form_field field %}
+                        {% endfor %}
+                    {% endif %}
+                {% endblock form_fields %}
+
+                {% block buttons %}
+                    <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">
+                        {% trans 'Zpět' %}
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        {% trans 'Uložit' %}
+                    </button>
+                {% endblock buttons %}
+            </form>
+        </div>
+    </div>
+    
+{% endblock %}
