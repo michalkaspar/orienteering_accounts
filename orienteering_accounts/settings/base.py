@@ -28,7 +28,7 @@ PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 SECRET_KEY = config('PROJECT_SECRET_KEY', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('PROJECT_DEBUG', default=False)
 
 DEBUG_STATIC_FILES = False
 
@@ -185,7 +185,6 @@ MEDIA_URL = '/media/'
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(processName)s (%(process)d) %(threadName)s (%(thread)d) <%(name)s> %(message)s'
