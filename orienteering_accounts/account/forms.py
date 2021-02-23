@@ -49,7 +49,8 @@ class RoleForm(ModelForm):
     permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.all(),
         widget=forms.CheckboxSelectMultiple(),
-        label=_('Práva')
+        label=_('Práva'),
+        required=False
     )
 
     class Meta:
