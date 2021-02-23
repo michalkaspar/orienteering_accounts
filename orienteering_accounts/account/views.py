@@ -113,7 +113,7 @@ class RoleAddView(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
     form_class = RoleForm
 
     def get_success_url(self):
-        return reverse('accounts:role:list', args=[self.object.pk])
+        return reverse('accounts:role:list')
 
 
 class RoleEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
@@ -123,4 +123,4 @@ class RoleEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     form_class = RoleForm
 
     def get_success_url(self):
-        return reverse('accounts:role:list', args=[self.object.pk])
+        return reverse('accounts:role:list')
