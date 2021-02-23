@@ -1,16 +1,16 @@
 from orienteering_accounts.account.choices import *
 
 
-def view_account_list(employee):
-    return employee.ifperm(PERMISSION_VIEW_ACCOUNT_LIST)
+def view_account_list(account):
+    return account.ifperm(PERMISSION_VIEW_ACCOUNT_LIST)
 
 
-def edit_account(employee):
-    return employee.ifperm(PERMISSION_EDIT_ACCOUNT)
+def edit_account(account):
+    return account.ifperm(PERMISSION_EDIT_ACCOUNT)
 
 
-def view_account(employee):
-    return employee.ifperm(PERMISSION_VIEW_ACCOUNT)
+def view_account(account):
+    return account.ifperm(PERMISSION_VIEW_ACCOUNT)
 
 
 account_edit_perms = [edit_account]
@@ -20,27 +20,27 @@ account_view_perms = [
 ]
 
 
-def add_transaction(employee):
-    return employee.ifperm(PERMISSION_ADD_TRANSACTION)
+def add_transaction(account):
+    return account.ifperm(PERMISSION_ADD_TRANSACTION)
 
 
 transaction_create_perms = [add_transaction]
 
 
-def add_role(employee):
-    return employee.ifperm(PERMISSION_ADD_ROLE)
+def add_role(account):
+    return account.ifperm(PERMISSION_ADD_ROLE)
 
 
-def change_role(employee):
-    return employee.ifperm(PERMISSION_CHANGE_ROLE)
+def change_role(account):
+    return account.ifperm(PERMISSION_CHANGE_ROLE)
 
 
-def delete_role(employee):
-    return employee.ifperm(PERMISSION_DELETE_ROLE)
+def delete_role(account):
+    return account.ifperm(PERMISSION_DELETE_ROLE)
 
 
-def view_role(employee):
-    return employee.ifperm(PERMISSION_VIEW_ROLE)
+def view_role(account):
+    return account.ifperm(PERMISSION_VIEW_ROLE)
 
 
 role_add_perms = [add_role]

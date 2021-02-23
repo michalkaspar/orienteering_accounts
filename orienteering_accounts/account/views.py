@@ -29,19 +29,19 @@ class AccountLoginView(LoginView):
     redirect_authenticated_user = True
 
 
-class AccountList(PermissionsRequiredMixin, LoginRequiredMixin, FilterView):
+class AccountList(LoginRequiredMixin, PermissionsRequiredMixin, FilterView):
     template_name = 'account/list.html'
     filterset_class = AccountFilter
     permissions_required = perms.account_view_perms
 
 
-class AccountDetail(PermissionsRequiredMixin, DetailView):
+class AccountDetail(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):
     model = Account
     template_name = 'account/detail.html'
     permissions_required = perms.account_view_perms
 
 
-class AccountEdit(PermissionsRequiredMixin, UpdateView):
+class AccountEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     model = Account
     template_name = 'account/edit.html'
     permissions_required = perms.account_edit_perms
@@ -51,7 +51,7 @@ class AccountEdit(PermissionsRequiredMixin, UpdateView):
         return reverse('accounts:detail', args=[self.object.pk])
 
 
-class TransactionCreate(PermissionsRequiredMixin, CreateView):
+class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
     template_name = 'transaction/create.html'
     model = Transaction
     form_class = TransactionAddForm
@@ -100,13 +100,13 @@ class TransactionCreate(PermissionsRequiredMixin, CreateView):
         return reverse('accounts:detail', args=[self.kwargs['pk']])
 
 
-class RoleListView(PermissionsRequiredMixin, ListView):
+class RoleListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
     model = Role
     permissions_required = perms.role_view_perms
     template_name = 'account/role/list.html'
 
 
-class RoleAddView(PermissionsRequiredMixin, CreateView):
+class RoleAddView(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
     model = Role
     permissions_required = perms.role_add_perms
     template_name = 'account/role/edit.html'
@@ -116,7 +116,7 @@ class RoleAddView(PermissionsRequiredMixin, CreateView):
         return reverse('accounts:role:list', args=[self.object.pk])
 
 
-class RoleEditView(PermissionsRequiredMixin, UpdateView):
+class RoleEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     model = Role
     permissions_required = perms.role_edit_perms
     template_name = 'account/role/edit.html'
