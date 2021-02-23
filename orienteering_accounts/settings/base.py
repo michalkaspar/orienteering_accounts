@@ -183,11 +183,6 @@ MEDIA_URL = '/media/'
 # LOGGING #
 ###########
 
-LOG_DIR = config('PROJECT_LOG_DIR', '/tmp')
-os.makedirs(LOG_DIR, exist_ok=True)
-
-LOG_FILE = config('PROJECT_LOG_FILE', os.path.join(LOG_DIR, 'app.log'))
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -203,19 +198,19 @@ LOGGING = {
         'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
             'formatter': 'verbose',
         },
         'file_info': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'info.log',
+            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
             'formatter': 'verbose',
         },
         'file_error': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': 'error.log',
+            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
             'formatter': 'verbose',
         }
     },
