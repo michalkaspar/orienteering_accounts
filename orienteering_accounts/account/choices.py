@@ -2,6 +2,11 @@
 
 # ACCOUNT #############################################################
 
+PERMISSION_VIEW_PAYMENT_PERIOD_LIST = 'view_payment_period_list'
+PERMISSION_CREATE_PAYMENT_PERIOD = 'create_payment_period'
+PERMISSION_EDIT_PAYMENT_PERIOD = 'edit_payment_period'
+PERMISSION_VIEW_PAYMENT_PERIOD = 'view_payment_period'
+
 PERMISSION_VIEW_ACCOUNT_LIST = 'view_account_list'
 PERMISSION_EDIT_ACCOUNT = 'edit_account'
 PERMISSION_VIEW_ACCOUNT = 'view_account'

@@ -1,6 +1,30 @@
 from orienteering_accounts.account.choices import *
 
 
+def view_payment_period_list(account):
+    return account.ifperm(PERMISSION_VIEW_PAYMENT_PERIOD_LIST)
+
+
+def create_payment_period(account):
+    return account.ifperm(PERMISSION_EDIT_PAYMENT_PERIOD)
+
+
+def edit_payment_period(account):
+    return account.ifperm(PERMISSION_EDIT_PAYMENT_PERIOD)
+
+
+def view_payment_period(account):
+    return account.ifperm(PERMISSION_VIEW_PAYMENT_PERIOD)
+
+
+payment_period_create_perms = [create_payment_period]
+payment_period_edit_perms = [edit_payment_period]
+payment_period_view_perms = [
+    view_payment_period_list,
+    view_payment_period
+]
+
+
 def view_account_list(account):
     return account.ifperm(PERMISSION_VIEW_ACCOUNT_LIST)
 

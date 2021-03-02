@@ -4,8 +4,9 @@
 
     <h1>{% trans "Seznam rolí" %}</h1>
 
-    <a href="{% url 'accounts:role:add' %}" class="c-btn c-btn--success">{% trans 'Přidat roli' %}</a>
-
+    <div style="margin-bottom: 10px">
+        <a href="{% url 'accounts:role:add' %}" class="btn btn-success">{% trans 'Přidat roli' %}</a>
+    </div>
     <table class="table table-striped table-bordered">
       <thead>
         <tr>

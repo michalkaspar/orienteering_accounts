@@ -28,7 +28,7 @@ PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 SECRET_KEY = config('PROJECT_SECRET_KEY', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('PROJECT_DEBUG', default=False)
+DEBUG = config('PROJECT_DEBUG', default=True)
 
 DEBUG_STATIC_FILES = False
 
@@ -197,19 +197,19 @@ LOGGING = {
         'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
+            'filename': 'debug.log',
             'formatter': 'verbose',
         },
         'file_info': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
+            'filename': 'info.log',
             'formatter': 'verbose',
         },
         'file_error': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(config('DJANGO_APP_DIR'), 'debug.log'),
+            'filename': 'error.log',
             'formatter': 'verbose',
         }
     },
@@ -237,3 +237,6 @@ ORIS_API_URL = config('PROJECT_ORIS_API_URL', '')
 REFRESH_EVENTS_BEFORE_DAYS = 14
 
 TEMPLATE_DATETIME_FORMAT = '%d.%m.%Y %H:%M'
+TEMPLATE_DATE_FORMAT = '%d.%m.%Y'
+
+X_FRAME_OPTIONS = 'ALLOWALL'

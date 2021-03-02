@@ -3,16 +3,17 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views.generic import CreateView, DetailView, UpdateView, ListView
-from django_filters.views import FilterView
+from django.views.generic import CreateView, DetailView, UpdateView, ListView, TemplateView
 from django.utils.translation import ugettext_lazy as _
+from django_filters.views import FilterView
+
 from requests import HTTPError
 
 from orienteering_accounts.account.filters import AccountFilter
-from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm
-from orienteering_accounts.account.models import Transaction, Account
+from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm
+from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod
 from orienteering_accounts.account import perms
 from orienteering_accounts.account.forms import RoleForm
 from orienteering_accounts.account.models import Role
@@ -24,24 +25,50 @@ from orienteering_accounts.account.forms import LoginForm
 from orienteering_accounts.core.mixins import PermissionsRequiredMixin
 
 
+class PaymentPeriodListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
+    template_name = 'account/payment_period/list.html'
+    model = PaymentPeriod
+    permissions_required = perms.payment_period_view_perms
+
+
+class PaymentPeriodCreateView(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
+    model = PaymentPeriod
+    form_class = PaymentPeriodForm
+    template_name = 'account/payment_period/create.html'
+    permissions_required = perms.payment_period_create_perms
+
+    def get_success_url(self):
+        return reverse('accounts:payment_period:list')
+
+
+class PaymentPeriodEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
+    model = PaymentPeriod
+    form_class = PaymentPeriodForm
+    template_name = 'account/payment_period/edit.html'
+    permissions_required = perms.payment_period_edit_perms
+
+    def get_success_url(self):
+        return reverse('accounts:payment_period:list')
+
+
 class AccountLoginView(LoginView):
     form_class = LoginForm
     redirect_authenticated_user = True
 
 
-class AccountList(LoginRequiredMixin, PermissionsRequiredMixin, FilterView):
+class AccountListView(LoginRequiredMixin, PermissionsRequiredMixin, FilterView):
     template_name = 'account/list.html'
     filterset_class = AccountFilter
     permissions_required = perms.account_view_perms
 
 
-class AccountDetail(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):
+class AccountDetailView(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):
     model = Account
     template_name = 'account/detail.html'
     permissions_required = perms.account_view_perms
 
 
-class AccountEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
+class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     model = Account
     template_name = 'account/edit.html'
     permissions_required = perms.account_edit_perms
@@ -98,6 +125,19 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
 
     def get_success_url(self):
         return reverse('accounts:detail', args=[self.kwargs['pk']])
+
+
+class AccountTransactionsView(TemplateView):
+    template_name = 'account/transactions.html'
+
+    def get_context_data(self, **kwargs):
+        account = get_object_or_404(Account, id=self.kwargs['pk'])
+
+        context_data = super().get_context_data(**kwargs)
+        context_data.update(
+            account=account
+        )
+        return context_data
 
 
 class RoleListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):

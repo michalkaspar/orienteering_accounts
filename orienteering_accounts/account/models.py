@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from orienteering_accounts.core.models import BaseModel
+from orienteering_accounts.core.templatetags.core import format_date
 from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 
@@ -56,6 +57,17 @@ class Role(BaseModel):
 
     def get_absolute_url(self):
         return reverse('accounts:role:list')
+
+
+class PaymentPeriod(BaseModel):
+    date_from = models.DateField(verbose_name=_('Platnost od'))
+    date_to = models.DateField(verbose_name=_('Platnost do'))
+
+    def get_absolute_url(self):
+        return reverse('accounts:payment_period:list')
+
+    def __str__(self):
+        return f'{format_date(self.date_from)} - {format_date(self.date_to)}'
 
 
 class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
@@ -126,6 +138,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         return cls.objects.exclude(id__in=paid_accounts_ids)
 
+    def get_transactions_descendant(self):
+        return self.transactions.order_by('-created')
+
 
 class Transaction(BaseModel):
 
@@ -134,6 +149,7 @@ class Transaction(BaseModel):
         OTHER = 'JINÉ', _('Jiné')
 
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
+    period = models.ForeignKey('account.PaymentPeriod', null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Období'))
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
     purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
     note = models.TextField(verbose_name=_('Poznámka'), blank=True)

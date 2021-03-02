@@ -19,3 +19,16 @@ def format_datetime(value):
         return date.strftime(value, settings.TEMPLATE_DATETIME_FORMAT)
 
     return value
+
+
+@register.filter
+def format_date(value):
+    if not value:
+        return '-'
+
+    if isinstance(value, datetime):
+        value = value.date()
+    if isinstance(value, date):
+        return date.strftime(value, settings.TEMPLATE_DATE_FORMAT)
+
+    return value

@@ -7,4 +7,4 @@ register = template.Library()
 
 @register.inclusion_tag('transaction/templatetags/amount.html')
 def transaction_amount(amount: Decimal):
-    return {'amount': amount}
+    return {'amount': amount.quantize(Decimal('1'))}

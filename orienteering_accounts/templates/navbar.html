@@ -1,0 +1,38 @@
+{% load account i18n %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="/">{% trans "IS SKOB Zlín" %}</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+        {% ifperm view_events %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url "events:list" %}">{% trans "Události" %}</a>
+            </li>
+        {% endifperm %}
+        {% ifperm view_account %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {% trans "Účty" %}
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  {% ifperm view_account %}
+                    <a class="dropdown-item" href="{% url "accounts:list" %}">{% trans "Účty" %}</a>
+                  {% endifperm %}
+                  {% ifperm view_role %}
+                    <a class="dropdown-item" href="{% url "accounts:role:list" %}">{% trans "Role" %}</a>
+                  {% endifperm %}
+                  {% ifperm view_payment_period %}
+                    <a class="dropdown-item" href="{% url "accounts:payment_period:list" %}">{% trans "Platební období" %}</a>
+                  {% endifperm %}
+              </div>
+            </li>
+        {% endifperm %}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url "accounts:detail" request.user.id %}">{% trans "Můj účet" %}</a>
+        </li>
+    </ul>
+  </div>
+</nav>

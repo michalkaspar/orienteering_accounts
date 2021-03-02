@@ -63,6 +63,7 @@
                           <th scope="col">{% trans "Datum a čas vzniku" %}</th>
                           <th scope="col">{% trans "Částka" %}</th>
                           <th scope="col">{% trans "Účel transakce" %}</th>
+                          <th scope="col">{% trans "Období" %}</th>
                           <th scope="col">{% trans "Poznámka" %}</th>
                         </tr>
                     </thead>
@@ -72,6 +73,7 @@
                                 <td>{{ transaction.created|format_datetime }}</td>
                                 <td>{% transaction_amount transaction.amount %}</td>
                                 <td>{{ transaction.get_purpose_display }}</td>
+                                <td>{{ transaction.period|default:"-" }}</td>
                                 <td>{{ transaction.note }}</td>
                             </tr>
                         {% endfor %}

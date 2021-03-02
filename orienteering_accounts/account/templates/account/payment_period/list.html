@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% load i18n core %}
+
+{% block main_content %}
+    <h1>{% trans "Platební období" %}</h1>
+
+    <div style="margin-bottom: 10px">
+        <a href="{% url 'accounts:payment_period:add' %}" class="btn btn-success">{% trans 'Přidat platební období' %}</a>
+    </div>
+
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Platnost" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment_period in object_list %}
+            <tr>
+                <td class="c-table__cell">
+                  {% url 'accounts:payment_period:edit' payment_period.pk as action_edit_url %}
+                  <a href="{{ action_edit_url }}">{{ payment_period.date_from|format_date }} - {{ payment_period.date_to|format_date }}</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr style="text-align: center">
+                <td>{% trans "Tabulka neobsahuje žádná data" %}</td>
+            </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}
