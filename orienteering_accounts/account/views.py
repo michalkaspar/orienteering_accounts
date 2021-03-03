@@ -1,8 +1,11 @@
+import jwt
+
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, UpdateView, ListView, TemplateView
@@ -130,12 +133,28 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
 class AccountTransactionsView(TemplateView):
     template_name = 'account/transactions.html'
 
-    def get_context_data(self, **kwargs):
-        account = get_object_or_404(Account, id=self.kwargs['pk'])
+    def get(self, request, *args, **kwargs):
+        token = request.GET.get('auth')
 
+        if not token:
+            return HttpResponse('Auth token is missing', status=400)
+
+        try:
+            payload = jwt.decode(token, settings.API_SECRET, algorithms='HS256')
+        except jwt.InvalidTokenError:
+            return HttpResponse('Token is invalid', status=401)
+
+        if 'registration_number' not in payload:
+            return HttpResponse('Token is invalid', status=401)
+
+        self.account = get_object_or_404(Account, registration_number=payload['registration_number'])
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data.update(
-            account=account
+            account=self.account
         )
         return context_data
 

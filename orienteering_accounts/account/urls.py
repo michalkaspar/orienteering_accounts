@@ -29,5 +29,5 @@ urlpatterns = [
     path('<int:pk>/', AccountDetailView.as_view(), name='detail'),
     path('<int:pk>/edit/', AccountEditView.as_view(), name='edit'),
     path('<int:pk>/transaction/add/', TransactionCreate.as_view(), name='transaction_add'),
-    path('<int:pk>/transactions/', AccountTransactionsView.as_view(), name='transactions')
+    path('transactions/', AccountTransactionsView.as_view(), name='transactions')
 ]
