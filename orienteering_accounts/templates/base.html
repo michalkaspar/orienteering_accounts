@@ -27,7 +27,9 @@
         {% endblock scripts %}
     </head>
     <body>
-    {% include "navbar.html" %}
+    {% if not request.user.is_anonymous %}
+        {% include "navbar.html" %}
+    {% endif %}
     <div class="container">
         {% block main_content %}{% endblock main_content %}
     </div>
