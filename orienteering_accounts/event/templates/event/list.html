@@ -1,7 +1,38 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "base.html" %}{% load i18n forms %}
 
 {% block main_content %}
-    <table class="table table-striped">
+
+    <h1>{% trans "Seznam závodů" %}</h1>
+
+    <form method="get">
+          <div class="row">
+            {% comment %}
+            <div class="col-3">
+              {% form_field filter.form.date %}
+            </div>
+            {% endcomment %}
+            <div class="col-3">
+              {% form_field filter.form.date_from %}
+            </div>
+            <div class="col-3">
+              {% form_field filter.form.date_to %}
+            </div>
+            <div class="col-3">
+              {% form_field filter.form.region %}
+            </div>
+            <div class="col-2">
+              {% form_field filter.form.handled %}
+            </div>
+            <div class="col-2">
+              {% form_field filter.form.leader %}
+            </div>
+            <div class="col-1">
+                <input class="btn btn-success" type="submit" value="{% trans "Hledat" %}" style="margin-top: 25px;">
+            </div>
+          </div>
+    </form>
+
+    <table class="table table-striped table-bordered">
       <thead>
         <tr>
           <th scope="col">{% trans "Název" %}</th>
@@ -9,16 +40,22 @@
           <th scope="col">{% trans "Organizátor" %}</th>
           <th scope="col">{% trans "Oblast" %}</th>
           <th scope="col">{% trans "Typ závodu" %}</th>
+          <th scope="col">{% trans "Zpracovat?" %}</th>
+          <th scope="col">{% trans "Vedoucí" %}</th>
+          <th scope="col">{% trans "ORIS" %}</th>
         </tr>
       </thead>
       <tbody>
-        {% for event in object_list %}
+        {% for event in event_list %}
         <tr>
-          <td>{{ event.name }}</td>
+          <td><a href="{% url 'events:detail' event.id %}">{{ event.name }}</a></td>
           <td>{{ event.date }}</td>
           <td>{{ event.organizer_1.abbr }}</td>
           <td>{{ event.region }}</td>
           <td>{{ event.level.name }}</td>
+          <td>{{ event.handled }}</td>
+          <td>{{ event.leader }}</td>
+          <td><a href="{{ event.oris_url }}">{{ event.oris_id }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

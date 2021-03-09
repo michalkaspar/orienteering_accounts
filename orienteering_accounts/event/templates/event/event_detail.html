@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% load i18n forms %}
+
+{% block main_content %}
+    <h1>{% trans "Detail závodu" %}</h1>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>{{ event.name }}</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Datum" %}: {{ event.date }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Organizátor" %}: {{ event.organizers }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Oblast" %}: {{ event.region }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Disciplína" %}: {{ event.discipline.name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Úroveň" %}: {{ event.level.name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Místo" %}: {{ event.venue }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "ORIS" %}: <a href="{{ event.oris_url }}">{{ event.oris_id }}</a>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <form method="post">
+    {% csrf_token %}
+        {% form_field form.handled %}
+        {% form_field form.leader %}
+
+        <input class="btn-success" type="submit" value="Uložit">
+    </form>
+{% endblock %}

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from orienteering_accounts.account.models import Account
 from orienteering_accounts.entry.models import Entry
 from orienteering_accounts.oris.client import ORISClient
 
@@ -31,6 +32,24 @@ class Event(models.Model):
     status = models.CharField(max_length=255, blank=True, default='')
     ob_postupy = models.CharField(max_length=255, blank=True, null=True)
     categories_data = models.JSONField(default=dict)
+
+    ### Internals
+    handled = models.BooleanField(default=False)
+    leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
+
+    class Meta:
+        ordering = ("date",)
+
+    @property
+    def oris_url(self):
+        return "https://oris.orientacnisporty.cz/Zavod?id=" + str(self.oris_id)
+
+    @property
+    def organizers(self):
+        str = f"{self.organizer_1['name']}"
+        if self.organizer_2:
+            str += f", {self.organizer_2['name']}"
+        return str
 
     @classmethod
     def upsert_from_oris(cls, event):
