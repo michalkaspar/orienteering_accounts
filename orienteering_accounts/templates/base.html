@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n account %}
 <!doctype html>
 <html lang="cs-cs">
     <head>
@@ -30,7 +30,7 @@
     {% if not request.user.is_anonymous %}
         {% include "navbar.html" %}
     {% endif %}
-    <div class="container">
+    <div class="container" style="max-width: 1280px">
         {% if messages %}
         <ul class="messages">
             {% for message in messages %}
@@ -38,7 +38,26 @@
             {% endfor %}
         </ul>
         {% endif %}
-        {% block main_content %}{% endblock main_content %}
+        <div class="row">
+            <div class="col-10">
+            {% block main_content %}
+            {% endblock main_content %}
+            </div>
+            {% if not request.user.is_anonymous %}
+                {% ifperm view_change_log %}
+                    <div class="col-2" style="border-left: 2px solid black;">
+                        <h4>{% trans "Historie změn:" %}</h4>
+                        <div class="container">
+                        {% for change_log in request.user.change_logs.all %}
+                            <div class="row">{{ change_log|safe }}</div>
+                        {% empty %}
+                            <div class="row">{% trans "Žádné změny" %}</div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                {% endifperm %}
+            {% endif %}
+        </div>
     </div>
     </body>
 </html>

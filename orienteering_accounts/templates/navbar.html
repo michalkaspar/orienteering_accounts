@@ -30,6 +30,11 @@
               </div>
             </li>
         {% endifperm %}
+            <li class="nav-item dropdown">
+              <a class="nav-link" href="{% url "events:list" %}">{% trans "Události" %}</a>
+            </li>
+        {% ifperm view_event %}
+        {% endifperm %}
         <li class="nav-item">
             <a class="nav-link" href="{% url "accounts:detail" request.user.id %}">{% trans "Můj účet" %}</a>
         </li>

@@ -4,6 +4,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -26,6 +27,7 @@ from django.contrib.auth.views import LoginView
 
 from orienteering_accounts.account.forms import LoginForm
 from orienteering_accounts.core.mixins import PermissionsRequiredMixin
+from orienteering_accounts.core.models import ChangeLog
 
 
 class PaymentPeriodListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
@@ -112,6 +114,12 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
         try:
             with transaction.atomic():
                 created_transaction = form.save()
+                ChangeLog.objects.create(
+                    owner_id=self.request.user.pk,
+                    instance_type=ContentType.objects.get_for_model(Transaction),
+                    instance_id=created_transaction.pk,
+                    change_type=ChangeLog.ChangeType.CREATE
+                )
                 account = created_transaction.account
                 if created_transaction.purpose == Transaction.TransactionPurpose.CLUB_MEMBERSHIP and account.is_late_with_club_membership_payment:
                     account.add_entry_rights_in_oris()

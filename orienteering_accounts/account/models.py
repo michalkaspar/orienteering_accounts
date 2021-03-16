@@ -153,3 +153,9 @@ class Transaction(BaseModel):
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
     purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
     note = models.TextField(verbose_name=_('Poznámka'), blank=True)
+
+    def __str__(self):
+        return f'{self.account} {self.get_purpose_display()} {self.amount}'
+
+    def get_absolute_url(self):
+        return reverse('accounts:detail', args=[self.account.pk])

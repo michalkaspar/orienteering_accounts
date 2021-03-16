@@ -71,3 +71,10 @@ role_add_perms = [add_role]
 role_edit_perms = [change_role, add_role]
 role_delete_perms = [change_role]
 role_view_perms = [add_role, change_role, delete_role, view_role]
+
+
+def view_change_log(account):
+    return account.ifperm(PERMISSION_VIEW_CHANGE_LOG)
+
+
+change_log_view_perms = [view_change_log]

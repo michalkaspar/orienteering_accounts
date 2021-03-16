@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load i18n forms %}
+{% extends "base.html" %}{% load i18n forms account %}
 
 {% block main_content %}
     <h1>{% trans "Detail závodu" %}</h1>
@@ -44,15 +44,30 @@
                 {% trans "ORIS" %}: <a href="{{ event.oris_url }}">{{ event.oris_id }}</a>
             </div>
         </div>
+        {% ifnotperm edit_event %}
+        <div class="row">
+            <div class="col">
+                {% trans "Zpracováváno systémem" %}: {{ event.handled|yesno:"Ano,Ne" }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% trans "Vedoucí" %}: {{ event.leader|default:"-" }}
+            </div>
+        </div>
+        {% endifnotperm %}
     </div>
 
     <br>
 
-    <form method="post">
-    {% csrf_token %}
-        {% form_field form.handled %}
-        {% form_field form.leader %}
+    {% ifperm edit_event %}
+        <form method="post">
+        {% csrf_token %}
+            {% form_field form.handled %}
+            {% form_field form.leader %}
 
-        <input class="btn-success" type="submit" value="Uložit">
-    </form>
+            <input class="btn-success" type="submit" value="Uložit">
+        </form>
+    {% endifperm %}
+
 {% endblock %}
