@@ -7,12 +7,12 @@
     <form method="post">
         {% csrf_token %}
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="COST" checked>
-          <label class="form-check-label" for="transaction_type">{% trans "Výdaj" %}</label>
+          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="INCOME" checked>
+          <label class="form-check-label" for="transaction_type">{% trans "Příjem" %}</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="INCOME">
-          <label class="form-check-label" for="transaction_type">{% trans "Příjem" %}</label>
+          <input class="form-check-input" type="radio" name="transaction_type" id="transaction_type" value="COST">
+          <label class="form-check-label" for="transaction_type">{% trans "Výdaj" %}</label>
         </div>
         {% form_field form.amount %}
         {% form_field form.purpose %}

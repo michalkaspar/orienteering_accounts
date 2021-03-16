@@ -29,10 +29,10 @@ class PaymentPeriodForm(forms.ModelForm):
 class TransactionAddForm(forms.ModelForm):
 
     class TransactionType(models.TextChoices):
-        COST = 'COST', _('Výdaj')
         INCOME = 'INCOME', _('Příjem')
+        COST = 'COST', _('Výdaj')
 
-    transaction_type = forms.ChoiceField(choices=TransactionType.choices, initial=TransactionType.COST, label=_('Typ transakce'))
+    transaction_type = forms.ChoiceField(choices=TransactionType.choices, initial=TransactionType.INCOME, label=_('Typ transakce'))
 
     class Meta:
         model = Transaction
@@ -40,7 +40,6 @@ class TransactionAddForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['note'].required = True
         self.fields['amount'].validators = [MinValueValidator(Decimal(0))]
 
     def clean(self):
@@ -48,6 +47,9 @@ class TransactionAddForm(forms.ModelForm):
 
         if cleaned_data['purpose'] == Transaction.TransactionPurpose.CLUB_MEMBERSHIP and not cleaned_data['period']:
             self.add_error('period', _('Je nutné zvolit období pro platbu v případě oddílového příspěvku'))
+
+        if cleaned_data['purpose'] == Transaction.TransactionPurpose.OTHER and not cleaned_data['note']:
+            self.add_error('note', _('Poznámku je nutné uvést v případě ostatních plateb'))
 
         if self.cleaned_data['transaction_type'] == TransactionAddForm.TransactionType.COST:
             self.cleaned_data['amount'] *= -1
