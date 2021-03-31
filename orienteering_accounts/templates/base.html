@@ -19,6 +19,7 @@
         {% block stylesheets %}
         <!-- Stylesheet -->
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.2-web/css/all.css' %}">
         {% endblock stylesheets %}
 
         {% block scripts %}
@@ -38,7 +39,7 @@
             {% endfor %}
         </ul>
         {% endif %}
-        <div class="row">
+        <div class="row" >
             <div class="col-10">
             {% block main_content %}
             {% endblock main_content %}
@@ -46,10 +47,11 @@
             {% if not request.user.is_anonymous %}
                 {% ifperm view_change_log %}
                     <div class="col-2" style="border-left: 2px solid black;">
-                        <h4>{% trans "Historie změn:" %}</h4>
+                        <h3>{% trans "Historie změn:" %}</h3>
                         <div class="container">
                         {% for change_log in request.user.change_logs.all %}
                             <div class="row">{{ change_log|safe }}</div>
+                            <hr style="margin-top: 5px; margin-bottom: 5px; border-width: 2px;">
                         {% empty %}
                             <div class="row">{% trans "Žádné změny" %}</div>
                         {% endfor %}

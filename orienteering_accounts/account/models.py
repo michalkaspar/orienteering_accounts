@@ -122,6 +122,14 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     def balance(self) -> Decimal:
         return Decimal(str(self.transactions.aggregate(balance=Coalesce(Sum('amount'), 0))['balance']))
 
+    @property
+    def club_membership_paid(self):
+        return self.transactions.filter(purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP).exists()
+
+    @property
+    def debts_paid(self):
+        return self.transactions.filter(purpose=Transaction.TransactionPurpose.DEBTS).exists()
+
     def add_entry_rights_in_oris(self):
         ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=True)
 
@@ -147,6 +155,7 @@ class Transaction(BaseModel):
     class TransactionPurpose(models.TextChoices):
         CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
         OTHER = 'JINÉ', _('Jiné')
+        DEBTS = 'DLUHY', _('Dluhy')
 
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
     period = models.ForeignKey('account.PaymentPeriod', null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Období'))
