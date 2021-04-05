@@ -34,6 +34,7 @@ DEBUG_STATIC_FILES = False
 
 ALLOWED_HOSTS = config('PROJECT_ALLOWED_HOSTS', cast=Csv(), default='')
 
+ADMINS = config('PROJECT_ADMINS', default=[])
 
 # Application definition
 
@@ -197,6 +198,9 @@ LOGGING = {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
     },
     'handlers': {
         'file_debug': {
@@ -222,16 +226,21 @@ LOGGING = {
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'plain',
-        }
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file_debug', 'file_info', 'file_error'],
+            'handlers': ['file_debug', 'file_info', 'file_error', 'mail_admins'],
             'level': 'ERROR',
             'propagate': False,
         },
         'orienteering_accounts': {
-            'handlers': ['file_debug', 'file_info', 'file_error'],
+            'handlers': ['file_debug', 'file_info', 'file_error', 'mail_admins'],
             'level': 'DEBUG',
         },
     },
