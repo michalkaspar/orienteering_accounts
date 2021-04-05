@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import requests
 import typing
 
@@ -93,8 +95,9 @@ class ORISClient:
 
         entries = []
 
-        for entry_id, entry_dict in response_data.items():
-            entries.append(Entry(**entry_dict))
+        if response_data:
+            for entry_id, entry_dict in response_data.items():
+                entries.append(Entry(**entry_dict))
 
         return entries
 
@@ -111,3 +114,17 @@ class ORISClient:
             params.update(other=can_entry_others)
 
         return cls.make_post_request('setClubEntryRights', params=params)
+
+    @classmethod
+    def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[Decimal]:
+        params = {
+            'eventid': event_id
+        }
+        response_data = cls.make_get_request('getEventBalance', params=params)
+
+        if response_data:
+            for _, club_dict in response_data['Clubs'].items():
+                if club_dict['ClubID'] == club_id:
+                    return Decimal(club_dict['ToBePaid'])
+
+        return None

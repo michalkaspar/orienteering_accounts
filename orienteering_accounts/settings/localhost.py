@@ -2,6 +2,9 @@ import sys
 
 from .base import *
 
+LOGGING['loggers']['django']['handlers'] += ['console']
+LOGGING['loggers']['orienteering_accounts']['handlers'] += ['console']
+
 try:
     from .local import *
 except ImportError:

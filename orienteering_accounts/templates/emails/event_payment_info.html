@@ -1,0 +1,10 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block body %}
+    {% trans "Ahoj" %}<br>
+    <br>
+    {% trans "Prosím zaplať částku" %} {{ payment_amount }}{% trans "CZK" %}<br>
+    <br>
+    {% trans "na účet" %} {{ account_number }}
+{% endblock %}

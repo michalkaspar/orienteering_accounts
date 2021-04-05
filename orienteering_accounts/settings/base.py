@@ -193,6 +193,11 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s <%(name)s> %(message)s'
         },
     },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
     'handlers': {
         'file_debug': {
             'level': 'DEBUG',
@@ -211,15 +216,37 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'error.log',
             'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'plain',
         }
     },
     'loggers': {
-        'project': {
+        'django': {
+            'handlers': ['file_debug', 'file_info', 'file_error'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'orienteering_accounts': {
             'handlers': ['file_debug', 'file_info', 'file_error'],
             'level': 'DEBUG',
         },
     },
 }
+
+###########
+# EMAILS #
+###########
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = config('PROJECT_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = config('PROJECT_EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = config('PROJECT_DEFAULT_FROM_EMAIL', '')
 
 # Project
 
@@ -242,3 +269,5 @@ TEMPLATE_DATE_FORMAT = '%d.%m.%Y'
 X_FRAME_OPTIONS = 'ALLOWALL'
 
 API_SECRET = config('PROJECT_API_SECRET', '')
+
+EVENT_PAYMENT_EMAILS_SEND_TO = config('PROJECT_EVENT_PAYMENT_EMAILS_SEND_TO', default=[])

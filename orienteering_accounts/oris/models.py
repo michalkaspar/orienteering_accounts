@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class Gender(str, Enum):
@@ -70,13 +70,29 @@ class Event(BaseModel):
     status: typing.Optional[str] = Field(alias='Status', default='')
     ob_postupy: typing.Optional[str] = Field(alias='OBPostupy')
     categories_data: typing.Any = Field(alias='Classes', default={})
+    entry_date_1: typing.Optional[str] = Field(alias='EntryDate1')
+    entry_date_2: typing.Optional[str] = Field(alias='EntryDate2')
+    entry_date_3: typing.Optional[str] = Field(alias='EntryDate3')
+    entry_bank_account: typing.Optional[str] = Field(alias='EntryBankAccount', default='')
+
+    @validator('entry_date_1', 'entry_date_2', 'entry_date_3')
+    def never_empty(cls, v: str) -> typing.Optional[str]:
+        if not v:
+            return None
+        return v
 
 
 class Entry(BaseModel):
     oris_id: int = Field(alias='ID')
     oris_category_id: int = Field(alias='ClassID')
-    oris_user_id: int = Field(alias='UserID')
+    oris_user_id: typing.Optional[int] = Field(alias='UserID')
     fee: int = Field(alias='Fee')
     oris_created: datetime = Field(alias='CreatedDateTime')
-    oris_updated: datetime = Field(alias='UpdatedDateTime')
-    rent_si: bool = Field(alias='RentSI')
+    oris_updated: typing.Optional[str] = Field(alias='UpdatedDateTime')
+    rent_si: typing.Optional[bool] = Field(alias='RentSI')
+
+    @validator('oris_updated')
+    def never_empty(cls, v: str) -> typing.Optional[str]:
+        if not v:
+            return None
+        return v
