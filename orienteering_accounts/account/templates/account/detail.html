@@ -65,16 +65,22 @@
                           <th scope="col">{% trans "Účel transakce" %}</th>
                           <th scope="col">{% trans "Období" %}</th>
                           <th scope="col">{% trans "Poznámka" %}</th>
+                          {% ifperm edit_transaction %}
+                          <th scope="col">{% trans "Akce" %}</th>
+                          {% endifperm %}
                         </tr>
                     </thead>
                     <tbody>
-                        {% for transaction in object.transactions.all %}
+                        {% for transaction in object.get_transactions_descendant %}
                             <tr>
                                 <td>{{ transaction.created|format_datetime }}</td>
                                 <td>{% transaction_amount transaction.amount %}</td>
                                 <td>{{ transaction.get_purpose_display }}</td>
                                 <td>{{ transaction.period|default:"-" }}</td>
                                 <td>{{ transaction.note }}</td>
+                                {% ifperm edit_transaction %}
+                                    <td><a href="{% url "accounts:transaction_edit" transaction.pk %}">{% trans "Upravit" %}</a></td>
+                                {% endifperm %}
                             </tr>
                         {% endfor %}
                     </tbody>

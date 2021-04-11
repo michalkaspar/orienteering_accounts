@@ -48,7 +48,13 @@ def add_transaction(account):
     return account.ifperm(PERMISSION_ADD_TRANSACTION)
 
 
+def edit_transaction(account):
+    return account.ifperm(PERMISSION_EDIT_TRANSACTION)
+
+
 transaction_create_perms = [add_transaction]
+
+transaction_edit_perms = [edit_transaction]
 
 
 def add_role(account):

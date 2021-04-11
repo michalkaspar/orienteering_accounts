@@ -8,6 +8,7 @@ PERMISSION_VIEW_ACCOUNT_LIST = 'view_account_list'
 PERMISSION_EDIT_ACCOUNT = 'edit_account'
 PERMISSION_VIEW_ACCOUNT = 'view_account'
 PERMISSION_ADD_TRANSACTION = 'add_transaction'
+PERMISSION_EDIT_TRANSACTION = 'edit_transaction'
 
 PERMISSION_ADD_ROLE = 'add_role'
 PERMISSION_CHANGE_ROLE = 'change_role'

@@ -16,7 +16,8 @@ from django_filters.views import FilterView
 from requests import HTTPError
 
 from orienteering_accounts.account.filters import AccountFilter
-from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm
+from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm, \
+    TransactionEditForm
 from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod
 from orienteering_accounts.account import perms
 from orienteering_accounts.account.forms import RoleForm
@@ -84,7 +85,7 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
 
 
 class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
-    template_name = 'transaction/create.html'
+    template_name = 'transaction/edit.html'
     model = Transaction
     form_class = TransactionAddForm
     permissions_required = perms.transaction_create_perms
@@ -136,6 +137,16 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
 
     def get_success_url(self):
         return reverse('accounts:detail', args=[self.kwargs['pk']])
+
+
+class TransactionEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
+    template_name = 'transaction/edit.html'
+    model = Transaction
+    form_class = TransactionEditForm
+    permissions_required = perms.transaction_edit_perms
+
+    def get_success_url(self):
+        return reverse('accounts:detail', args=[self.get_form().instance.account.pk])
 
 
 class AccountTransactionsView(TemplateView):
