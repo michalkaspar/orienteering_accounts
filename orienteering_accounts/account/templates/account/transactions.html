@@ -13,21 +13,14 @@
     <div class="container" >
         <div class="row">
             <div class="col">
-                <h4>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h4>
+                <h4>{% trans "Oddílový příspěvek zaplacen" %}: {{ account.club_membership_paid|yesno:"ANO,NE" }}</h4>
             </div>
         </div>
-        {% for transaction in account.get_transactions_descendant %}
-            <div class="row">
-                <div class="col">{{ transaction.created|format_date }}</div>
+        <div class="row">
+            <div class="col">
+                <h4>{% trans "Dluh zaplacen" %}: {{ account.debts_paid|yesno:"ANO,NE" }}</h4>
             </div>
-            <div class="row">
-                <div class="col">{% trans "Účel" %}: {{ transaction.get_purpose_display }}</div>
-            </div>
-            <div class="row">
-                <div class="col">{% trans "Částka" %}: {% transaction_amount transaction.amount %}</div>
-            </div>
-            <hr color="black">
-        {% endfor %}
+        </div>
     </div>
     </body>
 </html>
