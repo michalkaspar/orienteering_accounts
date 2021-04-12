@@ -1,3 +1,5 @@
+import io
+import xlsxwriter
 import jwt
 
 from django import forms
@@ -5,12 +7,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.views import View
 from django.views.generic import CreateView, DetailView, UpdateView, ListView, TemplateView
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, gettext
 from django_filters.views import FilterView
 
 from requests import HTTPError
@@ -66,6 +70,43 @@ class AccountListView(LoginRequiredMixin, PermissionsRequiredMixin, FilterView):
     template_name = 'account/list.html'
     filterset_class = AccountFilter
     permissions_required = perms.account_view_perms
+
+
+class AccountExportView(LoginRequiredMixin, PermissionsRequiredMixin, View):
+    permissions_required = perms.account_view_perms
+
+    def get(self, *args, **kwargs):
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet()
+
+        worksheet.set_column(0, 0, width=20)
+        worksheet.set_column(0, 1, width=20)
+        worksheet.set_column(0, 2, width=20)
+
+        worksheet.write(0, 0, gettext('Jméno a Příjmení'))
+        worksheet.write(0, 1, gettext('Příspěvky uhrazeny'))
+        worksheet.write(0, 2, gettext('Dluhy uhrazeny'))
+
+        for i, account in enumerate(Account.objects.order_by('last_name')):
+
+            row = i+1
+
+            worksheet.write(row, 0, account.full_name_inv)
+            worksheet.write(row, 1, gettext('ANO') if account.club_membership_paid else gettext('NE'))
+            worksheet.write(row, 2, gettext('ANO') if account.debts_paid else gettext('NE'))
+
+        worksheet.fit_to_pages(1, 0)
+        workbook.close()
+        output.seek(0)
+
+        response = HttpResponse(
+            ContentFile(output.read()),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=accounts.xlsx'
+
+        return response
 
 
 class AccountDetailView(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):

@@ -1,7 +1,7 @@
 from django.urls import path, include
 
 from orienteering_accounts.account.views import (
-    AccountListView, AccountDetailView, AccountEditView, TransactionCreate, RoleListView,
+    AccountListView, AccountExportView, AccountDetailView, AccountEditView, TransactionCreate, RoleListView,
     RoleAddView, RoleEditView, AccountTransactionsView, PaymentPeriodEditView, PaymentPeriodListView,
     PaymentPeriodCreateView, TransactionEdit
 )
@@ -24,6 +24,7 @@ payment_period_urlpatterns = ([
 
 urlpatterns = [
     path('', AccountListView.as_view(), name='list'),
+    path('export/', AccountExportView.as_view(), name='export'),
     path('role/', include(role_urlpatterns)),
     path('payment_period/', include(payment_period_urlpatterns)),
     path('<int:pk>/', AccountDetailView.as_view(), name='detail'),

@@ -119,6 +119,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return f'{self.first_name} {self.last_name}'
 
     @property
+    def full_name_inv(self):
+        return f'{self.last_name} {self.first_name}'
+
+    @property
     def balance(self) -> Decimal:
         return Decimal(str(self.transactions.aggregate(balance=Coalesce(Sum('amount'), 0))['balance']))
 
