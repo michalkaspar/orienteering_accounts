@@ -28,7 +28,7 @@ PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 SECRET_KEY = config('PROJECT_SECRET_KEY', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('PROJECT_DEBUG', default=True)
+DEBUG = True
 
 DEBUG_STATIC_FILES = False
 
