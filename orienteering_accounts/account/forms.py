@@ -40,7 +40,7 @@ class TransactionEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.amount < 0:
+        if self.instance.pk and self.instance.amount < 0:
             self.initial['amount'] = self.instance.amount * -1
         self.fields['amount'].validators = [MinValueValidator(Decimal(0))]
 
