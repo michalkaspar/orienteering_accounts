@@ -83,18 +83,21 @@ class AccountExportView(LoginRequiredMixin, PermissionsRequiredMixin, View):
         worksheet.set_column(0, 0, width=20)
         worksheet.set_column(0, 1, width=20)
         worksheet.set_column(0, 2, width=20)
+        worksheet.set_column(0, 3, width=20)
 
         worksheet.write(0, 0, gettext('Jméno a Příjmení'))
-        worksheet.write(0, 1, gettext('Příspěvky uhrazeny'))
-        worksheet.write(0, 2, gettext('Dluhy uhrazeny'))
+        worksheet.write(0, 1, gettext('Registrační číslo'))
+        worksheet.write(0, 2, gettext('Příspěvky uhrazeny'))
+        worksheet.write(0, 3, gettext('Dluhy uhrazeny'))
 
         for i, account in enumerate(Account.objects.order_by('last_name')):
 
             row = i+1
 
             worksheet.write(row, 0, account.full_name_inv)
-            worksheet.write(row, 1, gettext('ANO') if account.club_membership_paid else gettext('NE'))
-            worksheet.write(row, 2, gettext('ANO') if account.debts_paid else gettext('NE'))
+            worksheet.write(row, 1, account.registration_number)
+            worksheet.write(row, 2, gettext('ANO') if account.club_membership_paid else gettext('NE'))
+            worksheet.write(row, 3, gettext('ANO') if account.debts_paid else gettext('NE'))
 
         worksheet.fit_to_pages(1, 0)
         workbook.close()
