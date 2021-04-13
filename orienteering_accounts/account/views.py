@@ -126,7 +126,7 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
 
 
 class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
-    template_name = 'transaction/edit.html'
+    template_name = 'transaction/create.html'
     model = Transaction
     form_class = TransactionAddForm
     permissions_required = perms.transaction_create_perms
