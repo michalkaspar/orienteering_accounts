@@ -42,3 +42,6 @@ class ChangeLog(BaseModel):
 
     def __str__(self):
         return f'<a href="{self.instance.get_absolute_url()}">{self.instance}</a>'
+
+    class Meta:
+        ordering = ('-created',)
