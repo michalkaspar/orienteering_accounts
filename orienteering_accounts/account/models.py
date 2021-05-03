@@ -141,14 +141,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=False)
 
     @classmethod
-    def get_accounts_without_paid_club_membership(cls, deadline: datetime) -> QuerySet['Account']:
-        paid_accounts_ids = cls.objects.filter(
-            transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
-            transactions__created__lte=deadline,
-            transactions__created__year=deadline.year
-        ).values_list('pk', flat=True).distinct()
-
-        return cls.objects.exclude(id__in=paid_accounts_ids)
+    def get_accounts_without_paid_club_membership(cls) -> QuerySet['Account']:
+        for account in cls.objects.all():
+            if not (account.debts_paid and account.club_membership_paid):
+                yield account
 
     def get_transactions_descendant(self):
         return self.transactions.order_by('-created')
