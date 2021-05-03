@@ -34,7 +34,7 @@ DEBUG_STATIC_FILES = False
 
 ALLOWED_HOSTS = config('PROJECT_ALLOWED_HOSTS', cast=Csv(), default='')
 
-ADMINS = [(email, email) for email in config('PROJECT_ADMINS', default=[])]
+ADMINS = [(config('PROJECT_ADMIN', default=''), config('PROJECT_ADMIN', default=''))]
 
 # Application definition
 
@@ -279,4 +279,4 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 
 API_SECRET = config('PROJECT_API_SECRET', '')
 
-EVENT_PAYMENT_EMAILS_SEND_TO = config('PROJECT_EVENT_PAYMENT_EMAILS_SEND_TO', default=[])
+EVENT_PAYMENT_EMAILS_SEND_TO = [config('PROJECT_EVENT_PAYMENT_EMAILS_SEND_TO', default='')]
