@@ -34,7 +34,7 @@ DEBUG_STATIC_FILES = False
 
 ALLOWED_HOSTS = config('PROJECT_ALLOWED_HOSTS', cast=Csv(), default='')
 
-ADMINS = config('PROJECT_ADMINS', default=[])
+ADMINS = [(email, email) for email in config('PROJECT_ADMINS', default=[])]
 
 # Application definition
 

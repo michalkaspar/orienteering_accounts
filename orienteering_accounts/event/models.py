@@ -82,7 +82,7 @@ class Event(models.Model):
             handled=True,
             entry_date_1__isnull=False,
             entry_date_1__lte=timezone.now()
-        ).exlude(
+        ).exclude(
             entry_bank_account=''
         )
 
