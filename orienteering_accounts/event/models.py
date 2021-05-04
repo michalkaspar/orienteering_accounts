@@ -40,6 +40,7 @@ class Event(models.Model):
     entry_date_2 = models.DateTimeField(blank=True, null=True)
     entry_date_3 = models.DateTimeField(blank=True, null=True)
     entry_bank_account = models.CharField(max_length=255, blank=True, default='')
+    links = models.JSONField(default=dict)
 
     ### Internals
     handled = models.BooleanField(default=False)
@@ -88,20 +89,21 @@ class Event(models.Model):
 
     def send_payment_info_email(self):
 
-        club_event_balance = ORISClient.get_club_event_balance(self.oris_id)
+        event_balance = ORISClient.get_club_event_balance(self.oris_id)
 
-        if not club_event_balance:
+        if not event_balance:
             return
 
         context = {
-            'payment_amount': club_event_balance,
-            'account_number': self.entry_bank_account
+            'event_balance': event_balance,
+            'event': self,
+            'club_id': settings.CLUB_ID
         }
 
         html_content = render_to_string('emails/event_payment_info.html', context)
 
         email_utils.send_email(
             recipient_list=settings.EVENT_PAYMENT_EMAILS_SEND_TO,
-            subject=f'{self.name} - platba',
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - platba',
             html_content=html_content
         )

@@ -7,7 +7,7 @@ from django.conf import settings
 from datetime import date
 
 from orienteering_accounts.oris import choices as oris_choices
-from orienteering_accounts.oris.models import RegisteredUser, Event, Entry
+from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance
 
 
 class ORISClient:
@@ -116,7 +116,7 @@ class ORISClient:
         return cls.make_post_request('setClubEntryRights', params=params)
 
     @classmethod
-    def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[Decimal]:
+    def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[EventBalance]:
         params = {
             'eventid': event_id
         }
@@ -125,6 +125,6 @@ class ORISClient:
         if response_data:
             for _, club_dict in response_data['Clubs'].items():
                 if club_dict['ClubID'] == club_id:
-                    return Decimal(club_dict['ToBePaid'])
+                    return EventBalance(**club_dict)
 
         return None

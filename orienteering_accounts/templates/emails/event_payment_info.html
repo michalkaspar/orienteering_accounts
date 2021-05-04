@@ -1,10 +1,29 @@
 {% extends "emails/base.html" %}
-{% load i18n %}
+{% load i18n event %}
 
 {% block body %}
     {% trans "Ahoj" %}<br>
     <br>
-    {% trans "Prosím zaplať částku" %} {{ payment_amount }}{% trans "CZK" %}<br>
+    {% trans "Prosím zaplať částku" %} {{ event_balance.to_be_paid }} {% trans "CZK" %}<br>
     <br>
-    {% trans "na účet" %} {{ account_number }}
+    {% trans "na účet" %} {{ event.entry_bank_account }}
+    <br>
+    {% trans "VS:" %} {{ event_balance.payment_vs }}
+    <br>
+    {% trans "ORIS:" %} <a href="https://oris.orientacnisporty.cz/Zavod?id={{ event.oris_id }}">{% trans "odkaz" %}</a>
+    {% get_bulletin_url event as bulletin_url %}
+    {% if bulletin_url %}
+        <br>
+        {% trans "Rozpis" %} <a href="{{ bulletin_url }}">{% trans "odkaz" %}</a>
+    {% endif %}
+    <br>
+    {% trans "Přihlášky:" %} <a href="https://oris.orientacnisporty.cz/PrehledPrihlasenych?id={{ event.oris_id }}&club={{ club_id }}">{% trans "odkaz" %}</a>
+    <br>
+    {% trans "Místo konání:" %} {{ event.venue }}
+    <br>
+    {% trans "Region:" %} {{ event.region }}
+    <br>
+    {% trans "Pořadatel:" %} {{ event.organizer_1.name  }}
+    <br>
+
 {% endblock %}
