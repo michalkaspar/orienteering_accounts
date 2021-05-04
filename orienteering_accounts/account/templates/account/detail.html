@@ -56,6 +56,7 @@
         </div>
         <div class="row">
             <div class="col">
+                <h3>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h3>
                 <h3>{% trans "Proběhlé transakce" %}:</h3>
                 <table class="table table-bordered">
                     <thead>
@@ -83,9 +84,20 @@
                                 {% endifperm %}
                             </tr>
                         {% endfor %}
+                        {% if account.init_balance %}
+                            <tr>
+                                <td>01.04.2021</td>
+                                <td>{% transaction_amount account.init_balance %}</td>
+                                <td>{% trans "Dluh z minulých let" %}</td>
+                                <td>* - 01.04.2021</td>
+                                <td></td>
+                                {% ifperm edit_transaction %}
+                                    <td></td>
+                                {% endifperm %}
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
-                <h3>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h3>
             </div>
         </div>
     </div>
