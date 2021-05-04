@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         logger.info(f'Removing entry rights started')
 
-        for account in Account.get_accounts_without_paid_club_membership():
+        for account in Account.get_accounts_to_remove_entry_rights_in_oris():
             #account.remove_entry_rights_in_oris()
             #account.is_late_with_club_membership_payment = True
             #account.save(update_fields=['is_late_with_club_membership_payment'])

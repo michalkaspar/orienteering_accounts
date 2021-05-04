@@ -86,6 +86,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     si: str = models.CharField(max_length=30, verbose_name=_('SI'))
     born_year: int = models.PositiveIntegerField(verbose_name=_('Ročník'))
     is_late_with_club_membership_payment = models.BooleanField(default=False)
+    init_balance = models.DecimalField(decimal_places=2, max_digits=9, default=Decimal(0))
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
@@ -124,7 +125,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def balance(self) -> Decimal:
-        return Decimal(str(self.transactions.aggregate(balance=Coalesce(Sum('amount'), 0))['balance']))
+        return self.init_balance + Decimal(str(
+            self.transactions.exclude(
+                purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+            ).aggregate(balance=Coalesce(Sum('amount'), 0))['balance'])
+        )
 
     @property
     def club_membership_paid(self):
@@ -141,9 +146,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=False)
 
     @classmethod
-    def get_accounts_without_paid_club_membership(cls) -> QuerySet['Account']:
+    def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet['Account']:
         for account in cls.objects.all():
-            if not (account.debts_paid and account.club_membership_paid):
+            if not (account.balance >= Decimal(0) and account.club_membership_paid):
                 yield account
 
     def get_transactions_descendant(self):
