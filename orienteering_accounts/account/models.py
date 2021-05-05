@@ -137,7 +137,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_paid(self):
-        return self.transactions.filter(purpose=Transaction.TransactionPurpose.DEBTS).exists()
+        return self.balance >= Decimal(0)
 
     def add_entry_rights_in_oris(self):
         ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=True)
@@ -148,7 +148,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     @classmethod
     def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet['Account']:
         for account in cls.objects.all():
-            if not (account.balance >= Decimal(0) and account.club_membership_paid):
+            if not (account.debts_paid and account.club_membership_paid):
                 yield account
 
     def get_transactions_descendant(self):
