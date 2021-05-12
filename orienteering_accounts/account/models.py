@@ -87,6 +87,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     born_year: int = models.PositiveIntegerField(verbose_name=_('Ročník'))
     is_late_with_club_membership_payment = models.BooleanField(default=False)
     init_balance = models.DecimalField(decimal_places=2, max_digits=9, default=Decimal(0))
+    leader_key = models.UUIDField(null=True)
+    email = models.EmailField(null=True)
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
@@ -161,15 +163,21 @@ class Transaction(BaseModel):
         CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
         OTHER = 'JINÉ', _('Jiné')
         DEBTS = 'DLUHY', _('Dluhy')
+        ENTRY = 'ENTRY', _('Účast na závodech')
 
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
     period = models.ForeignKey('account.PaymentPeriod', null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Období'))
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
     purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
     note = models.TextField(verbose_name=_('Poznámka'), blank=True, default='')
+    origin_entry = models.ForeignKey('entry.Entry', on_delete=models.SET_NULL, null=True, related_name='transactions')
 
     def __str__(self):
         return f'{self.account} {self.get_purpose_display()} {self.amount}'
 
     def get_absolute_url(self):
         return reverse('accounts:detail', args=[self.account.pk])
+
+    @property
+    def is_event(self):
+        return self.purpose == self.TransactionPurpose.ENTRY

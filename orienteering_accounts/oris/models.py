@@ -75,6 +75,7 @@ class Event(BaseModel):
     entry_date_3: typing.Optional[str] = Field(alias='EntryDate3')
     entry_bank_account: typing.Optional[str] = Field(alias='EntryBankAccount', default='')
     links: typing.Any = Field(alias='Links', default={})
+    additional_services: typing.Any = Field(alias='Services', default={})
 
     @validator('entry_date_1', 'entry_date_2', 'entry_date_3')
     def never_empty(cls, v: str) -> typing.Optional[str]:
@@ -86,6 +87,7 @@ class Event(BaseModel):
 class Entry(BaseModel):
     oris_id: int = Field(alias='ID')
     oris_category_id: int = Field(alias='ClassID')
+    category_name: str = Field(alias='ClassDesc')
     oris_user_id: typing.Optional[int] = Field(alias='UserID')
     fee: int = Field(alias='Fee')
     oris_created: datetime = Field(alias='CreatedDateTime')

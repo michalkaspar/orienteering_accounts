@@ -21,6 +21,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 
+PROJECT_DOMAIN = config('PROJECT_MAIN_DOMAIN', default='')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 

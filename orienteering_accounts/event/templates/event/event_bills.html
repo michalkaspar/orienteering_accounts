@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% load i18n forms account entry %}
+
+{% block navbar %}{% endblock %}
+
+{% block main_content %}
+    <h1>{{ event.name }} - {% trans "Vyúčtování" %}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans "Jméno a Příjmení" %}</th>
+                <th>{% trans "Registrační číslo" %}</th>
+                <th>{% trans "Kategorie" %}</th>
+                <th>{% trans "Startovné" %}</th>
+                <th>{% trans "Startovné po příspěvku oddílu" %}</th>
+                {% for _, additional_service in event.additional_services %}
+                    <th>{{ additional_service.NameCZ }}</th>
+                {% endfor %}
+                <th>{% trans "Dluh" %}</th>
+            </tr>
+        </thead>
+        {% for form in formset %}
+            {{ form.id }}
+            {% with form.instance as entry %}
+                <tr>
+                    <td>{{ entry.account.full_name }}</td>
+                    <td>{{ entry.account.registration_number }}</td>
+                    <td>{{ entry.category_name }}</td>
+                    <td>{{ entry.fee }}</td>
+                    <td>{{ entry.fee_after_club_discount }}</td>
+                    {% for _, additional_service in event.additional_services %}
+                        <td>{% entry_additional_service_value entry additional_service %}</td>
+                    {% endfor %}
+                    <td>{% form_field form.debt label=False %}</td>
+                </tr>
+            {% endwith %}
+        {% endfor %}
+        </table>
+        <button type="submit" class="btn btn-success">{% trans "Odeslat" %}</button>
+    </form>
+
+{% endblock %}
+
+{% block right-sidebar %}
+{% endblock %}

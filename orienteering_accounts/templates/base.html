@@ -28,38 +28,42 @@
         {% endblock scripts %}
     </head>
     <body>
-    {% if not request.user.is_anonymous %}
-        {% include "navbar.html" %}
-    {% endif %}
-    <div class="container" style="max-width: 1280px">
-        {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
+        {% block navbar %}
+        {% if not request.user.is_anonymous %}
+            {% include "navbar.html" %}
         {% endif %}
-        <div class="row" >
-            <div class="col-10">
-            {% block main_content %}
-            {% endblock main_content %}
-            </div>
-            {% if not request.user.is_anonymous %}
-                {% ifperm view_change_log %}
-                    <div class="col-2" style="border-left: 2px solid black;">
-                        <h3>{% trans "Historie změn:" %}</h3>
-                        <div class="container">
-                        {% for change_log in request.user.change_logs.all %}
-                            <div class="row">{{ change_log|safe }}</div>
-                            <hr style="margin-top: 5px; margin-bottom: 5px; border-width: 2px;">
-                        {% empty %}
-                            <div class="row">{% trans "Žádné změny" %}</div>
-                        {% endfor %}
-                        </div>
-                    </div>
-                {% endifperm %}
+        {% endblock %}
+        <div class="container" style="max-width: 1280px; padding-bottom: 15px;">
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
             {% endif %}
+            <div class="row" >
+                <div class="col-10">
+                {% block main_content %}
+                {% endblock main_content %}
+                </div>
+                {% block right-sidebar %}
+                {% if not request.user.is_anonymous %}
+                    {% ifperm view_change_log %}
+                        <div class="col-2" style="border-left: 2px solid black;">
+                            <h3>{% trans "Historie změn:" %}</h3>
+                            <div class="container">
+                            {% for change_log in request.user.change_logs.all %}
+                                <div class="row">{{ change_log|safe }}</div>
+                                <hr style="margin-top: 5px; margin-bottom: 5px; border-width: 2px;">
+                            {% empty %}
+                                <div class="row">{% trans "Žádné změny" %}</div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    {% endifperm %}
+                {% endif %}
+                {% endblock %}
+            </div>
         </div>
-    </div>
     </body>
 </html>

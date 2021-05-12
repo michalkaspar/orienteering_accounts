@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models
 from django.db.models import QuerySet
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -41,6 +43,8 @@ class Event(models.Model):
     entry_date_3 = models.DateTimeField(blank=True, null=True)
     entry_bank_account = models.CharField(max_length=255, blank=True, default='')
     links = models.JSONField(default=dict)
+    additional_services = models.JSONField(default=dict)
+    bills_solved = models.BooleanField(default=False)
 
     ### Internals
     handled = models.BooleanField(default=False)
@@ -48,6 +52,9 @@ class Event(models.Model):
 
     class Meta:
         ordering = ("date",)
+
+    def __str__(self):
+        return f'{self.name} {self.date}'
 
     @property
     def oris_url(self):
@@ -74,8 +81,10 @@ class Event(models.Model):
         )
 
     def update_entries(self):
+        additional_services = ORISClient.get_event_additional_services(self.oris_id)
+
         for entry in ORISClient.get_event_entries(self.oris_id):
-            Entry.upsert_from_oris(entry, self)
+            Entry.upsert_from_oris(entry, self, additional_services.get(entry.oris_user_id, {}))
 
     @classmethod
     def to_send_payment_info_email(cls) -> QuerySet:
@@ -105,5 +114,23 @@ class Event(models.Model):
         email_utils.send_email(
             recipient_list=settings.EVENT_PAYMENT_EMAILS_SEND_TO,
             subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - platba',
+            html_content=html_content
+        )
+
+    def send_leader_debts_email(self):
+
+        if self.bills_solved:
+            return
+
+        context = {
+            'event': self,
+            'bills_url': f'http://{settings.PROJECT_DOMAIN}{reverse("events:bills", args=[self.pk, self.leader.leader_key])}'
+        }
+
+        html_content = render_to_string('emails/event_debts.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.leader.email],
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - dluhy',
             html_content=html_content
         )

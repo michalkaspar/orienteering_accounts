@@ -76,7 +76,7 @@
                             <tr>
                                 <td>{{ transaction.created|format_datetime }}</td>
                                 <td>{% transaction_amount transaction.amount %}</td>
-                                <td>{{ transaction.get_purpose_display }}</td>
+                                <td>{{ transaction.get_purpose_display }}{% if transaction.is_event %} {{ transaction.origin_entry.event }}{% endif %}</td>
                                 <td>{{ transaction.period|default:"-" }}</td>
                                 <td>{{ transaction.note }}</td>
                                 {% ifperm edit_transaction %}

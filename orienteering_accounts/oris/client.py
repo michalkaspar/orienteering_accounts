@@ -102,6 +102,22 @@ class ORISClient:
         return entries
 
     @classmethod
+    def get_event_additional_services(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Dict[int, typing.Dict]:
+        params = {
+            'eventid': event_id,
+            'clubid': club_id
+        }
+        response_data = cls.make_get_request('getEventServiceEntries', params=params)
+
+        additional_services = {}
+
+        if response_data:
+            for _, service_dict in response_data.items():
+                additional_services[int(service_dict['UserID'])] = service_dict
+
+        return additional_services
+
+    @classmethod
     def set_club_entry_rights(cls, user_id: int, club_key: int = settings.CLUB_KEY, can_entry_self: bool = None, can_entry_others: bool = None):
         params = {
             'clubuser': user_id,
