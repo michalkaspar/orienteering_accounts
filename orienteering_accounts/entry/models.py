@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from orienteering_accounts.account.models import Account
@@ -20,7 +21,7 @@ class Entry(models.Model):
     oris_updated = models.DateTimeField(null=True, blank=True)
     rent_si = models.BooleanField(default=False)
     additional_services = models.JSONField(default={})
-    debt = models.DecimalField(decimal_places=2, max_digits=9, null=True)
+    debt = models.DecimalField(decimal_places=2, max_digits=9, null=True, validators=(MinValueValidator(0),))
 
     @classmethod
     def upsert_from_oris(cls, entry, event: 'Event', additional_services: dict = {}):

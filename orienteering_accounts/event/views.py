@@ -87,7 +87,7 @@ class EventBills(View):
             event.save(update_fields=['bills_solved'])
             return HttpResponseRedirect(reverse('events:bills_success', args=[event.pk, key]))
 
-        render(request, 'event/event_bills.html', {
+        return render(request, 'event/event_bills.html', {
             'event': event,
             'formset': formset
         })
