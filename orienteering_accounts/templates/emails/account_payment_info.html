@@ -10,9 +10,9 @@
         <br>
         <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
         <br>
-        {% trans "Účet: " %}{{ club_bank_account_number }}
+        {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
         <br>
-        {% trans "Částka: " %}{{ account.club_membership_payment_amount }}
+        {% trans "Částka: " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
         <br>
         {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
         <br>
@@ -32,9 +32,9 @@
         <br>
         <b>{% trans "Své dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
         <br>
-        {% trans "Účet: " %}{{ club_bank_account_number }}
+        {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
         <br>
-        {% trans "Částka: " %}{{ account.debts_payment_amount }}
+        {% trans "Částka: " %}{{ account.debts_payment_amount }} {% trans "Kč" %}
         <br>
         {% trans "Zpráva pro příjemce: " %}{{ account.debts_payment_message }}
         <br>
@@ -43,6 +43,10 @@
         <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
         <br>
     {% endif %}
+    <br>
+    <br>
+    {% trans "Pokud tvou platbu nezaevidujeme do 30.5.2021 nebude ti umožněno přihlašovat se na závody." %}
+    <br>
     <br>
     {% trans "Děkujeme za platbu" %}
 
