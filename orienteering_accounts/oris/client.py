@@ -127,9 +127,9 @@ class ORISClient:
             'clubkey': club_key
         }
 
-        if can_entry_self:
+        if can_entry_self is not None:
             params.update(self=can_entry_self)
-        if can_entry_others:
+        if can_entry_others is not None:
             params.update(other=can_entry_others)
 
         return cls.make_post_request('setClubEntryRights', params=params)
