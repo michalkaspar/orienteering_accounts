@@ -212,7 +212,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         html_content = render_to_string('emails/account_payment_info.html', context)
 
         email_utils.send_email(
-            recipient_list=[t[0] for t in settings.ADMINS],
+            recipient_list=[self.email],
             subject=f'Platba příspěvků a dluhů - připomenutí',
             html_content=html_content
         )
