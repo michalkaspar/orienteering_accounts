@@ -28,6 +28,9 @@ class ORISClient:
         response = request_func(settings.ORIS_API_URL, params=params, json=data, **kwargs)
         response.raise_for_status()
 
+        if not response:
+            return None
+
         response_data = response.json()
 
         return response_data['Data']
