@@ -5,7 +5,7 @@
     {% trans "Ahoj" %}<br>
     <br>
     {% if not account.club_membership_paid %}
-        {% trans "V systému evidujeme, že stále nemáš zaplacené oddílové příspěvky." %}
+        {% trans "V systému evidujeme, že ty, závodník " %}{{ account.full_name }} ,{{ account.registration_number }} {% trans "stále nemáš zaplacené oddílové příspěvky." %}
         <br>
         <br>
         <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
@@ -23,7 +23,7 @@
     {% endif %}
     {% if not account.debts_paid %}
         {% if account.club_membership_paid %}
-            {% trans "V systému evidujeme, že stále nemáš zaplacené dluhy" %}
+            {% trans "V systému evidujeme, že ty, závodník " %}{{ account.full_name }} ,{{ account.registration_number }} {% trans "stále nemáš zaplacené dluhy." %}
         {% else %}
             <br>
             {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy" %}
