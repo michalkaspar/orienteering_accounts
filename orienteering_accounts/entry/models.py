@@ -45,9 +45,7 @@ class Entry(models.Model):
 
     @property
     def fee_after_club_discount(self):
-        current_year = datetime.now().year
-        born_year = self.account.born_year + 2000 if self.account.born_year < current_year - 2000 else self.account.born_year + 1900
-        if current_year - born_year > 20:
+        if self.account.is_adult:
             return self.fee / Decimal(2)
         return Decimal(0)
 

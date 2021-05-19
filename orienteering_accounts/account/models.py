@@ -1,11 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import Sum, QuerySet
 from django.db.models.functions import Coalesce
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,6 +15,7 @@ from orienteering_accounts.core.models import BaseModel
 from orienteering_accounts.core.templatetags.core import format_date
 from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
+from orienteering_accounts.core.utils import emails as email_utils
 
 
 class LazyPermission(object):
@@ -134,12 +137,22 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
     @property
+    def balance_without_entries(self) -> Decimal:
+        return self.init_balance + Decimal(str(
+            self.transactions.exclude(
+                purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+            ).exclude(
+                origin_entry__isnull=False
+            ).aggregate(balance=Coalesce(Sum('amount'), 0))['balance'])
+        )
+
+    @property
     def club_membership_paid(self):
         return self.transactions.filter(purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP).exists()
 
     @property
     def debts_paid(self):
-        return self.balance >= Decimal(0)
+        return self.balance_without_entries >= Decimal(0)
 
     def add_entry_rights_in_oris(self):
         ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=True)
@@ -155,6 +168,54 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     def get_transactions_descendant(self):
         return self.transactions.order_by('-created')
+
+    @property
+    def debts_payment_qr_url(self):
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.debts_payment_amount}&currency=CZK&message={self.debts_payment_message}&size=200"
+
+    @property
+    def debts_payment_message(self):
+        return f'OP Mistrovské soutěže {self.full_name}'
+
+    @property
+    def club_membership_payment_message(self):
+        return f'OP {self.full_name}'
+
+    @property
+    def club_membership_payment_amount(self):
+        return Decimal('1500.00') if self.is_adult else Decimal('2000.00')
+
+    @property
+    def debts_payment_amount(self):
+        return -self.init_balance
+
+    @property
+    def club_membership_payment_qr_url(self):
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200"
+
+    @property
+    def is_adult(self):
+        current_year = datetime.now().year
+        born_year = self.born_year + 2000 if self.born_year < current_year - 2000 else self.born_year + 1900
+        return current_year - born_year > 20
+
+    def send_payment_info_email(self):
+
+        if self.debts_paid and self.club_membership_paid:
+            return
+
+        context = {
+            'account': self,
+            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}'
+        }
+
+        html_content = render_to_string('emails/account_payment_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.email],
+            subject=f'Platba příspěvků a dluhů - připomenutí',
+            html_content=html_content
+        )
 
 
 class Transaction(BaseModel):
