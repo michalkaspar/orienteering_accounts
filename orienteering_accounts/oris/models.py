@@ -103,4 +103,4 @@ class Entry(BaseModel):
 
 class EventBalance(BaseModel):
     to_be_paid: Decimal = Field(alias='ToBePaid')
-    payment_vs: str = Field(alias='PaymentVS')
+    payment_vs: typing.Optional[str] = Field(alias='PaymentVS')
