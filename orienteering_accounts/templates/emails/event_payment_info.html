@@ -2,8 +2,6 @@
 {% load i18n event %}
 
 {% block body %}
-    {% trans "Ahoj" %}<br>
-    <br>
     {% trans "Prosím zaplať částku" %} {{ event_balance.to_be_paid }} {% trans "CZK" %}<br>
     <br>
     {% trans "na účet" %} {{ event.entry_bank_account }}
