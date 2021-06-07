@@ -97,6 +97,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     oris_id: int = models.PositiveIntegerField(unique=True)
     oris_paid: int = models.PositiveSmallIntegerField(verbose_name=_('ORIS Paid'))
     oris_club_id: int = models.PositiveIntegerField()  # TODO enum
+    oris_club_member_id = models.PositiveIntegerField(null=True)
     oris_fee: int = models.PositiveIntegerField()  # TODO enum
 
     role = models.ForeignKey(
@@ -155,10 +156,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return self.balance_without_entries >= Decimal(0)
 
     def add_entry_rights_in_oris(self):
-        ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=True)
+        ORISClient.set_club_entry_rights(self.oris_club_member_id, can_entry_self=True)
 
     def remove_entry_rights_in_oris(self):
-        ORISClient.set_club_entry_rights(self.oris_id, can_entry_self=False)
+        ORISClient.set_club_entry_rights(self.oris_club_member_id, can_entry_self=False)
 
     @classmethod
     def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet['Account']:

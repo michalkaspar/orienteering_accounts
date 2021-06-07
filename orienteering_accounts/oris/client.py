@@ -132,7 +132,7 @@ class ORISClient:
         if can_entry_others is not None:
             params.update(other=can_entry_others)
 
-        return cls.make_post_request('setClubEntryRights', params=params)
+        return cls.make_get_request('setClubEntryRights', params=params)
 
     @classmethod
     def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[EventBalance]:
