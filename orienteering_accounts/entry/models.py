@@ -49,19 +49,14 @@ class Entry(models.Model):
 
     @property
     def fee_after_club_discount(self):
+        category_entry_fee = self.event.get_category_fee(self.category_name)
+
         if self.account.is_adult:
-            fee = self.fee / Decimal(2)
+            fee = category_entry_fee / Decimal(2)
         else:
             fee = Decimal(0)
 
-        category_entry_fee = self.event.get_category_fee(self.category_name)
-
-        late_entry_fee = Decimal(0)
-
-        if category_entry_fee:
-            late_entry_fee = self.fee - category_entry_fee
-        else:
-            logger.warning(f'Category entry fee not found for entry {self}')
+        late_entry_fee = self.fee - category_entry_fee
 
         return fee + late_entry_fee
 
