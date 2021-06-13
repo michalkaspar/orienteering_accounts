@@ -35,7 +35,7 @@ class Entry(models.Model):
         try:
             account = Account.objects.get(oris_id=entry.oris_user_id)
         except Account.DoesNotExist:
-            logger.error(f'Entry for event {event} not created, account ORIS ID {entry.account_oris_id} does not exists.')
+            logger.error(f'Entry for event {event} not created, account ORIS ID {entry.oris_user_id} does not exists.')
             return
 
         cls.objects.update_or_create(
