@@ -1,3 +1,4 @@
+import typing
 from datetime import datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urljoin
@@ -134,3 +135,9 @@ class Event(models.Model):
             subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - dluhy',
             html_content=html_content
         )
+
+    def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:
+        for _, category_dict in self.categories_data.items():
+            if category_dict.get('Name') == category_name:
+                return Decimal(category_dict.get('Fee', 0))
+        return None

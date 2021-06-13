@@ -166,7 +166,10 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
                     change_type=ChangeLog.ChangeType.CREATE
                 )
                 account = created_transaction.account
-                if created_transaction.purpose == Transaction.TransactionPurpose.CLUB_MEMBERSHIP and account.is_late_with_club_membership_payment:
+                if created_transaction.purpose in [
+                    Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+                    Transaction.TransactionPurpose.DEBTS
+                ] and account.is_late_with_club_membership_payment:
                     account.add_entry_rights_in_oris()
                     account.is_late_with_club_membership_payment = False
                     account.save()

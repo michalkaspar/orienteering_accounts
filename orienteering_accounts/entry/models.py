@@ -1,4 +1,5 @@
 import logging
+import typing
 from datetime import datetime
 from decimal import Decimal
 
@@ -23,6 +24,9 @@ class Entry(models.Model):
     additional_services = models.JSONField(default={})
     debt = models.DecimalField(decimal_places=2, max_digits=9, null=True, validators=(MinValueValidator(0),))
 
+    def __str__(self):
+        return f'{self.event} entry {self.account}'
+
     @classmethod
     def upsert_from_oris(cls, entry, event: 'Event', additional_services: dict = {}):
         if not entry.oris_user_id:
@@ -46,8 +50,20 @@ class Entry(models.Model):
     @property
     def fee_after_club_discount(self):
         if self.account.is_adult:
-            return self.fee / Decimal(2)
-        return Decimal(0)
+            fee = self.fee / Decimal(2)
+        else:
+            fee = Decimal(0)
+
+        category_entry_fee = self.event.get_category_fee(self.category_name)
+
+        late_entry_fee = Decimal(0)
+
+        if category_entry_fee:
+            late_entry_fee = self.fee - category_entry_fee
+        else:
+            logger.warning(f'Category entry fee not found for entry {self}')
+
+        return fee + late_entry_fee
 
     @property
     def debt_init(self):
