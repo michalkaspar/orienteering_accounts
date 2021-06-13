@@ -65,7 +65,7 @@ class Event(models.Model):
     def organizers(self):
         str = f"{self.organizer_1['name']}"
         if self.organizer_2:
-            str += f", {self.organizer_2['name']}"
+            str += f", {self.organizer_2['Name']}"
         return str
 
     @classmethod
