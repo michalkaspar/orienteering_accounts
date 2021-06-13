@@ -100,7 +100,8 @@ class ORISClient:
 
         if response_data:
             for entry_id, entry_dict in response_data.items():
-                entries.append(Entry(**entry_dict))
+                if entry_dict.get('UserID'):
+                    entries.append(Entry(**entry_dict))
 
         return entries
 
