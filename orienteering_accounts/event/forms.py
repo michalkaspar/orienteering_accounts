@@ -13,11 +13,12 @@ from orienteering_accounts.event.models import Event
 class EventForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.read_only():
-            for f in self.fields.values():
-                f.disabled = True
-        else:
-            self.fields['leader'].queryset = Account.objects.exclude(event__isnull=False)
+        #if self.read_only():
+        #    for f in self.fields.values():
+        #        f.disabled = True
+        #else:
+        #    self.fields['leader'].queryset = Account.objects.exclude(event__isnull=False)
+        self.fields['leader'].queryset = Account.objects.exclude(event__isnull=False)
 
     def read_only(self):
         return self.instance.date <= date.today()

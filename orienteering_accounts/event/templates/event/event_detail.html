@@ -65,6 +65,9 @@
         {% csrf_token %}
             {% form_field form.handled %}
             {% form_field form.leader %}
+            {% if event.leader %}
+                <a href="{% url "events:bills" event.pk event.leader.leader_key %}">Dluhy</a>
+            {% endif %}
 
             <input class="btn-success" type="submit" value="Uložit">
         </form>
