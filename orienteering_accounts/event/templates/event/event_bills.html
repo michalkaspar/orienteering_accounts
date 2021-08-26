@@ -16,7 +16,7 @@
                 <th>{% trans "Kategorie" %}</th>
                 <th>{% trans "Startovné" %}</th>
                 <th>{% trans "Startovné po příspěvku oddílu" %}</th>
-                {% for _, additional_service in event.additional_services %}
+                {% for _, additional_service in event.additional_services.items %}
                     <th>{{ additional_service.NameCZ }}</th>
                 {% endfor %}
                 <th>{% trans "Dluh" %}</th>

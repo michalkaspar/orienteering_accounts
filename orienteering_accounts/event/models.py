@@ -141,3 +141,7 @@ class Event(models.Model):
             if category_dict.get('Name') == category_name:
                 return Decimal(category_dict.get('Fee', 0))
         return None
+
+    @property
+    def is_stage(self):
+        return True if self.discipline and self.discipline.get('oris_id') == settings.ORIS_STAGE_RACE_ID else False

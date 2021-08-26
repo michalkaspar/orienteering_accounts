@@ -51,10 +51,13 @@ class Entry(models.Model):
     def fee_after_club_discount(self):
         category_entry_fee = self.event.get_category_fee(self.category_name)
 
-        if self.account.is_adult:
-            fee = category_entry_fee / Decimal(2)
+        if self.event.is_stage:
+            fee = category_entry_fee
         else:
-            fee = Decimal(0)
+            if self.account.is_adult:
+                fee = category_entry_fee / Decimal(2)
+            else:
+                fee = Decimal(0)
 
         late_entry_fee = self.fee - category_entry_fee
 
