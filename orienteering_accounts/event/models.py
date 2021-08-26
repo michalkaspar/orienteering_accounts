@@ -84,8 +84,13 @@ class Event(models.Model):
     def update_entries(self):
         additional_services = ORISClient.get_event_additional_services(self.oris_id)
 
+        oris_entries_ids = set()
+
         for entry in ORISClient.get_event_entries(self.oris_id):
             Entry.upsert_from_oris(entry, self, additional_services.get(entry.oris_user_id, {}))
+            oris_entries_ids.add(entry.oris_user_id)
+
+        self.entries.exclude(account__oris_id__in=oris_entries_ids).delete()
 
     @classmethod
     def to_send_payment_info_email(cls) -> QuerySet:
