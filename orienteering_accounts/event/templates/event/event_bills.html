@@ -31,7 +31,7 @@
                     <td>{{ entry.category_name }}</td>
                     <td>{{ entry.fee }}</td>
                     <td>{{ entry.fee_after_club_discount }}</td>
-                    {% for _, additional_service in event.additional_services %}
+                    {% for _, additional_service in event.additional_services.items %}
                         <td>{% entry_additional_service_value entry additional_service %}</td>
                     {% endfor %}
                     <td>{% form_field form.debt label=False %}</td>

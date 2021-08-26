@@ -1,3 +1,4 @@
+from collections import defaultdict
 from decimal import Decimal
 
 import requests
@@ -106,18 +107,18 @@ class ORISClient:
         return entries
 
     @classmethod
-    def get_event_additional_services(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Dict[int, typing.Dict]:
+    def get_event_additional_services(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Dict[int, typing.List]:
         params = {
             'eventid': event_id,
             'clubid': club_id
         }
         response_data = cls.make_get_request('getEventServiceEntries', params=params)
 
-        additional_services = {}
+        additional_services = defaultdict(list)
 
         if response_data:
             for _, service_dict in response_data.items():
-                additional_services[int(service_dict['UserID'])] = service_dict
+                additional_services[int(service_dict['UserID'])].append(service_dict)
 
         return additional_services
 

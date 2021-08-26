@@ -67,8 +67,11 @@ class Entry(models.Model):
     def debt_init(self):
         additional_services_cost_sum = Decimal(0)
 
-        for _, service in self.additional_services.items():
-            additional_services_cost_sum += Decimal(service['TotalFee'])
+        self.additional_services: list
+
+        if self.additional_services:
+            for service in self.additional_services:
+                additional_services_cost_sum += Decimal(service['TotalFee'])
 
         # FIXME solve late entries properly
 

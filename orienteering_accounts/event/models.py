@@ -87,7 +87,7 @@ class Event(models.Model):
         oris_entries_ids = set()
 
         for entry in ORISClient.get_event_entries(self.oris_id):
-            Entry.upsert_from_oris(entry, self, additional_services.get(entry.oris_user_id, {}))
+            Entry.upsert_from_oris(entry, self, additional_services.get(entry.oris_user_id, []))
             oris_entries_ids.add(entry.oris_user_id)
 
         self.entries.exclude(account__oris_id__in=oris_entries_ids).delete()
