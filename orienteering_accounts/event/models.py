@@ -1,4 +1,4 @@
-import typing
+import typing, logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urljoin
@@ -15,9 +15,21 @@ from orienteering_accounts.account.models import Account
 from orienteering_accounts.entry.models import Entry
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
+from orienteering_accounts.oris import choices as oris_choices
+
+
+logger = logging.getLogger(__name__)
 
 
 class Event(models.Model):
+
+    class ProcessingType(models.TextChoices):
+        UNPROCESSED = 'UNPROCESSED', _('Nezpracován')
+        PAYMENT_INFO_EMAIL_SENT = 'PAYMENT_INFO_EMAIL_SENT', _('Odeslán příkaz k platbě')
+        LEADER_EMAIL_SENT = 'LEADER_EMAIL_SENT', _('Odeslán email vedoucímu')
+        BILLS_EMAIL_SENT = 'LEADER_EMAIL_SENT', _('Odeslán email vedoucímu')
+        BILLS_SOLVED = 'BILLS_SOLVED', _('Dluhy spočteny')
+
     oris_id = models.PositiveIntegerField(unique=True)
     name = models.CharField(max_length=255, verbose_name=_('Název'))
     date = models.DateField()
@@ -50,6 +62,7 @@ class Event(models.Model):
     ### Internals
     handled = models.BooleanField(default=False)
     leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
+    processing_state = models.CharField(max_length=50, choices=ProcessingType.choices, default=ProcessingType.UNPROCESSED)
 
     class Meta:
         ordering = ("date",)
@@ -69,6 +82,17 @@ class Event(models.Model):
         return str
 
     @classmethod
+    def import_from_oris(cls):
+        for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO]:
+            for event in ORISClient.get_events(sport=sport):
+                cls.upsert_from_oris(event)
+
+    @classmethod
+    def refresh_from_oris(cls):
+        for event in cls.objects.filter(handled=True, processing_state=cls.ProcessingType.UNPROCESSED):
+            event._refresh_from_oris()
+
+    @classmethod
     def upsert_from_oris(cls, event):
         cls.objects.update_or_create(
             oris_id=event.oris_id,
@@ -81,6 +105,21 @@ class Event(models.Model):
             date__gte=datetime.today() - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
         )
 
+    def _refresh_from_oris(self):
+        oris_event = ORISClient.get_event(self.oris_id)
+        self.upsert_from_oris(oris_event)
+        self.refresh_from_db()
+
+    @classmethod
+    def send_payment_info_emails(cls):
+        for event in cls.objects.filter(
+            processing_state=cls.ProcessingType.UNPROCESSED,
+            handled=True,
+            entry_date_1__lte=timezone.now()
+        ):
+            logger.info(f'Sending payment email for event {event}.')
+            event.send_payment_info_email()
+
     def update_entries(self):
         additional_services = ORISClient.get_event_additional_services(self.oris_id)
 
@@ -91,16 +130,6 @@ class Event(models.Model):
             oris_entries_ids.add(entry.oris_user_id)
 
         self.entries.exclude(account__oris_id__in=oris_entries_ids).delete()
-
-    @classmethod
-    def to_send_payment_info_email(cls) -> QuerySet:
-        return cls.objects.filter(
-            handled=True,
-            entry_date_1__isnull=False,
-            entry_date_1__lte=timezone.now()
-        ).exclude(
-            entry_bank_account=''
-        )
 
     def send_payment_info_email(self):
 
@@ -123,6 +152,9 @@ class Event(models.Model):
             html_content=html_content
         )
 
+        self.processing_state = Event.ProcessingType.PAYMENT_INFO_EMAIL_SENT
+        self.save(update_fields=('processing_state',))
+
     def send_leader_debts_email(self):
 
         if self.bills_solved:
@@ -140,6 +172,9 @@ class Event(models.Model):
             subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - dluhy',
             html_content=html_content
         )
+
+        self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
+        self.save(update_fields=('processing_state',))
 
     def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:
         for _, category_dict in self.categories_data.items():
