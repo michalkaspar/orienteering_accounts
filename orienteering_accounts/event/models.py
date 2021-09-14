@@ -27,7 +27,7 @@ class Event(models.Model):
         UNPROCESSED = 'UNPROCESSED', _('Nezpracován')
         PAYMENT_INFO_EMAIL_SENT = 'PAYMENT_INFO_EMAIL_SENT', _('Odeslán příkaz k platbě')
         LEADER_EMAIL_SENT = 'LEADER_EMAIL_SENT', _('Odeslán email vedoucímu')
-        BILLS_EMAIL_SENT = 'LEADER_EMAIL_SENT', _('Odeslán email vedoucímu')
+        BILLS_EMAIL_SENT = 'BILLS_EMAIL_SENT', _('Odeslány dluhy vedoucímu')
         BILLS_SOLVED = 'BILLS_SOLVED', _('Dluhy spočteny')
 
     oris_id = models.PositiveIntegerField(unique=True)
