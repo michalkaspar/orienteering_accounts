@@ -93,6 +93,7 @@ class Entry(BaseModel):
     oris_created: datetime = Field(alias='CreatedDateTime')
     oris_updated: typing.Optional[str] = Field(alias='UpdatedDateTime')
     rent_si: typing.Optional[bool] = Field(alias='RentSI')
+    oris_club_note: typing.Optional[str] = Field(alias='ClubNote')
 
     @validator('oris_updated')
     def never_empty(cls, v: str) -> typing.Optional[str]:

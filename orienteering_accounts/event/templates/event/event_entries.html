@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load i18n forms %}
+
+{% block main_content %}
+
+    <h1>{% trans "Přihlášky" %}</h1>
+
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Závodník" %}</th>
+          <th scope="col">{% trans "Kategorie" %}</th>
+          <th scope="col">{% trans "Vklad" %}</th>
+          <th scope="col">{% trans "Klubová poznámka" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in event.entries.all %}
+        <tr>
+          <td><a href="{% url 'accounts:detail' entry.account.id %}">{{ entry.account }}</a></td>
+          <td>{{ entry.category_name }}</td>
+          <td>{{ entry.fee }}</td>
+          <td>{{ entry.oris_club_note|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

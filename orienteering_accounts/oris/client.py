@@ -93,7 +93,9 @@ class ORISClient:
     def get_event_entries(cls, event_id: int, club_id: int = settings.CLUB_ID):
         params = {
             'eventid': event_id,
-            'clubid': club_id
+            'clubid': club_id,
+            'username': settings.ORIS_API_USERNAME,
+            'password': settings.ORIS_API_PASSWORD
         }
         response_data = cls.make_get_request('getEventEntries', params=params)
 

@@ -56,6 +56,16 @@ class EventDetail(LoginRequiredMixin, View):
         return HttpResponseRedirect(reverse('events:list'))
 
 
+class EventEntries(LoginRequiredMixin, View):
+    permissions_required = perms.event_view_perms
+
+    def get(self, request, pk):
+        event = get_object_or_404(Event, pk=pk)
+        return render(request, 'event/event_entries.html', {
+            'event': event,
+        })
+
+
 class EventBills(View):
 
     def get(self, request, pk, key):

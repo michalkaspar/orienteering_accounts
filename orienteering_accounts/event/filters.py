@@ -12,6 +12,12 @@ class EventFilter(django_filters.FilterSet):
     handled = django_filters.BooleanFilter(field_name='handled', label=_('Zpracované?'))
     leader = django_filters.BooleanFilter(field_name='leader', method='filter_leader', label=_('Vedoucí?'))
 
+    def __init__(self, data=None, *args, **kwargs):
+        if data is None:
+            data = dict(handled=True)
+
+        super().__init__(data, *args, **kwargs)
+
     def filter_leader(self, qs, fname, value):
         lookup = '__'.join([fname, 'isnull'])
         return qs.filter(**{lookup: not value})
