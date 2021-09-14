@@ -103,6 +103,7 @@ class Event(models.Model):
             oris_id=event.oris_id,
             defaults=event.dict()
         )
+        instance.refresh_from_db()
         return instance
 
     @classmethod
