@@ -85,7 +85,12 @@ class Event(models.Model):
     def import_from_oris(cls):
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO]:
             for event in ORISClient.get_events(sport=sport):
-                cls.upsert_from_oris(event)
+                instance = cls.upsert_from_oris(event)
+                if instance.date and instance.date >= timezone.now():
+                    instance.update_entries()
+                    if not instance.handled and instance.entries.exists():
+                        instance.handled = True
+                        instance.save(update_fields=['handled'])
 
     @classmethod
     def refresh_from_oris(cls):
@@ -94,10 +99,11 @@ class Event(models.Model):
 
     @classmethod
     def upsert_from_oris(cls, event):
-        cls.objects.update_or_create(
+        instance, _ = cls.objects.update_or_create(
             oris_id=event.oris_id,
             defaults=event.dict()
         )
+        return instance
 
     @classmethod
     def to_refresh(cls):
@@ -153,7 +159,7 @@ class Event(models.Model):
         )
 
         self.processing_state = Event.ProcessingType.PAYMENT_INFO_EMAIL_SENT
-        self.save(update_fields=('processing_state',))
+        self.save(update_fields=['processing_state'])
 
     def send_leader_debts_email(self):
 
@@ -174,7 +180,7 @@ class Event(models.Model):
         )
 
         self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
-        self.save(update_fields=('processing_state',))
+        self.save(update_fields=['processing_state'])
 
     def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:
         for _, category_dict in self.categories_data.items():

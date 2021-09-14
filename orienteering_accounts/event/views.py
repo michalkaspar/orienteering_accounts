@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 class EventList(LoginRequiredMixin, FilterView):
     permissions_required = perms.event_view_perms
     template_name = 'event/list.html'
-    queryset = Event.objects.all()
+    queryset = Event.objects.order_by('-date')
     filterset_class = EventFilter
 
 
@@ -93,8 +93,10 @@ class EventBills(View):
 
         if formset.is_valid():
             formset.save()
-            event.bills_solved = True
-            event.save(update_fields=['bills_solved'])
+            event.bills_solved = True  # TODO deprecated
+            event.processing_state = Event.ProcessingType.BILLS_SOLVED
+            event.save(update_fields=['processing_state', 'bills_solved'])
+
             return HttpResponseRedirect(reverse('events:bills_success', args=[event.pk, key]))
 
         return render(request, 'event/event_bills.html', {
