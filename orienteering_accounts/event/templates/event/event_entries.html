@@ -18,7 +18,7 @@
         {% for entry in event.entries.all %}
         <tr>
           <td><a href="{% url 'accounts:detail' entry.account.id %}">{{ entry.account }}</a></td>
-          <td>{{ entry.account.email }}</td>
+          <td>{{ entry.account.email|default:"-" }}</td>
           <td>{{ entry.category_name }}</td>
           <td>{{ entry.fee }}</td>
           <td>{{ entry.oris_club_note|default:"-" }}</td>
