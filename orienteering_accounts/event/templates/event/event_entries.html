@@ -8,6 +8,7 @@
       <thead>
         <tr>
           <th scope="col">{% trans "Závodník" %}</th>
+          <th scope="col">{% trans "Email" %}</th>
           <th scope="col">{% trans "Kategorie" %}</th>
           <th scope="col">{% trans "Vklad" %}</th>
           <th scope="col">{% trans "Klubová poznámka" %}</th>
@@ -17,6 +18,7 @@
         {% for entry in event.entries.all %}
         <tr>
           <td><a href="{% url 'accounts:detail' entry.account.id %}">{{ entry.account }}</a></td>
+          <td>{{ entry.account.email }}</td>
           <td>{{ entry.category_name }}</td>
           <td>{{ entry.fee }}</td>
           <td>{{ entry.oris_club_note|default:"-" }}</td>
