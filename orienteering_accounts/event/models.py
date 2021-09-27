@@ -85,7 +85,10 @@ class Event(models.Model):
     def import_from_oris(cls):
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO]:
             for event in ORISClient.get_events(sport=sport):
-                instance = cls.upsert_from_oris(event)
+                try:
+                    instance = cls.objects.get(oris_id=event.oris_id)
+                except cls.DoesNotExist:
+                    instance = cls.upsert_from_oris(event)
                 if instance.date and instance.date >= timezone.now().date():
                     instance.update_entries()
                     if not instance.handled and instance.entries.exists():
