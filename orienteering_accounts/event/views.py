@@ -98,7 +98,7 @@ class EventBills(View):
             event.bills_solved = True  # TODO deprecated
             event.processing_state = Event.ProcessingType.BILLS_SOLVED
             event.bills_solved_at = timezone.now()
-            event.save(update_fields=['processing_state', 'bills_solved'])
+            event.save(update_fields=['processing_state', 'bills_solved', 'bills_solved_at'])
 
             return HttpResponseRedirect(reverse('events:bills_success', args=[event.pk, key]))
 
