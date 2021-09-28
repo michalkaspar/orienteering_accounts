@@ -36,15 +36,19 @@ class EntryBillForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.is_bound:
-            self.initial['debt'] = self.instance.debt_init
+            if self.instance.debt:
+                self.initial['debt'] = self.instance.debt
+            else:
+                self.initial['debt'] = self.instance.debt_init
 
     def save(self, *args, **kwargs):
+        is_update = bool(self.instance.debt)
         entry = super().save(*args, **kwargs)
-        if entry.debt > Decimal(0):
-            entry.transactions.create(
+        if is_update or entry.debt > Decimal(0):
+            entry.transactions.update_or_create(
                 purpose=Transaction.TransactionPurpose.ENTRY,
                 account=entry.account,
-                amount=-entry.debt
+                defaults=dict(amount=-entry.debt)
             )
         return entry
 

@@ -1,7 +1,9 @@
 import uuid
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView
 from django_filters.views import FilterView
@@ -74,7 +76,7 @@ class EventBills(View):
         if event.leader.pk != leader.pk:
             raise Http404()
 
-        if event.bills_solved:
+        if event.bills_solved_at and event.bills_solved_at < timezone.now() - timedelta(days=14):
             raise Http404()
 
         entries_qs = event.entries.order_by('account__registration_number')
@@ -95,6 +97,7 @@ class EventBills(View):
             formset.save()
             event.bills_solved = True  # TODO deprecated
             event.processing_state = Event.ProcessingType.BILLS_SOLVED
+            event.bills_solved_at = timezone.now()
             event.save(update_fields=['processing_state', 'bills_solved'])
 
             return HttpResponseRedirect(reverse('events:bills_success', args=[event.pk, key]))

@@ -63,6 +63,7 @@ class Event(models.Model):
     handled = models.BooleanField(default=False)
     leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     processing_state = models.CharField(max_length=50, choices=ProcessingType.choices, default=ProcessingType.UNPROCESSED)
+    bills_solved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ("date",)
