@@ -73,7 +73,7 @@ class Event(BaseModel):
     entry_date_1: typing.Optional[str] = Field(alias='EntryDate1')
     entry_date_2: typing.Optional[str] = Field(alias='EntryDate2')
     entry_date_3: typing.Optional[str] = Field(alias='EntryDate3')
-    entry_bank_account: typing.Optional[str] = Field(alias='EntryBankAccount')
+    entry_bank_account: typing.Optional[str] = Field(alias='EntryBankAccount', default='')
     links: typing.Any = Field(alias='Links', default={})
     additional_services: typing.Any = Field(alias='Services', default={})
 
