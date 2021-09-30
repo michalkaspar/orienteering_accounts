@@ -3,6 +3,7 @@ from decimal import Decimal
 from django import forms
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 
 from orienteering_accounts.account.models import Account, Transaction
@@ -31,7 +32,7 @@ class EntryBillForm(forms.ModelForm):
 
     class Meta:
         models = Entry
-        fields = ('debt',)
+        fields = ('debt', 'other_debt', 'debt_note')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,16 +42,46 @@ class EntryBillForm(forms.ModelForm):
             else:
                 self.initial['debt'] = self.instance.debt_init
 
+            if not self.instance.other_debt:
+                self.initial['other_debt'] = Decimal(0)
+
+    def clean_debt_note(self):
+        other_debt = self.cleaned_data['other_debt']
+        debt_note = self.cleaned_data['debt_note']
+        if other_debt and not debt_note:
+            raise ValidationError("Je nutné vyplnit poznámku, pokud jsou vyplněny další náklady.")
+
+        return debt_note
+
     def save(self, *args, **kwargs):
         is_update = bool(self.instance.debt)
+        has_other_debt = bool(self.instance.other_debt)
         entry = super().save(*args, **kwargs)
         if is_update or entry.debt > Decimal(0):
             entry.transactions.update_or_create(
                 purpose=Transaction.TransactionPurpose.ENTRY,
                 account=entry.account,
-                defaults=dict(amount=-entry.debt)
+                defaults=dict(
+                    amount=-entry.debt
+                )
             )
+        if entry.other_debt and entry.other_debt > Decimal(0):
+            entry.transactions.update_or_create(
+                purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                account=entry.account,
+                defaults=dict(
+                    amount=-entry.other_debt,
+                    note=entry.debt_note
+                )
+            )
+        else:
+            # Case when other debt is deleted
+            entry.transactions.filter(
+                purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                account=entry.account
+            ).delete()
+
         return entry
 
 
-EventEntryBillFormSet = modelformset_factory(Entry, fields=['debt'], form=EntryBillForm, extra=0)
+EventEntryBillFormSet = modelformset_factory(Entry, fields=['debt', 'other_debt', 'debt_note'], form=EntryBillForm, extra=0)

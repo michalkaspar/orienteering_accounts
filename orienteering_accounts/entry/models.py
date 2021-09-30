@@ -23,6 +23,8 @@ class Entry(models.Model):
     rent_si = models.BooleanField(default=False)
     additional_services = models.JSONField(default={})
     debt = models.DecimalField(decimal_places=2, max_digits=9, null=True, validators=(MinValueValidator(0),))
+    other_debt = models.DecimalField(decimal_places=2, max_digits=9, null=True, validators=(MinValueValidator(0),))
+    debt_note = models.CharField(max_length=255, null=True, blank=True)
     oris_club_note = models.TextField(blank=True, null=True)
 
     def __str__(self):

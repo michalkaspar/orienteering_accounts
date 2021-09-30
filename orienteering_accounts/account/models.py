@@ -226,6 +226,7 @@ class Transaction(BaseModel):
         OTHER = 'JINÉ', _('Jiné')
         DEBTS = 'DLUHY', _('Dluhy')
         ENTRY = 'ENTRY', _('Účast na závodech')
+        ENTRY_OTHER = 'ENTRY_OTHER', _('Další náklady na závodech')
 
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='transactions')
     period = models.ForeignKey('account.PaymentPeriod', null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Období'))
@@ -242,4 +243,4 @@ class Transaction(BaseModel):
 
     @property
     def is_event(self):
-        return self.purpose == self.TransactionPurpose.ENTRY
+        return self.purpose in [self.TransactionPurpose.ENTRY, self.TransactionPurpose.ENTRY_OTHER]

@@ -20,6 +20,8 @@
                     <th>{{ additional_service.NameCZ }}</th>
                 {% endfor %}
                 <th>{% trans "Dluh" %}</th>
+                <th>{% trans "Další náklady" %}</th>
+                <th>{% trans "Poznámka" %}</th>
             </tr>
         </thead>
         {% for form in formset %}
@@ -35,6 +37,8 @@
                         <td>{% entry_additional_service_value entry additional_service %}</td>
                     {% endfor %}
                     <td>{% form_field form.debt label=False %}</td>
+                    <td>{% form_field form.other_debt label=False %}</td>
+                    <td>{% form_field form.debt_note label=False %}</td>
                 </tr>
             {% endwith %}
         {% endfor %}
