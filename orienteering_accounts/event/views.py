@@ -68,6 +68,21 @@ class EventEntries(LoginRequiredMixin, View):
         })
 
 
+class EventEntriesPreview(View):
+    permissions_required = perms.event_view_perms
+
+    def get(self, request, pk, key):
+        leader = get_object_or_404(Account, leader_key=key)
+        event = get_object_or_404(Event, pk=pk)
+
+        if event.leader.pk != leader.pk:
+            raise Http404()
+
+        return render(request, 'event/event_entries_preview.html', {
+            'event': event,
+        })
+
+
 class EventBills(View):
 
     def get(self, request, pk, key):

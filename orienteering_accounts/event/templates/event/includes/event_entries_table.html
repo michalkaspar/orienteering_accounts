@@ -1,0 +1,24 @@
+{% load i18n %}
+
+<table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Závodník" %}</th>
+          <th scope="col">{% trans "Email" %}</th>
+          <th scope="col">{% trans "Kategorie" %}</th>
+          <th scope="col">{% trans "Vklad" %}</th>
+          <th scope="col">{% trans "Klubová poznámka" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in event.entries.all %}
+        <tr>
+          <td>{% if preview %}{{ entry.account }}{% else %}<a href="{% url 'accounts:detail' entry.account.id %}">{{ entry.account }}</a>{% endif %}</td>
+          <td>{{ entry.account.email|default:"-" }}</td>
+          <td>{{ entry.category_name }}</td>
+          <td>{{ entry.fee }}</td>
+          <td>{{ entry.oris_club_note|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+</table>
