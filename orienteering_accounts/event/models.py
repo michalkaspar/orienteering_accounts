@@ -187,6 +187,27 @@ class Event(models.Model):
         self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
         self.save(update_fields=['processing_state'])
 
+    def send_leader_entries_email(self):
+
+        if not self.entries.exists():
+            return
+
+        context = {
+            'event': self,
+            'entries_url': f'http://{settings.PROJECT_DOMAIN}{reverse("events:entries_preview", args=[self.pk, self.leader.leader_key])}'
+        }
+
+        html_content = render_to_string('emails/event_entries.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.leader.email],
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - přihlášky',
+            html_content=html_content
+        )
+
+        self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
+        self.save(update_fields=['processing_state'])
+
     def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:
         for _, category_dict in self.categories_data.items():
             if category_dict.get('Name') == category_name:
