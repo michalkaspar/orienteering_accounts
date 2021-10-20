@@ -1,0 +1,31 @@
+{% load i18n static transaction core  %}
+<!doctype html>
+<html lang="cs-cs">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>{% block title %} | {% trans 'SKOB Zlín - správa účtů' %}{% endblock title %}</title>
+        <meta name="description" content="Dashboard UI Kit">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    </head>
+    <body>
+    <div class="container" style="font-size: 16px" >
+        <div class="row">
+            <div class="col">
+                <p>{% trans "Příspěvky zaplaceny" %}: {% if account.club_membership_paid %}<span style="color: green">{% trans "ANO" %}</span>{% else %}<span style="color: red">{% trans "NE" %}</span>{% endif %}</>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>{% trans "Dluhy zaplaceny" %}: {% if account.debts_paid %}<span style="color: green">{% trans "ANO" %}</span>{% else %}<span style="color: red">{% trans "NE" %}</span>{% endif %}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <a href="{% url "accounts:transactions" account.key %}">{% trans "Moje konto" %}</a>
+            </div>
+        </div>
+    </div>
+    </body>
+</html>

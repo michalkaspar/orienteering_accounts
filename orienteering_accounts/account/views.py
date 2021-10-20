@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views import View
@@ -196,8 +196,8 @@ class TransactionEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
         return reverse('accounts:detail', args=[self.get_form().instance.account.pk])
 
 
-class AccountTransactionsView(TemplateView):
-    template_name = 'account/transactions.html'
+class AccountTransactionsEmbeddedView(TemplateView):
+    template_name = 'account/embedded.html'
 
     def get(self, request, *args, **kwargs):
         token = request.GET.get('auth')
@@ -215,6 +215,22 @@ class AccountTransactionsView(TemplateView):
 
         self.account = get_object_or_404(Account, registration_number=payload['registration_number'])
 
+        return super().get(request, *args, **kwargs)
+
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data.update(
+            account=self.account
+        )
+        return context_data
+
+
+class AccountTransactionsView(TemplateView):
+    template_name = 'account/transactions.html'
+
+    def get(self, request, *args, **kwargs):
+        self.account = get_object_or_404(Account, key=kwargs['key'])
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

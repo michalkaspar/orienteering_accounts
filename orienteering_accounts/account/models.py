@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
 
@@ -107,6 +108,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         on_delete=models.PROTECT,
         verbose_name=_('Role')
     )
+
+    key = models.UUIDField(default=uuid.uuid4)
 
     ifperm = LazyPermission()
     objects = BaseUserManager()

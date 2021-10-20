@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from orienteering_accounts.account.views import (
     AccountListView, AccountExportView, AccountDetailView, AccountEditView, TransactionCreate, RoleListView,
-    RoleAddView, RoleEditView, AccountTransactionsView, PaymentPeriodEditView, PaymentPeriodListView,
+    RoleAddView, RoleEditView, AccountTransactionsEmbeddedView, AccountTransactionsView, PaymentPeriodEditView, PaymentPeriodListView,
     PaymentPeriodCreateView, TransactionEdit
 )
 
@@ -31,5 +31,6 @@ urlpatterns = [
     path('<int:pk>/edit/', AccountEditView.as_view(), name='edit'),
     path('<int:pk>/transaction/add/', TransactionCreate.as_view(), name='transaction_add'),
     path('transaction/<int:pk>/edit/', TransactionEdit.as_view(), name='transaction_edit'),
-    path('transactions/', AccountTransactionsView.as_view(), name='transactions')
+    path('transactions/', AccountTransactionsEmbeddedView.as_view(), name='embedded'),
+    path('transactions/<uuid:key>/', AccountTransactionsView.as_view(), name='transactions'),
 ]
