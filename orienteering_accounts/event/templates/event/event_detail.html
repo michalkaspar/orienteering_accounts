@@ -10,6 +10,9 @@
             </div>
             <div class="col-3" style="text-align: right">
                 <a class="btn btn-secondary" href="{% url "events:entries" event.pk %}">{% trans "Přihlášky" %}</a>
+                {% if event.leader %}
+                    <a class="btn btn-secondary" href="{% url "events:bills" event.pk event.leader.leader_key %}">{% trans "Dluhy" %}</a>
+                {% endif %}
             </div>
         </div>
         <div class="row">
