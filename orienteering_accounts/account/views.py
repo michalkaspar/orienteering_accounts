@@ -213,7 +213,10 @@ class AccountTransactionsEmbeddedView(TemplateView):
         if 'registration_number' not in payload:
             return HttpResponse('Token is invalid', status=401)
 
-        self.account = get_object_or_404(Account, registration_number=payload['registration_number'])
+        registration_number = payload['registration_number']
+        registration_number = registration_number.replace('MTBOTZL', '')
+
+        self.account = get_object_or_404(Account, registration_number=registration_number)
 
         return super().get(request, *args, **kwargs)
 
