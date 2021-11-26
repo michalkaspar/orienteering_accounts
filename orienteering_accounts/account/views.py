@@ -214,7 +214,7 @@ class AccountTransactionsEmbeddedView(TemplateView):
             return HttpResponse('Token is invalid', status=401)
 
         registration_number = payload['registration_number']
-        registration_number = registration_number.replace('MTBOTZL', '')
+        registration_number = registration_number.replace('MTBO', '')
 
         self.account = get_object_or_404(Account, registration_number=registration_number)
 
