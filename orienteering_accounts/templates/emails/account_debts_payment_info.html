@@ -11,13 +11,13 @@
     <br>
     {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
     <br>
-    {% trans "Částka: " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
+    {% trans "Částka: " %}{{ account.debts_payment_amount }} {% trans "Kč" %}
     <br>
-    {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
+    {% trans "Zpráva pro příjemce: " %}{{ account.debts_payment_message }}
     <br>
     {% trans "QR kód: " %}
     <br>
-    <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
+    <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
     <br>
     {% trans "Děkujeme za platbu." %}
 

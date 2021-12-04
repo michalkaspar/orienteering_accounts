@@ -191,7 +191,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_payment_amount(self):
-        return -self.init_balance
+        return -self.balance
 
     @property
     def club_membership_payment_qr_url(self):
