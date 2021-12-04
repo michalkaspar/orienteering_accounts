@@ -236,7 +236,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         email_utils.send_email(
             recipient_list=[self.email],
-            subject=f'Platba dluhů',
+            subject=f'Platba dluhů - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
 
