@@ -6,7 +6,7 @@
     <br>
     {% trans "Prosíme o platbu dluhů za uplynulý rok za závodníka " %}{{ account.full_name }} {{ account.registration_number }} <b>{% trans "do konce tohoto kalendářního roku." %}</b>
     <br>
-    {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
+    {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
     <br>
     {% trans "V případě nesrovnalostí či dotazů kontaktuj Romana Zbranka, roman.zbranek@gmail.com." %}
     <br>

@@ -228,7 +228,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         context = {
             'account': self,
-            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}'
+            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}',
+            'domain': settings.PROJECT_DOMAIN
         }
 
         html_content = render_to_string('emails/account_debts_payment_info.html', context)
