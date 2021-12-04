@@ -221,6 +221,24 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             html_content=html_content
         )
 
+    def send_debts_payment_info_email(self):
+
+        if self.balance >= 0:
+            return
+
+        context = {
+            'account': self,
+            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}'
+        }
+
+        html_content = render_to_string('emails/account_debts_payment_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.email],
+            subject=f'Platba dluhů',
+            html_content=html_content
+        )
+
 
 class Transaction(BaseModel):
 
