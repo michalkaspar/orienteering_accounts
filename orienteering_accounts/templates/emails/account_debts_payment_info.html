@@ -4,8 +4,11 @@
 {% block body %}
     {% trans "Ahoj" %}<br>
     <br>
-    {% trans "Prosíme o platbu dluhů za uplynulý rok za závodníka " %}{{ account.full_name }} {{ account.registration_number }}
+    {% trans "Prosíme o platbu dluhů za uplynulý rok za závodníka " %}{{ account.full_name }} {{ account.registration_number }} <b>{% trans "do konce tohoto kalendářního roku." %}</b>
     <br>
+    {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
+    <br>
+    {% trans "V případě nesrovnalostí či dotazů kontaktuj Romana Zbranka, roman.zbranek@gmail.com." %}
     <br>
     <b>{% trans "Dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
     <br>
@@ -19,6 +22,10 @@
     <br>
     <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
     <br>
+    <br>
     {% trans "Děkujeme za platbu." %}
+    <br>
+    <br>
+    {% trans "Za SKOB Zlín, Michal Kašpar, administrátor IS." %}
 
 {% endblock %}
