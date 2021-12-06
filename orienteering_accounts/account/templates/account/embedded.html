@@ -13,16 +13,6 @@
     <div class="container" style="font-size: 16px" >
         <div class="row">
             <div class="col">
-                <p>{% trans "Příspěvky zaplaceny" %}: {% if account.club_membership_paid %}<span style="color: green">{% trans "ANO" %}</span>{% else %}<span style="color: red">{% trans "NE" %}</span>{% endif %}</>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <p>{% trans "Dluhy zaplaceny" %}: {% if account.debts_paid %}<span style="color: green">{% trans "ANO" %}</span>{% else %}<span style="color: red">{% trans "NE" %}</span>{% endif %}</p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
                 <a target="_parent" href="{% url "accounts:transactions" account.key %}">{% trans "Moje konto" %}</a>
             </div>
         </div>
