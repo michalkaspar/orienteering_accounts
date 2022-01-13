@@ -1,5 +1,7 @@
 import django_filters
 from django import forms
+from django.db.models import Sum, Q, F
+from django.db.models.functions import Coalesce
 
 from orienteering_accounts.account.models import Account, Transaction
 from django.utils.translation import ugettext_lazy as _
@@ -16,33 +18,37 @@ class AccountFilter(django_filters.FilterSet):
         lookup_expr='icontains',
         label=_('Příjmení')
     )
-    club_membership_paid = django_filters.BooleanFilter(
-        field_name='club_membership_paid',
-        method='filter_club_membership_paid',
-        widget=forms.CheckboxInput,
-        label=_('Zaplatil příspěvky')
+    first_name = django_filters.CharFilter(
+        field_name='first_name',
+        lookup_expr='icontains',
+        label=_('Křestní jméno')
     )
-    debts_paid = django_filters.BooleanFilter(
-        field_name='debts_paid',
-        method='filter_debts_paid',
-        widget=forms.CheckboxInput,
-        label=_('Zaplatil dluhy')
+    email = django_filters.CharFilter(
+        field_name='email',
+        lookup_expr='icontains',
+        label=_('Email')
     )
 
     class Meta:
         model = Account
-        fields = ['registration_number', 'last_name', 'debts_paid', 'club_membership_paid']
+        fields = ['registration_number', 'first_name', 'last_name', 'email']
 
     @property
     def qs(self):
-        return super().qs.distinct().order_by('last_name')
+        queryset = super().qs.distinct()
+        if 'o' in self.request.GET:
+            ordering = self.request.GET['o']
 
-    def filter_club_membership_paid(self, queryset, name, value):
-        if value:
-            return queryset.filter(transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP)
-        return queryset
+            if 'balance' in ordering:
+                queryset = queryset.annotate(
+                    balance_=F('init_balance') + Coalesce(Sum(
+                        'transactions__amount',
+                        filter=~Q(transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP)
+                    ), 0)
+                ).order_by(f'{"-" if "-" in ordering else ""}balance_')
+            else:
+                queryset = queryset.order_by(ordering)
+        else:
+            queryset = queryset.order_by('last_name')
 
-    def filter_debts_paid(self, queryset, name, value):
-        if value:
-            return queryset.filter(transactions__purpose=Transaction.TransactionPurpose.DEBTS)
         return queryset

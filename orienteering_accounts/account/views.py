@@ -71,6 +71,17 @@ class AccountListView(LoginRequiredMixin, PermissionsRequiredMixin, FilterView):
     filterset_class = AccountFilter
     permissions_required = perms.account_view_perms
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context_data = super().get_context_data(object_list=object_list, **kwargs)
+        if 'o' in self.request.GET:
+            ordering = self.request.GET['o']
+            if ordering.startswith('-'):
+                context_data.update(descendant=False)
+            else:
+                context_data.update(descendant=True)
+            context_data.update(ordering=ordering)
+        return context_data
+
 
 class AccountExportView(LoginRequiredMixin, PermissionsRequiredMixin, View):
     permissions_required = perms.account_view_perms
