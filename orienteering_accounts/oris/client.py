@@ -75,8 +75,9 @@ class ORISClient:
 
         events = []
 
-        for reg_id, event_dict in response_data.items():
-            events.append(Event(**event_dict))
+        if response_data:
+            for reg_id, event_dict in response_data.items():
+                events.append(Event(**event_dict))
 
         return events
 
