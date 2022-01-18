@@ -85,7 +85,7 @@ class Event(models.Model):
     @classmethod
     def import_from_oris(cls):
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO]:
-            for event in ORISClient.get_events(sport=sport):
+            for event in ORISClient.get_events(sport=sport, include_unofficial_events=1):
                 try:
                     instance = cls.objects.get(oris_id=event.oris_id)
                 except cls.DoesNotExist:
