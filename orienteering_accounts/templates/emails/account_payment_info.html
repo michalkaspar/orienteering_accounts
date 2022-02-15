@@ -7,7 +7,9 @@
     {% trans "Prosíme o platbu oddílových příspěvků pro nadcházející sezonu za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
     <br>
-    {% trans "Termín pro uhrazení je do " %}<b>{% trans "28.2.2022." %}</b>
+    {% trans "Příspěvky pro letošní rok jsou stejné jako v letech minulých (výjimka rok 2021) tzn. 3000,- Kč dítě, 2000,- dospělý. Termín na úhradu byl stanoven do " %}<b>28.2.2022</b>{% trans " z důvodů registrace závodníků na novou sezónu. Slevy na každého dalšího člena rodiny jsou stále v platnosti." %}
+    <br>
+    {% trans "Změna oproti letům minulým je, že už nebudou přijímány žádné platby v hotovosti, ale vše musí být uhrazeno na účet klubu. Pokud bude někdo chtít žádat potvrzení kvůli příspěvku od VZP, prosím kontaktujte Míšu Hančíkovou na adrese m.hancikova99@gmail.com. Po připsání částky na náš účet Vám bude vystaveno a odesláno emailem potvrzení s datem transakce. Z těchto důvodů, pokud budete žádat pro více členů rodiny, proveďte platby každou zvlášť." %}
     <br>
     <br>
     <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
@@ -25,10 +27,11 @@
     <br>
     {% if not account.debts_paid %}
         <br>
-        {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy" %}
+        {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy." %}
         <br>
         <br>
         <b>{% trans "Své dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
+        <br>
         <br>
         {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
         <br>
@@ -43,7 +46,7 @@
     {% endif %}
     <br>
     <br>
-    {% trans "Pokud Tvou platbu nezaevidujeme do 28. 2. 2022, nebude Ti umožněno se v ORISu přihlašovat na závody." %}
+    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>28. 2. 2022</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}
