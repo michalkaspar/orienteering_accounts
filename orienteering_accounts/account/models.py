@@ -214,7 +214,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         email_utils.send_email(
             recipient_list=[self.email],
-            subject=f'Platba oddílových příspěvků',
+            subject=f'Platba oddílových příspěvků - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
 
