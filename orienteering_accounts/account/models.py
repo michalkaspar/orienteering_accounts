@@ -156,7 +156,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_paid(self):
-        return self.balance_without_entries >= Decimal(0)
+        return self.balance >= Decimal(0)
 
     def add_entry_rights_in_oris(self):
         ORISClient.set_club_entry_rights(self.oris_club_member_id, can_entry_self=True)
@@ -187,7 +187,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def club_membership_payment_amount(self):
-        return Decimal('1500.00') if self.is_adult else Decimal('2000.00')
+        return Decimal('1500.00').quantize(Decimal(1)) if self.is_adult else Decimal('2000.00').quantize(Decimal(1))
 
     @property
     def debts_payment_amount(self):
