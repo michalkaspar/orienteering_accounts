@@ -2,32 +2,27 @@
 {% load i18n event %}
 
 {% block body %}
-    {% trans "Ahoj" %}<br>
+    {% trans "Ahoj," %}<br>
     <br>
-    {% if not account.club_membership_paid %}
-        {% trans "V systému evidujeme, že ty, závodník " %}{{ account.full_name }} {{ account.registration_number }}, {% trans "stále nemáš zaplacené oddílové příspěvky." %}
-        <br>
-        <br>
-        <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
-        <br>
-        {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
-        <br>
-        {% trans "Částka: " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
-        <br>
-        {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
-        <br>
-        {% trans "QR kód: " %}
-        <br>
-        <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
-        <br>
-    {% endif %}
+    {% trans "Prosíme o platbu oddílových příspěvků pro nadcházející sezonu za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
+    <br>
+    <br>
+    {% trans "Termín pro uhrazení je do " %}<b>{% trans "28.2.2022." %}</b>
+    <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
+    <br>
+    {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
+    <br>
+    {% trans "Částka: " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
+    <br>
+    {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
+    <br>
+    {% trans "QR kód: " %}
+    <br>
+    <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
+    <br>
     {% if not account.debts_paid %}
-        {% if account.club_membership_paid %}
-            {% trans "V systému evidujeme, že ty, závodník " %}{{ account.full_name }} {{ account.registration_number }}, {% trans "stále nemáš zaplacené dluhy." %}
-        {% else %}
-            <br>
-            {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy" %}
-        {% endif %}
+        <br>
+        {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy" %}
         <br>
         <br>
         <b>{% trans "Své dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
@@ -45,7 +40,7 @@
     {% endif %}
     <br>
     <br>
-    {% trans "Pokud Tvou platbu nezaevidujeme do 31. 5. 2021, nebude Ti umožněno se v ORISu přihlašovat na závody." %}
+    {% trans "Pokud Tvou platbu nezaevidujeme do 28. 2. 2022, nebude Ti umožněno se v ORISu přihlašovat na závody." %}
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}

@@ -205,9 +205,6 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     def send_payment_info_email(self):
 
-        if self.debts_paid and self.club_membership_paid:
-            return
-
         context = {
             'account': self,
             'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}'
