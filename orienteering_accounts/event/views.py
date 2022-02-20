@@ -110,7 +110,7 @@ class EventBills(View):
 
         if formset.is_valid():
             formset.save()
-            event.bills_solved = True  # TODO deprecated
+            event.bills_solved = True
             event.processing_state = Event.ProcessingType.BILLS_SOLVED
             event.bills_solved_at = timezone.now()
             event.save(update_fields=['processing_state', 'bills_solved', 'bills_solved_at'])

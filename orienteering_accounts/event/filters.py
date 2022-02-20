@@ -11,6 +11,7 @@ class EventFilter(django_filters.FilterSet):
     region = django_filters.CharFilter(field_name='region', lookup_expr='icontains', label=_('Oblast'))
     handled = django_filters.BooleanFilter(field_name='handled', label=_('Zpracované?'))
     leader = django_filters.BooleanFilter(field_name='leader', method='filter_leader', label=_('Vedoucí?'))
+    bills_solved = django_filters.BooleanFilter(field_name='bills_solved', label=_('Dluhy vyplněny?'))
 
     def __init__(self, data=None, *args, **kwargs):
         if data is None:
@@ -24,5 +25,4 @@ class EventFilter(django_filters.FilterSet):
 
     class Meta:
         model = Event
-        # fields = ['date', 'region', 'handled']
-        fields = ['date_from', 'date_to', 'region', 'handled', 'leader']
+        fields = ['date_from', 'date_to', 'region', 'handled', 'leader', 'bills_solved']
