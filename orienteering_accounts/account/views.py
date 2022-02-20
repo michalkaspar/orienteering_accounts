@@ -21,7 +21,7 @@ from requests import HTTPError
 
 from orienteering_accounts.account.filters import AccountFilter
 from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm, \
-    TransactionEditForm
+    TransactionEditForm, AccountPasswordChangeEditForm, AccountPasswordSetEditForm
 from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod
 from orienteering_accounts.account import perms
 from orienteering_accounts.account.forms import RoleForm
@@ -133,10 +133,22 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     model = Account
     template_name = 'account/edit.html'
     permissions_required = perms.account_edit_perms
-    form_class = AccountEditForm
 
     def get_success_url(self):
         return reverse('accounts:detail', args=[self.object.pk])
+
+    def get_form_class(self):
+        if self.request.user.pk == self.object.pk:
+            return AccountPasswordChangeEditForm
+        if self.request.user.is_superuser:
+            return AccountPasswordSetEditForm
+        return AccountEditForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.user.pk == self.object.pk or self.request.user.is_superuser:
+            kwargs.update(user=self.object)
+        return kwargs
 
 
 class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):

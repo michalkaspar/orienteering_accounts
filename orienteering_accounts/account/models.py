@@ -237,6 +237,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             html_content=html_content
         )
 
+    def get_absolute_url(self):
+        return reverse('accounts:detail', args=[self.pk])
+
 
 class Transaction(BaseModel):
 

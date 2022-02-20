@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, SetPasswordForm
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.forms import ModelForm
@@ -70,7 +70,15 @@ class AccountEditForm(ModelForm):
 
     class Meta:
         model = Account
-        fields = ['role']
+        fields = ['role', 'email']
+
+
+class AccountPasswordChangeEditForm(PasswordChangeForm, AccountEditForm):
+    pass
+
+
+class AccountPasswordSetEditForm(SetPasswordForm, AccountEditForm):
+    pass
 
 
 class RoleForm(ModelForm):
