@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class EventFilter(django_filters.FilterSet):
-    # date = django_filters.DateFromToRangeFilter(field_name='date', label=_('Datum'))
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains', label=_('Název'))
     date_from = django_filters.DateFilter(field_name='date', lookup_expr='gte', label=_('Datum od'))
     date_to = django_filters.DateFilter(field_name='date', lookup_expr='lte', label=_('Datum do'))
     region = django_filters.CharFilter(field_name='region', lookup_expr='icontains', label=_('Oblast'))
