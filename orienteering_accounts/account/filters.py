@@ -1,6 +1,6 @@
 import django_filters
 from django import forms
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, Max
 from django.db.models.functions import Coalesce
 
 from orienteering_accounts.account.models import Account, Transaction
@@ -36,6 +36,14 @@ class AccountFilter(django_filters.FilterSet):
     @property
     def qs(self):
         queryset = super().qs.distinct()
+
+        queryset = queryset.annotate(
+            membership_paid_to=Max(
+                'transactions__period__date_to', filter=Q(
+                    transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+                )
+            )
+        )
         if 'o' in self.request.GET:
             ordering = self.request.GET['o']
 

@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load i18n forms transaction %}
+{% extends "base.html" %}{% load i18n forms transaction core %}
 
 {% block main_content %}
 
@@ -39,6 +39,7 @@
             <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}first_name">{% trans "Křestní jméno" %}</a></th>
             <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}email">{% trans "Email" %}</a></th>
             <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}balance">{% trans "Zůstatek" %}</a></th>
+            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}membership_paid_to">{% trans "Příspěvky do" %}</a></th>
         </tr>
       </thead>
       <tbody>
@@ -49,6 +50,7 @@
             <td>{{ account.first_name }}</td>
             <td>{{ account.email|default:"-" }}</td>
             <td>{% transaction_amount account.balance %}</td>
+            <td>{{ account.membership_paid_to|format_date|default:"-" }}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -88,8 +88,6 @@ class EventBills(View):
     def get(self, request, pk, key):
         get_object_or_404(Account, leader_key=key)
         event = get_object_or_404(Event, pk=pk)
-        #if event.leader.pk != leader.pk:
-        #    raise Http404()
 
         if event.bills_solved_at and event.bills_solved_at < timezone.now() - timedelta(days=14):
             raise Http404()
