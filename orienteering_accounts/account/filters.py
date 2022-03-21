@@ -41,7 +41,7 @@ class AccountFilter(django_filters.FilterSet):
         if data is None:
             data = dict(is_active=True)
 
-        super().__init__(data, *args, **kwargs)
+        super().__init__(data, queryset=Account.all_objects.all(), *args, **kwargs)
 
     @property
     def qs(self):
