@@ -74,6 +74,19 @@ class PaymentPeriod(BaseModel):
         return f'{format_date(self.date_from)} - {format_date(self.date_to)}'
 
 
+class AccountManager(BaseUserManager):
+
+    def __init__(self, is_active=True, *args, **kwargs):
+        self.is_active = is_active
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        if self.is_active:
+            return qs.filter(is_active=True)
+        return qs
+
+
 class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     USERNAME_FIELD = EMAIL_FIELD = 'registration_number'
@@ -93,6 +106,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     init_balance = models.DecimalField(decimal_places=2, max_digits=9, default=Decimal(0))
     leader_key = models.UUIDField(null=True)
     email = models.EmailField(null=True)
+    is_active = models.BooleanField(default=True)
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
@@ -112,7 +126,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     key = models.UUIDField(default=uuid.uuid4)
 
     ifperm = LazyPermission()
-    objects = BaseUserManager()
+    objects = AccountManager()
+    all_objects = AccountManager(is_active=False)
 
     def __str__(self):
         return self.full_name
