@@ -28,10 +28,20 @@ class AccountFilter(django_filters.FilterSet):
         lookup_expr='icontains',
         label=_('Email')
     )
+    is_active = django_filters.BooleanFilter(
+        field_name='is_active',
+        label=_('Aktivní')
+    )
 
     class Meta:
         model = Account
-        fields = ['registration_number', 'first_name', 'last_name', 'email']
+        fields = ['registration_number', 'first_name', 'last_name', 'email', 'is_active']
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is None:
+            data = dict(is_active=True)
+
+        super().__init__(data, *args, **kwargs)
 
     @property
     def qs(self):
