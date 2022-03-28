@@ -166,10 +166,20 @@ class Event(models.Model):
         self.processing_state = Event.ProcessingType.PAYMENT_INFO_EMAIL_SENT
         self.save(update_fields=['processing_state'])
 
+    @classmethod
+    def send_leader_debts_emails(cls):
+        for event in cls.objects.filter(
+            processing_state=cls.ProcessingType.LEADER_EMAIL_SENT,
+            leader__isnull=False,
+            handled=True,
+            date__lt=timezone.now().date()
+        ):
+            logger.info(f'Sending debts email to leader for event {event}.')
+            event.send_leader_debts_email()
+
     def send_leader_debts_email(self):
 
-        if self.bills_solved:
-            return
+        assert self.processing_state == Event.ProcessingType.LEADER_EMAIL_SENT and self.leader
 
         context = {
             'event': self,
@@ -187,10 +197,20 @@ class Event(models.Model):
         self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
         self.save(update_fields=['processing_state'])
 
+    @classmethod
+    def send_leader_entries_emails(cls):
+        for event in cls.objects.filter(
+            processing_state=cls.ProcessingType.PAYMENT_INFO_EMAIL_SENT,
+            leader__isnull=False,
+            handled=True,
+            entry_date_1__lte=timezone.now()
+        ):
+            logger.info(f'Sending entries email to leader for event {event}.')
+            event.send_leader_entries_email()
+
     def send_leader_entries_email(self):
 
-        if not self.entries.exists():
-            return
+        assert self.entries.exists() and self.leader
 
         context = {
             'event': self,
@@ -205,7 +225,7 @@ class Event(models.Model):
             html_content=html_content
         )
 
-        self.processing_state = Event.ProcessingType.BILLS_EMAIL_SENT
+        self.processing_state = Event.ProcessingType.LEADER_EMAIL_SENT
         self.save(update_fields=['processing_state'])
 
     def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:

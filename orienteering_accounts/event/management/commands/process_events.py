@@ -29,4 +29,14 @@ class Command(BaseCommand):
 
         logger.info('Finished sending payment info emails')
 
-        #  TODO leader email, debts email
+        logger.info('Started sending entries leader info emails')
+
+        Event.send_leader_entries_emails()
+
+        logger.info('Finished sending entries leader info emails')
+
+        logger.info('Started sending debts leader info emails')
+
+        Event.send_leader_debts_emails()
+
+        logger.info('Finished sending debts leader info emails')

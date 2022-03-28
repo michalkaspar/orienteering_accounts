@@ -3,12 +3,18 @@ from decimal import Decimal
 
 import requests
 import typing
+import logging
 
 from django.conf import settings
 from datetime import date
 
+from pydantic import ValidationError
+
 from orienteering_accounts.oris import choices as oris_choices
 from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance
+
+
+logger = logging.getLogger(__name__)
 
 
 class ORISClient:
@@ -77,8 +83,10 @@ class ORISClient:
 
         if response_data:
             for reg_id, event_dict in response_data.items():
-                events.append(Event(**event_dict))
-
+                try:
+                    events.append(Event(**event_dict))
+                except ValidationError:
+                    logger.error('Invalid ORIS event, skipping', exc_info=True)
         return events
 
     @classmethod

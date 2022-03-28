@@ -244,6 +244,7 @@ LOGGING = {
         'orienteering_accounts': {
             'handlers': ['file_debug', 'file_info', 'file_error', 'mail_admins'],
             'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
