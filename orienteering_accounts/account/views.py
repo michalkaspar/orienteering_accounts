@@ -124,13 +124,13 @@ class AccountExportView(LoginRequiredMixin, PermissionsRequiredMixin, View):
 
 
 class AccountDetailView(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):
-    model = Account
+    queryset = Account.all_objects.all()
     template_name = 'account/detail.html'
     permissions_required = perms.account_view_perms
 
 
 class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
-    model = Account
+    queryset = Account.all_objects.all()
     template_name = 'account/edit.html'
     permissions_required = perms.account_edit_perms
 
