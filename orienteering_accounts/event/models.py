@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from orienteering_accounts.account.models import Account
@@ -16,7 +17,7 @@ from orienteering_accounts.entry.models import Entry
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.oris import choices as oris_choices
-
+from orienteering_accounts.oris.models import Result
 
 logger = logging.getLogger(__name__)
 
@@ -237,3 +238,10 @@ class Event(models.Model):
     @property
     def is_stage(self):
         return True if self.discipline and self.discipline.get('oris_id') == settings.ORIS_STAGE_RACE_ID else False
+
+    @cached_property
+    def results(self) -> typing.Dict[str, Result]:
+        return ORISClient.get_event_results(self.oris_id)
+
+    def get_result_by_registration_number(self, registration_number: str) -> typing.Optional[Result]:
+        return self.results.get(registration_number)

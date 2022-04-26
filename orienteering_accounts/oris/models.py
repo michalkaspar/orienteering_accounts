@@ -3,7 +3,10 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
+from django.utils.functional import cached_property
 from pydantic import BaseModel, Field, validator
+
+from orienteering_accounts.oris.client import ORISClient
 
 
 class Gender(str, Enum):
@@ -100,6 +103,11 @@ class Entry(BaseModel):
         if not v:
             return None
         return v
+
+
+class Result(BaseModel):
+    class_name: str = Field(alias='ClassDesc')
+    registration_number: str = Field(alias='RegNo')
 
 
 class EventBalance(BaseModel):

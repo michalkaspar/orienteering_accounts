@@ -54,7 +54,8 @@ class Entry(models.Model):
     def fee_after_club_discount(self):
         category_entry_fee = self.event.get_category_fee(self.category_name)
 
-        if self.event.is_stage:
+        if self.event.is_stage or not self.event.get_result_by_registration_number(self.account.registration_number):
+            # In case of stage event or runner
             fee = category_entry_fee
         else:
             if self.account.is_adult:
