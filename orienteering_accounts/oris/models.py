@@ -3,10 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from django.utils.functional import cached_property
 from pydantic import BaseModel, Field, validator
-
-from orienteering_accounts.oris.client import ORISClient
 
 
 class Gender(str, Enum):

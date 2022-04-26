@@ -85,7 +85,7 @@ class ORISClient:
                 try:
                     events.append(Event(**event_dict))
                 except ValidationError:
-                    logger.error('Invalid ORIS event, skipping', exc_info=True)
+                    logger.warning('Invalid ORIS event, skipping', exc_info=True)
         return events
 
     @classmethod
