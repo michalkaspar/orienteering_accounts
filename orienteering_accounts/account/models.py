@@ -134,7 +134,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @classmethod
     def upsert_from_oris(cls, registered_user):
-        cls.objects.update_or_create(
+        cls.all_objects.update_or_create(
             registration_number=registered_user.registration_number,
             defaults=registered_user.dict()
         )
