@@ -261,6 +261,8 @@ ANYMAIL = {
     "MAILJET_SECRET_KEY": config("PROJECT_MAILJET_SECRET_KEY", default='')
 }
 
+DEFAULT_FROM_EMAIL = config('PROJECT_DEFAULT_FROM_EMAIL', default='')
+
 # Project
 
 AUTH_USER_MODEL = 'account.Account'
