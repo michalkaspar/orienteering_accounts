@@ -42,8 +42,5 @@ def send_email(recipient_list: list,
     if html_content:
         msg.attach_alternative(html_content, "text/html")
 
-    try:
-        logger.debug('Sending email "{}" to {}'.format(subject, recipient_list))
-        msg.send(fail_silently=False)
-    except:
-        logger.error('Email ("{}") failed to send'.format(subject), exc_info=True, stack_info=True)
+    logger.debug('Sending email "{}" to {}'.format(subject, recipient_list))
+    msg.send()
