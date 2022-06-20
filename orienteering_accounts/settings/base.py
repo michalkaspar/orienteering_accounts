@@ -54,7 +54,8 @@ INSTALLED_APPS = [
     'orienteering_accounts.core',
     'orienteering_accounts.account',
     'orienteering_accounts.event',
-    'orienteering_accounts.entry'
+    'orienteering_accounts.entry',
+    'anymail'
 ]
 
 MIDDLEWARE = [
@@ -253,12 +254,12 @@ LOGGING = {
 # EMAILS #
 ###########
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = config('PROJECT_EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = config('PROJECT_EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = config('PROJECT_DEFAULT_FROM_EMAIL', '')
+EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+
+ANYMAIL = {
+    "MAILJET_API_KEY": config('PROJECT_MAILJET_API_KEY', default=''),
+    "MAILJET_SECRET_KEY": config("PROJECT_MAILJET_SECRET_KEY", default='')
+}
 
 # Project
 
