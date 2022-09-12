@@ -204,8 +204,9 @@ class Event(models.Model):
             processing_state=cls.ProcessingType.PAYMENT_INFO_EMAIL_SENT,
             leader__isnull=False,
             handled=True,
-            entry_date_1__lte=timezone.now()
-        ):
+            entry_date_1__lte=timezone.now(),
+            entries__isnull=False
+        ).distinct():
             logger.info(f'Sending entries email to leader for event {event}.')
             event.send_leader_entries_email()
 

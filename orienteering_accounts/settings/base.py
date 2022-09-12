@@ -38,6 +38,8 @@ ALLOWED_HOSTS = config('PROJECT_ALLOWED_HOSTS', cast=Csv(), default='')
 
 ADMINS = [(email, email) for email in config('PROJECT_ADMINS', default='', cast=Csv())]
 
+SERVER_EMAIL = config('PROJECT_SERVER_EMAIL', default='')
+
 # Application definition
 
 INSTALLED_APPS = [
