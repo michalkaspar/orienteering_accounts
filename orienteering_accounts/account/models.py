@@ -217,6 +217,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200"
 
     @property
+    def rest_club_membership_payment_qr_url(self):
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.rest_club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200"
+
+    @property
     def is_adult(self):
         current_year = datetime.now().year
         born_year = self.born_year + 2000 if self.born_year < current_year - 2000 else self.born_year + 1900
