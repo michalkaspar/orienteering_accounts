@@ -1,0 +1,36 @@
+{% extends "emails/base.html" %}
+{% load i18n event %}
+
+{% block body %}
+    {% trans "Ahoj," %}<br>
+    <br>
+    {% trans "Prosíme o platbu oddílových příspěvků pro zbytek sezony za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
+    <br>
+    <br>
+    {% trans "Změna oproti letům minulým je, že už nebudou přijímány žádné platby v hotovosti, ale vše musí být uhrazeno na účet klubu. Pokud bude někdo chtít žádat potvrzení kvůli příspěvku od VZP, prosím kontaktujte Míšu Hančíkovou na adrese m.hancikova99@gmail.com. Po připsání částky na náš účet Vám bude vystaveno a odesláno emailem potvrzení s datem transakce. Z těchto důvodů, pokud budete žádat pro více členů rodiny, proveďte platby každou zvlášť." %}
+    <br>
+    <br>
+    <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
+    <br>
+    <br>
+    {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
+    <br>
+    {% trans "Částka: " %}{{ account.rest_club_membership_payment_amount }} {% trans "Kč" %}
+    <br>
+    {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
+    <br>
+    {% trans "QR kód: " %}
+    <br>
+    <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
+    <br>
+    <br>
+    <br>
+    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>30. 9. 2022</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
+    <br>
+    <br>
+    {% trans "Děkujeme za platbu." %}
+    <br>
+    <br>
+    {% trans "Za SKOB Zlín, Michal Kašpar, administrátor IS." %}
+
+{% endblock %}

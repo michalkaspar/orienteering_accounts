@@ -205,6 +205,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return Decimal('2000.00').quantize(Decimal(1)) if self.is_adult else Decimal('3000.00').quantize(Decimal(1))
 
     @property
+    def rest_club_membership_payment_amount(self):
+        return Decimal('1000.00').quantize(Decimal(1)) if self.is_adult else Decimal('1500.00').quantize(Decimal(1))
+
+    @property
     def debts_payment_amount(self):
         return -self.balance.quantize(Decimal('1'))
 
@@ -230,6 +234,21 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         email_utils.send_email(
             recipient_list=[self.email],
             subject=f'Platba oddílových příspěvků - {self.full_name } {self.registration_number}',
+            html_content=html_content
+        )
+
+    def send_rest_payment_info_email(self):
+
+        context = {
+            'account': self,
+            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}'
+        }
+
+        html_content = render_to_string('emails/account_rest_payment_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.email],
+            subject=f'Platba oddílových příspěvků druhé pololetí - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
 
