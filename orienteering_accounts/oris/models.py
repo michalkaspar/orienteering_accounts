@@ -90,7 +90,10 @@ class BaseEntry(BaseModel):
     category_name: str = Field(alias='ClassDesc')
     oris_created: datetime = Field(alias='CreatedDateTime')
     oris_updated: typing.Optional[str] = Field(alias='UpdatedDateTime')
-    has_additional_services: bool = False
+
+    @property
+    def has_additional_services(self) -> bool:
+        return False
 
     @property
     def is_valid(self) -> bool:
@@ -106,13 +109,16 @@ class Entry(BaseEntry):
     fee: int = Field(alias='Fee')
     rent_si: typing.Optional[bool] = Field(alias='RentSI')
     oris_club_note: typing.Optional[str] = Field(alias='ClubNote')
-    has_additional_services: bool = True
 
     @validator('oris_updated')
     def never_empty(cls, v: str) -> typing.Optional[str]:
         if not v:
             return None
         return v
+
+    @property
+    def has_additional_services(self) -> bool:
+        return True
 
     @property
     def is_valid(self) -> bool:
