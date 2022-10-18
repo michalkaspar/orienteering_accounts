@@ -138,8 +138,15 @@ class Event(models.Model):
         oris_entries_ids = set()
 
         for entry in ORISClient.get_event_entries(self.oris_id):
-            Entry.upsert_from_oris(entry, self, additional_services.get(entry.oris_user_id, []))
-            oris_entries_ids.add(entry.oris_user_id)
+
+            if entry.has_additional_services:
+                entry_additional_services = additional_services.get(entry.oris_user_id, [])
+            else:
+                entry_additional_services = []
+
+            entry = Entry.upsert_from_oris(entry, self, entry_additional_services)
+            if entry:
+                oris_entries_ids.add(entry.oris_id)
 
         self.entries.exclude(account__oris_id__in=oris_entries_ids).delete()
 
@@ -240,9 +247,21 @@ class Event(models.Model):
     def is_stage(self):
         return True if self.discipline and self.discipline.get('oris_id') == settings.ORIS_STAGE_RACE_ID else False
 
+    @property
+    def is_relay(self):
+        return True if self.discipline and self.discipline.get('oris_id') in settings.ORIS_RELAY_RACE_IDS else False
+
     @cached_property
     def results(self) -> typing.Dict[str, Result]:
         return ORISClient.get_event_results(self.oris_id)
 
-    def get_result_by_registration_number(self, registration_number: str) -> typing.Optional[Result]:
-        return self.results.get(registration_number)
+    def did_not_start(self, registration_number: str) -> bool:
+        result = self.results.get(registration_number)
+
+        if not result:
+            return True
+
+        if result.time == 'DNS':
+            return True
+
+        return False

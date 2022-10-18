@@ -11,7 +11,7 @@ from datetime import date
 from pydantic import ValidationError
 
 from orienteering_accounts.oris import choices as oris_choices
-from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result
+from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class ORISClient:
         return Event(**response_data)
 
     @classmethod
-    def get_event_entries(cls, event_id: int, club_id: int = settings.CLUB_ID):
+    def get_event_entries(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.List[BaseEntry]:
         params = {
             'eventid': event_id,
             'clubid': club_id,
@@ -113,6 +113,9 @@ class ORISClient:
             for entry_id, entry_dict in response_data.items():
                 if entry_dict.get('UserID'):
                     entries.append(Entry(**entry_dict))
+                elif entry_dict.get('Legs'):
+                    for leg_id, leg_dict in entry_dict.get('Legs', []):
+                        entries.append(LegEntry(**leg_dict, **entry_dict))
 
         return entries
 

@@ -84,16 +84,29 @@ class Event(BaseModel):
         return v
 
 
-class Entry(BaseModel):
+class BaseEntry(BaseModel):
     oris_id: int = Field(alias='ID')
     oris_category_id: int = Field(alias='ClassID')
     category_name: str = Field(alias='ClassDesc')
-    oris_user_id: typing.Optional[int] = Field(alias='UserID')
-    fee: int = Field(alias='Fee')
     oris_created: datetime = Field(alias='CreatedDateTime')
     oris_updated: typing.Optional[str] = Field(alias='UpdatedDateTime')
+    has_additional_services: bool = False
+
+    @property
+    def is_valid(self) -> bool:
+        return NotImplemented
+
+    @property
+    def account_kwargs(self) -> dict:
+        return NotImplemented
+
+
+class Entry(BaseEntry):
+    oris_user_id: typing.Optional[int] = Field(alias='UserID')
+    fee: int = Field(alias='Fee')
     rent_si: typing.Optional[bool] = Field(alias='RentSI')
     oris_club_note: typing.Optional[str] = Field(alias='ClubNote')
+    has_additional_services: bool = True
 
     @validator('oris_updated')
     def never_empty(cls, v: str) -> typing.Optional[str]:
@@ -101,10 +114,31 @@ class Entry(BaseModel):
             return None
         return v
 
+    @property
+    def is_valid(self) -> bool:
+        return self.oris_user_id is not None
+
+    @property
+    def account_kwargs(self) -> dict:
+        return dict(oris_id=self.oris_user_id)
+
+
+class LegEntry(BaseEntry):
+    registration_number: typing.Optional[str] = Field(alias='RegNo')
+
+    @property
+    def is_valid(self) -> bool:
+        return self.registration_number is not None
+
+    @property
+    def account_kwargs(self) -> dict:
+        return dict(registration_number=self.registration_number)
+
 
 class Result(BaseModel):
     class_name: str = Field(alias='ClassDesc')
     registration_number: str = Field(alias='RegNo')
+    time: typing.Optional[str] = Field(alias='Time')
 
 
 class EventBalance(BaseModel):
