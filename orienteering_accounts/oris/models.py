@@ -85,7 +85,6 @@ class Event(BaseModel):
 
 
 class BaseEntry(BaseModel):
-    oris_id: int = Field(alias='ID')
     oris_category_id: int = Field(alias='ClassID')
     category_name: str = Field(alias='ClassDesc')
     oris_created: datetime = Field(alias='CreatedDateTime')
@@ -105,6 +104,7 @@ class BaseEntry(BaseModel):
 
 
 class Entry(BaseEntry):
+    oris_id: int = Field(alias='ID')
     oris_user_id: typing.Optional[int] = Field(alias='UserID')
     fee: int = Field(alias='Fee')
     rent_si: typing.Optional[bool] = Field(alias='RentSI')

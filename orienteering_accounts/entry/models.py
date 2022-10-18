@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Entry(models.Model):
-    oris_id = models.PositiveIntegerField(unique=True)
+    oris_id = models.PositiveIntegerField(unique=True, null=True)
     oris_category_id = models.PositiveIntegerField()
     category_name = models.CharField(max_length=255, blank=True, default='')
     account = models.ForeignKey('account.Account', related_name='entries', on_delete=models.CASCADE)

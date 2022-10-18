@@ -135,7 +135,7 @@ class Event(models.Model):
     def update_entries(self):
         additional_services = ORISClient.get_event_additional_services(self.oris_id)
 
-        oris_entries_ids = set()
+        account_ids = set()
 
         for entry in ORISClient.get_event_entries(self.oris_id):
 
@@ -146,9 +146,9 @@ class Event(models.Model):
 
             entry = Entry.upsert_from_oris(entry, self, entry_additional_services)
             if entry:
-                oris_entries_ids.add(entry.oris_id)
+                account_ids.add(entry.account_id)
 
-        self.entries.exclude(account__oris_id__in=oris_entries_ids).delete()
+        self.entries.exclude(account_id__in=account_ids).delete()
 
     def send_payment_info_email(self):
 
