@@ -115,7 +115,8 @@ class ORISClient:
                     entries.append(Entry(**entry_dict))
                 elif entry_dict.get('Legs'):
                     for leg_id, leg_dict in entry_dict.get('Legs', {}).items():
-                        entries.append(LegEntry(**leg_dict, **entry_dict))
+                        entry_dict.update(**leg_dict)
+                        entries.append(LegEntry(**entry_dict))
 
         return entries
 
