@@ -237,11 +237,11 @@ class Event(models.Model):
         self.processing_state = Event.ProcessingType.LEADER_EMAIL_SENT
         self.save(update_fields=['processing_state'])
 
-    def get_category_fee(self, category_name: str) -> typing.Optional[Decimal]:
+    def get_category_fee(self, category_name: str) -> Decimal:
         for _, category_dict in self.categories_data.items():
             if category_dict.get('Name') == category_name:
                 return Decimal(category_dict.get('Fee', 0))
-        return None
+        return Decimal(0)
 
     @property
     def is_stage(self):
