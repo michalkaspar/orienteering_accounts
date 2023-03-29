@@ -38,7 +38,10 @@ class AccountFilter(django_filters.FilterSet):
         fields = ['registration_number', 'first_name', 'last_name', 'email', 'is_active']
 
     def __init__(self, data=None, *args, **kwargs):
-        if data is None:
+        if data:
+            if 'is_active' not in data:
+                data.update(is_active=True)
+        else:
             data = dict(is_active=True)
 
         super().__init__(data, queryset=Account.all_objects.all(), *args, **kwargs)
