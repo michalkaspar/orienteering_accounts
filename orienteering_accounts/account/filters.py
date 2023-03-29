@@ -38,17 +38,14 @@ class AccountFilter(django_filters.FilterSet):
         fields = ['registration_number', 'first_name', 'last_name', 'email', 'is_active']
 
     def __init__(self, data=None, *args, **kwargs):
-        if data:
-            if 'is_active' not in data:
-                data.update(is_active=True)
-        else:
-            data = dict(is_active=True)
-
         super().__init__(data, queryset=Account.all_objects.all(), *args, **kwargs)
 
     @property
     def qs(self):
         queryset = super().qs.distinct()
+
+        if 'is_active' not in self.request.GET:
+            queryset = queryset.filter(is_active=True)
 
         queryset = queryset.annotate(
             membership_paid_to=Max(
