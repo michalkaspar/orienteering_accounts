@@ -39,6 +39,7 @@ class AccountFilter(django_filters.FilterSet):
 
     def __init__(self, data=None, *args, **kwargs):
         super().__init__(data, queryset=Account.all_objects.all(), *args, **kwargs)
+        self.form.initial['is_active'] = True
 
     @property
     def qs(self):

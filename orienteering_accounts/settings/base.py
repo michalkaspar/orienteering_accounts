@@ -19,6 +19,8 @@ config = AutoConfig(os.environ.get('DJANGO_CONFIG_ENV_DIR'))
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+APP_DIR = config('PROJECT_APP_DIR', default='')
+
 PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 
 PROJECT_DOMAIN = config('PROJECT_MAIN_DOMAIN', default='')
@@ -168,7 +170,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-LOCALE_PATHS = [config('DJANGO_LOCALE_PATH', default=os.path.join(BASE_DIR, 'locale'))]
+LOCALE_PATHS = [config('PROJECT_LOCALE_PATHS', default=os.path.join(APP_DIR, 'locale'))]
 
 
 # Static files (CSS, JavaScript, Images)

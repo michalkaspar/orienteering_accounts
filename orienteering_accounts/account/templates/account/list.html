@@ -37,12 +37,12 @@
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}registration_number">{% trans "Registrační číslo" %}</a></th>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}last_name">{% trans "Příjmení" %}</a></th>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}first_name">{% trans "Křestní jméno" %}</a></th>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}email">{% trans "Email" %}</a></th>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}balance">{% trans "Zůstatek" %}</a></th>
-            <th scope="col"><a href="{% url "accounts:list" %}?o={% if descendant %}-{% endif %}membership_paid_to">{% trans "Příspěvky do" %}</a></th>
+            {% sortable_th request "registration_number" "Registrační číslo" %}
+            {% sortable_th request "last_name" "Příjmení" %}
+            {% sortable_th request "first_name" "Křestní jméno" %}
+            {% sortable_th request "email" "Email" %}
+            {% sortable_th request "balance" "Zůstatek" %}
+            {% sortable_th request "membership_paid_to" "Příspěvky do" %}
         </tr>
       </thead>
       <tbody>
