@@ -134,10 +134,13 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @classmethod
     def upsert_from_oris(cls, registered_user):
-        cls.all_objects.update_or_create(
+        account, created = cls.all_objects.update_or_create(
             registration_number=registered_user.registration_number,
             defaults=registered_user.dict()
         )
+
+        if created:
+            account.send_account_created_info_email()
 
     @property
     def full_name(self):
@@ -152,7 +155,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return self.init_balance + Decimal(str(
             self.transactions.exclude(
                 purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
-            ).aggregate(balance=Coalesce(Sum('amount'), 0))['balance'])
+            ).aggregate(balance=Coalesce(Sum('amount'), Decimal(0)))['balance'])
         )
 
     @property
@@ -162,7 +165,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                 purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
             ).exclude(
                 origin_entry__isnull=False
-            ).aggregate(balance=Coalesce(Sum('amount'), 0))['balance'])
+            ).aggregate(balance=Coalesce(Sum('amount'), Decimal(0)))['balance'])
         )
 
     @property
@@ -272,6 +275,19 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         email_utils.send_email(
             recipient_list=[self.email],
             subject=f'Platba dluhů - {self.full_name } {self.registration_number}',
+            html_content=html_content
+        )
+
+    def send_account_created_info_email(self):
+        context = {
+            'account': self
+        }
+
+        html_content = render_to_string('emails/account_created_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=settings.ACCOUNT_CREATED_EMAILS_SEND_TO,
+            subject=f'Nový účet v IS - {self.full_name} {self.registration_number}',
             html_content=html_content
         )
 

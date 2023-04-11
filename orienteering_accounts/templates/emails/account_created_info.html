@@ -1,0 +1,12 @@
+{% extends "emails/base.html" %}
+{% load i18n event %}
+
+{% block body %}
+    {% trans "Ahoj," %}<br>
+    <br>
+    {% trans "Do IS byl z ORIS naimportován nový člen " %}{{ account.full_name }} {{ account.registration_number }}.
+    <br>
+    <br>
+    {% trans "Odkaz do IS: " %}<a href="{% url "accounts:detail" account.pk %}">{{ account.full_name }}</a>
+
+{% endblock %}

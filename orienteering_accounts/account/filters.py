@@ -1,7 +1,9 @@
 import django_filters
-from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, ButtonHolder, Submit, HTML
 from django.db.models import Sum, Q, F, Max
 from django.db.models.functions import Coalesce
+from django.urls import reverse
 
 from orienteering_accounts.account.models import Account, Transaction
 from django.utils.translation import ugettext_lazy as _
@@ -39,7 +41,28 @@ class AccountFilter(django_filters.FilterSet):
 
     def __init__(self, data=None, *args, **kwargs):
         super().__init__(data, queryset=Account.all_objects.all(), *args, **kwargs)
-        self.form.initial['is_active'] = True
+
+        if data:
+            if 'is_active' not in data:
+                data._mutable = True
+                data['is_active'] = True
+        else:
+            self.form.initial['is_active'] = True
+
+        self.form.helper = FormHelper()
+        self.form.helper.form_method = 'GET'
+        self.form.helper.layout = Layout(
+            'registration_number',
+            'first_name',
+            'last_name',
+            'email',
+            'is_active',
+            ButtonHolder(
+                Submit('search', 'Hledat', css_class='btn btn-success'),
+                HTML(f'<a href="{reverse("accounts:export")}" class="btn btn-secondary">{_("Export")}</a>'),
+                css_class="modal-footer"
+            )
+        )
 
     @property
     def qs(self):

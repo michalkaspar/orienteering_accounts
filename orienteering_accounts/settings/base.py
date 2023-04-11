@@ -59,8 +59,14 @@ INSTALLED_APPS = [
     'orienteering_accounts.account',
     'orienteering_accounts.event',
     'orienteering_accounts.entry',
-    'anymail'
+    'anymail',
+    "crispy_forms",
+    "crispy_bootstrap5"
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -296,6 +302,7 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 API_SECRET = config('PROJECT_API_SECRET', '')
 
 EVENT_PAYMENT_EMAILS_SEND_TO = config('PROJECT_EVENT_PAYMENT_EMAILS_SEND_TO', default='', cast=Csv())
+ACCOUNT_CREATED_EMAILS_SEND_TO = config('PROJECT_ACCOUNT_CREATED_EMAILS_SEND_TO', default='', cast=Csv())
 
 CLUB_BANK_ACCOUNT_NUMBER = config('PROJECT_CLUB_BANK_ACCOUNT_NUMBER', '')
 CLUB_BANK_CODE = config('PROJECT_CLUB_BANK_CODE', '')
