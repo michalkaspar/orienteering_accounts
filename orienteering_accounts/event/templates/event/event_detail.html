@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load i18n forms account %}
+{% extends "base.html" %}{% load i18n forms account crispy_forms_tags %}
 
 {% block main_content %}
     <h1>{% trans "Detail závodu" %}</h1>
@@ -67,13 +67,7 @@
     <br>
 
     {% ifperm edit_event %}
-        <form method="post">
-        {% csrf_token %}
-            {% form_field form.handled %}
-            {% form_field form.leader %}
-
-            <input class="btn-success" type="submit" value="Uložit">
-        </form>
+        {% crispy form %}
     {% endifperm %}
 
 {% endblock %}

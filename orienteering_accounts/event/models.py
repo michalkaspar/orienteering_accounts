@@ -62,6 +62,7 @@ class Event(models.Model):
 
     ### Internals
     handled = models.BooleanField(default=False)
+    handled_disabled = models.BooleanField(default=False)
     leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     processing_state = models.CharField(max_length=50, choices=ProcessingType.choices, default=ProcessingType.UNPROCESSED)
     bills_solved_at = models.DateTimeField(null=True, blank=True)
@@ -93,7 +94,8 @@ class Event(models.Model):
                     instance = cls.upsert_from_oris(event)
                 if instance.date and instance.date >= timezone.now().date():
                     instance.update_entries()
-                    if not instance.handled and instance.entries.exists():
+                    if not instance.handled and not instance.handled_disabled and instance.entries.exists():
+                        print(True)
                         instance.handled = True
                         instance.save(update_fields=['handled'])
 

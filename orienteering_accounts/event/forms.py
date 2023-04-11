@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, ButtonHolder, Submit
 from django import forms
 from datetime import date
 
@@ -14,6 +16,16 @@ from orienteering_accounts.event.models import Event
 class EventForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['leader'].queryset = Account.objects.order_by('-leader_priority', 'last_name', 'first_name')
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            'handled',
+            'leader',
+            ButtonHolder(
+                Submit('save', 'Uložit', css_class='btn btn-success'),
+                css_class="modal-footer"
+            )
+        )
 
     def read_only(self):
         return self.instance.date <= date.today()
@@ -22,6 +34,11 @@ class EventForm(forms.ModelForm):
         if not super().is_valid():
             return False
         return self.instance.handled or self.instance.leader is None
+
+    def save(self, commit=True):
+        if 'handled' in self.changed_data and not self.cleaned_data['handled']:
+            self.instance.handled_disabled = True
+        return super().save(commit=commit)
 
     class Meta:
         model = Event

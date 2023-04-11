@@ -107,6 +107,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     leader_key = models.UUIDField(null=True)
     email = models.EmailField(null=True)
     is_active = models.BooleanField(default=True)
+    leader_priority = models.PositiveSmallIntegerField(default=0)
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
@@ -130,7 +131,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     all_objects = AccountManager(is_active=False)
 
     def __str__(self):
-        return self.full_name
+        return self.full_name_inv
 
     @classmethod
     def upsert_from_oris(cls, registered_user):

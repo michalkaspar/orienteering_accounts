@@ -1,4 +1,6 @@
 import django_filters
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, ButtonHolder, Submit
 
 from orienteering_accounts.event.models import Event
 from django.utils.translation import ugettext_lazy as _
@@ -18,6 +20,21 @@ class EventFilter(django_filters.FilterSet):
             data = dict(handled=True)
 
         super().__init__(data, *args, **kwargs)
+        self.form.helper = FormHelper()
+        self.form.helper.form_method = 'GET'
+        self.form.helper.layout = Layout(
+            'date_from',
+            'date_to',
+            'region',
+            'handled',
+            'leader',
+            'bills_solved',
+            'name',
+            ButtonHolder(
+                Submit('search', 'Hledat', css_class='btn btn-success'),
+                css_class="modal-footer"
+            )
+        )
 
     def filter_leader(self, qs, fname, value):
         lookup = '__'.join([fname, 'isnull'])
