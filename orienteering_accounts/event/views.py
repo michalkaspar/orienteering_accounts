@@ -90,9 +90,6 @@ class EventBills(View):
         get_object_or_404(Account, leader_key=key)
         event = get_object_or_404(Event, pk=pk)
 
-        if event.bills_solved_at and event.bills_solved_at < timezone.now() - timedelta(days=14):
-            raise Http404()
-
         entries_qs = event.entries.order_by('account__registration_number')
 
         return render(request, 'event/event_bills.html', {
