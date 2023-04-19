@@ -65,7 +65,7 @@ class EventEntries(LoginRequiredMixin, View):
         event = get_object_or_404(Event, pk=pk)
         return render(request, 'event/event_entries.html', {
             'event': event,
-            'email_recipients': ', '.join(event.entries.values_list('account__email', flat=True))
+            'email_recipients': ', '.join(filter(None, event.entries.values_list('account__email', flat=True)))
         })
 
 
