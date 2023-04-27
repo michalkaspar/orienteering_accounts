@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import django_filters
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, ButtonHolder, Submit, HTML
@@ -86,7 +88,7 @@ class AccountFilter(django_filters.FilterSet):
                     balance_=F('init_balance') + Coalesce(Sum(
                         'transactions__amount',
                         filter=~Q(transactions__purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP)
-                    ), 0)
+                    ), Decimal(0))
                 ).order_by(f'{"-" if "-" in ordering else ""}balance_')
             else:
                 queryset = queryset.order_by(ordering)
