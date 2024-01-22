@@ -7,10 +7,11 @@
     {% trans "Prosíme o platbu oddílových příspěvků pro nadcházející sezonu za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
     <br>
-    {% trans "Příspěvky pro letošní rok jsou stejné jako v letech minulých, (výjimka rok 2021) tzn. 3000,- Kč dítě, 2000,- Kč dospělý. Termín na úhradu byl stanoven do " %}<b>15. 3. 2023</b>{% trans " z důvodů registrace závodníků na novou sezónu. Slevy na každého dalšího člena rodiny jsou stále v platnosti, tzn. první člen -200, druhý -400, třetí -600." %}
+    {% trans "Příspěvky pro letošní rok stanoveny na 4000,- Kč pro ročníky narození do roku 2004 včetně, 2000,- Kč pro ostatní. Termín na úhradu byl stanoven do " %}{% trans "15. 2. 2024" %}{% trans " z důvodů registrace závodníků na novou sezónu. Slevy na každého dalšího člena rodiny jsou stále v platnosti, tzn. první člen -200 Kč, druhý -400 Kč, třetí -600 Kč." %}
     <br>
-    {% trans "Změna oproti letům minulým je, že už nebudou přijímány žádné platby v hotovosti, ale vše musí být uhrazeno na účet klubu. Pokud bude někdo chtít žádat potvrzení kvůli příspěvku od VZP, prosím kontaktujte Míšu Hančíkovou na adrese m.hancikova99@gmail.com. Do emailu prosím uveďte " %} <b>{%trans "jméno závodníka, datum narození a datum, kdy byla platba provedena." %}</b> {% trans "Po připsání částky na náš účet Vám bude vystaveno a odesláno emailem potvrzení s datem transakce. Z těchto důvodů, pokud budete žádat pro více členů rodiny, proveďte platby každou zvlášť." %}
+    {% trans "Registrace do jedné Sekce (typicky OB) je v ceně příspěvků. Registrace do každé další sekce (MTBO, LOB, Trail-O) je zpoplatněna částkou 200 Kč (bude započítáno do dluhů). Do závodní sezony budou členové zaregistrováni až po zaplacení příspěvků (a případných dluhů za rok 2023, které ještě nebyly zaplaceny! Při dodatečné registraci budou členům strženy do dluhů dodatečné náklady na registraci." %}
     <br>
+    {% trans "Stejně jako loni, ani letos nebudou přijímány hotovostní platby, ale vše musí být uhrazeno na účet klubu. Pokud bude někdo chtít žádat potvrzení kvůli příspěvku od VZP, prosím kontaktujte Míšu Hančíkovou na adrese m.hancikova99@gmail.com. Do emailu prosím uveďte " %}<b>jméno závodníka, datum narození a datum, kdy byla platba provedena. </b>{% trans "Po připsání částky na náš účet Vám bude vystaveno a odesláno emailem potvrzení s datem transakce. Z těchto důvodů, pokud budete žádat pro více členů rodiny, proveďte platby každou zvlášť." %}
     <br>
     <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
     <br>
@@ -25,9 +26,9 @@
     <br>
     <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
     <br>
-    {% if not account.debts_paid %}
+    {% if account.debts_payment_amount >= 1000 %}
         <br>
-        {% trans "Dále evidujeme, že stále nemáš zaplacené dluhy." %}
+        {% trans "Dále evidujeme, že tvé dluhy přesahují částku 1000,- Kč." %}
         <br>
         <br>
         <b>{% trans "Své dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
@@ -46,7 +47,7 @@
     {% endif %}
     <br>
     <br>
-    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>15. 3. 2023</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
+    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>15. 2. 2024</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}

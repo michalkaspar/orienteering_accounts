@@ -206,7 +206,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def club_membership_payment_amount(self):
-        return Decimal('2000.00').quantize(Decimal(1)) if self.is_adult else Decimal('3000.00').quantize(Decimal(1))
+        return Decimal('2000.00').quantize(Decimal(1)) if self.is_adult else Decimal('4000.00').quantize(Decimal(1))
 
     @property
     def rest_club_membership_payment_amount(self):
