@@ -1,5 +1,6 @@
 import base64
 import json
+import typing
 
 from django.conf import settings
 from google.oauth2 import service_account
@@ -14,7 +15,7 @@ class GoogleAPIClient:
         credentials = service_account.Credentials.from_service_account_info(service_account_info)
         self.credentials = credentials.with_subject(settings.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_SUBJECT)
 
-    def _get_service(self, service_name, version, scopes: list[str]) -> Resource:
+    def _get_service(self, service_name, version, scopes: typing.List[str]) -> Resource:
         credentials = self.credentials.with_scopes(scopes)
         return build(service_name, version, credentials=credentials)
 
