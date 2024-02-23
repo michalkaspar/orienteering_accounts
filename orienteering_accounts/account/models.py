@@ -295,6 +295,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     def get_absolute_url(self):
         return reverse('accounts:detail', args=[self.pk])
 
+    def add_to_google_workspace_group(self):
+        from orienteering_accounts.google.client import client as google_client
+        google_client.add_member(self.email)
+
 
 class Transaction(BaseModel):
 
