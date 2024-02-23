@@ -9,7 +9,6 @@ from googleapiclient.discovery import build, Resource
 
 class GoogleAPIClient:
 
-
     def __init__(self):
         service_account_info = json.loads(base64.b64decode(settings.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS))
         credentials = service_account.Credentials.from_service_account_info(service_account_info)
@@ -24,8 +23,13 @@ class GoogleAPIClient:
         scopes = ['https://www.googleapis.com/auth/admin.directory.group.member']
         return self._get_service('admin', 'directory_v1', scopes=scopes)
 
+    def has_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> bool:
+        response = self.members_service.members().hasMember(groupKey=group_email, memberKey=member_email).execute()
+        return response['isMember']
+
     def add_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> None:
-        self.members_service.members().insert(groupKey=group_email, body={'email': member_email}).execute()
+        if not self.has_member(member_email, group_email):
+            self.members_service.members().insert(groupKey=group_email, body={'email': member_email}).execute()
 
 
 client = GoogleAPIClient()
