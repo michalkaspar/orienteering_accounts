@@ -1,6 +1,7 @@
 import base64
 import json
 import typing
+from functools import cached_property
 
 from django.conf import settings
 from google.oauth2 import service_account
@@ -23,12 +24,16 @@ class GoogleAPIClient:
         scopes = ['https://www.googleapis.com/auth/admin.directory.group.member']
         return self._get_service('admin', 'directory_v1', scopes=scopes)
 
-    def has_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> bool:
-        response = self.members_service.members().hasMember(groupKey=group_email, memberKey=member_email).execute()
-        return response['isMember']
+    @cached_property
+    def members(self) -> typing.List[dict]:
+        response = self.members_service.members().list(groupKey=settings.GOOGLE_GROUP_MEMBERS).execute()
+        return [member for member in response['members']]
+
+    def has_member(self, member_email: str) -> bool:
+        return member_email in [member['email'] for member in self.members]
 
     def add_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> None:
-        if not self.has_member(member_email, group_email):
+        if not self.has_member(member_email):
             self.members_service.members().insert(groupKey=group_email, body={'email': member_email}).execute()
 
 
