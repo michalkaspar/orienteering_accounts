@@ -144,6 +144,12 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
             return AccountPasswordSetEditForm
         return AccountEditForm
 
+    def form_valid(self, form: forms.Form):
+        response = super().form_valid(form)
+        if 'is_active'in form.changed_data:
+            self.object.remove_from_google_workspace_group()
+        return response
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if self.request.user.pk == self.object.pk or self.request.user.is_superuser:

@@ -17,6 +17,7 @@ from orienteering_accounts.core.templatetags.core import format_date
 from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
+from orienteering_accounts.google.client import client as google_client
 
 
 class LazyPermission(object):
@@ -142,6 +143,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         if created:
             account.send_account_created_info_email()
+            account.add_to_google_workspace_group()
 
     @property
     def full_name(self):
@@ -296,8 +298,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return reverse('accounts:detail', args=[self.pk])
 
     def add_to_google_workspace_group(self):
-        from orienteering_accounts.google.client import client as google_client
         google_client.add_member(self.email)
+
+    def remove_from_google_workspace_group(self):
+        google_client.delete_member(self.email)
 
 
 class Transaction(BaseModel):
