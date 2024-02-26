@@ -133,16 +133,10 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     queryset = Account.all_objects.all()
     template_name = 'account/edit.html'
     permissions_required = perms.account_edit_perms
+    form_class = AccountEditForm
 
     def get_success_url(self):
         return reverse('accounts:detail', args=[self.object.pk])
-
-    def get_form_class(self):
-        if self.request.user.pk == self.object.pk:
-            return AccountPasswordChangeEditForm
-        if self.request.user.is_superuser:
-            return AccountPasswordSetEditForm
-        return AccountEditForm
 
     def form_valid(self, form: forms.Form):
         response = super().form_valid(form)

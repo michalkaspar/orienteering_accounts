@@ -70,7 +70,7 @@ class AccountEditForm(ModelForm):
 
     class Meta:
         model = Account
-        fields = ['role', 'email', 'is_active']
+        fields = ['role', 'email', 'is_active', 'clubroom_chip_number']
 
 
 class AccountPasswordChangeEditForm(PasswordChangeForm, AccountEditForm):

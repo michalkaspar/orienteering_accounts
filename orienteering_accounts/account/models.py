@@ -109,6 +109,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     email = models.EmailField(null=True)
     is_active = models.BooleanField(default=True)
     leader_priority = models.PositiveSmallIntegerField(default=0)
+    clubroom_chip_number = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('Číslo čipu od klubovny'))
 
     # ORIS fields
     oris_id: int = models.PositiveIntegerField(unique=True)
