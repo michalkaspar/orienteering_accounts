@@ -144,12 +144,6 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
             self.object.remove_from_google_workspace_group()
         return response
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        if self.request.user.pk == self.object.pk or self.request.user.is_superuser:
-            kwargs.update(user=self.object)
-        return kwargs
-
 
 class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
     template_name = 'transaction/create.html'
