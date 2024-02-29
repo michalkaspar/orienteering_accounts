@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load i18n forms core %}
+
+{% block main_content %}
+
+     <div class="row">
+         <div class="col-11">
+             <h1>{% trans "Seznam čipů" %}</h1>
+         </div>
+         <div class="col-1">
+             <a class="btn btn-secondary" href="{% url "accounts:clubroom_chip_list_export" %}">{% trans "Export" %}</a>
+         </div>
+     </div>
+
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+            {% sortable_th request "registration_number" "Registrační číslo" %}
+            {% sortable_th request "last_name" "Příjmení" %}
+            {% sortable_th request "first_name" "Křestní jméno" %}
+            {% sortable_th request "clubroom_chip_number" "Číslo čipu" %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in object_list %}
+        <tr>
+            <td ><a href="{% url "accounts:detail" account.pk %}">{{ account.registration_number }}</a></td>
+            <td>{{ account.last_name }}</td>
+            <td>{{ account.first_name }}</td>
+            <td>{{ account.clubroom_chip_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

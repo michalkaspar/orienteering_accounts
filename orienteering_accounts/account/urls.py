@@ -3,7 +3,7 @@ from django.urls import path, include
 from orienteering_accounts.account.views import (
     AccountListView, AccountExportView, AccountDetailView, AccountEditView, TransactionCreate, RoleListView,
     RoleAddView, RoleEditView, AccountTransactionsEmbeddedView, AccountTransactionsView, PaymentPeriodEditView, PaymentPeriodListView,
-    PaymentPeriodCreateView, TransactionEdit
+    PaymentPeriodCreateView, TransactionEdit, ClubroomChipNumberView, ClubroomChipNumberExportView
 )
 
 app_name = 'accounts'
@@ -25,6 +25,8 @@ payment_period_urlpatterns = ([
 urlpatterns = [
     path('', AccountListView.as_view(), name='list'),
     path('export/', AccountExportView.as_view(), name='export'),
+    path('clubroom-chip-list/', ClubroomChipNumberView.as_view(), name='clubroom_chip_list'),
+    path('clubroom-chip-list/export/', ClubroomChipNumberExportView.as_view(), name='clubroom_chip_list_export'),
     path('role/', include(role_urlpatterns)),
     path('payment_period/', include(payment_period_urlpatterns)),
     path('<int:pk>/', AccountDetailView.as_view(), name='detail'),

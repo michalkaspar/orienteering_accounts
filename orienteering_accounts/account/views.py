@@ -289,3 +289,51 @@ class RoleEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('accounts:role:list')
+
+
+class ClubroomChipNumberView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
+    permissions_required = perms.account_edit_perms
+    template_name = 'account/clubroom_chip_list.html'
+    queryset = Account.all_objects.filter(clubroom_chip_number__isnull=False)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        ordering = self.request.GET.getlist('o')  # TODO add to Mixin
+        return qs.order_by(*ordering)
+
+
+class ClubroomChipNumberExportView(LoginRequiredMixin, PermissionsRequiredMixin, View):
+    permissions_required = perms.account_view_perms
+
+    def get(self, *args, **kwargs):
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet()
+
+        worksheet.set_column(0, 0, width=20)
+        worksheet.set_column(0, 1, width=20)
+        worksheet.set_column(0, 2, width=20)
+
+        worksheet.write(0, 0, gettext('Jméno a Příjmení'))
+        worksheet.write(0, 1, gettext('Registrační číslo'))
+        worksheet.write(0, 2, gettext('Číslo čipu'))
+
+        for i, account in enumerate(Account.objects.filter(clubroom_chip_number__isnull=False).order_by('last_name')):
+
+            row = i+1
+
+            worksheet.write(row, 0, account.full_name_inv)
+            worksheet.write(row, 1, account.registration_number)
+            worksheet.write(row, 2, account.clubroom_chip_number)
+
+        worksheet.fit_to_pages(1, 0)
+        workbook.close()
+        output.seek(0)
+
+        response = HttpResponse(
+            ContentFile(output.read()),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=accounts.xlsx'
+
+        return response

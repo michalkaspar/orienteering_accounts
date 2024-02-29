@@ -21,6 +21,7 @@
               <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                   {% ifperm view_account %}
                     <a class="dropdown-item" href="{% url "accounts:list" %}">{% trans "Účty" %}</a>
+                    <a class="dropdown-item" href="{% url "accounts:clubroom_chip_list" %}">{% trans "Čipy" %}</a>
                   {% endifperm %}
                   {% ifperm view_role %}
                     <a class="dropdown-item" href="{% url "accounts:role:list" %}">{% trans "Role" %}</a>
