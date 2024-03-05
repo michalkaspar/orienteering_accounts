@@ -95,7 +95,6 @@ class Event(models.Model):
                 if instance.date and instance.date >= timezone.now().date():
                     instance.update_entries()
                     if not instance.handled and not instance.handled_disabled and instance.entries.exists():
-                        print(True)
                         instance.handled = True
                         instance.save(update_fields=['handled'])
 
