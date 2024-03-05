@@ -298,11 +298,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     def get_absolute_url(self):
         return reverse('accounts:detail', args=[self.pk])
 
-    def add_to_google_workspace_group(self):
-        google_client.add_member(self.email)
+    def add_to_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS):
+        google_client.add_member(self.email, group_email=group_email)
 
-    def remove_from_google_workspace_group(self):
-        google_client.delete_member(self.email)
+    def remove_from_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS):
+        google_client.delete_member(self.email, group_email=group_email)
 
 
 class Transaction(BaseModel):

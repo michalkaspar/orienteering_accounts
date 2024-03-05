@@ -25,7 +25,7 @@ class GoogleAPIClient:
 
     def get_group_members(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> typing.List[dict]:
         response = self.members_service.members().list(groupKey=group_email).execute()
-        return [member for member in response['members']]
+        return [member for member in response.get('members', [])]
 
     def has_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> bool:
         return member_email in [member['email'] for member in self.get_group_members(group_email=group_email)]
