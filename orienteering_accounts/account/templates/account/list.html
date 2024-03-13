@@ -15,6 +15,7 @@
             {% sortable_th request "email" "Email" %}
             {% sortable_th request "balance" "Zůstatek" %}
             {% sortable_th request "membership_paid_to" "Příspěvky do" %}
+            {% sortable_th request "is_active" "Aktivní" %}
         </tr>
       </thead>
       <tbody>
@@ -26,6 +27,7 @@
             <td>{{ account.email|default:"-" }}</td>
             <td>{% transaction_amount account.balance %}</td>
             <td>{{ account.membership_paid_to|format_date|default:"-" }}</td>
+            <td>{{ account.is_active|yesno:"Ano,Ne" }}</td>
         </tr>
         {% endfor %}
       </tbody>
