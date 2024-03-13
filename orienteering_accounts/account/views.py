@@ -294,7 +294,7 @@ class RoleEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
 class ClubroomChipNumberView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
     permissions_required = perms.account_edit_perms
     template_name = 'account/clubroom_chip_list.html'
-    queryset = Account.all_objects.filter(clubroom_chip_number__isnull=False)
+    queryset = Account.all_objects.exclude(clubroom_chip_number='')
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -318,7 +318,7 @@ class ClubroomChipNumberExportView(LoginRequiredMixin, PermissionsRequiredMixin,
         worksheet.write(0, 1, gettext('Registrační číslo'))
         worksheet.write(0, 2, gettext('Číslo čipu'))
 
-        for i, account in enumerate(Account.objects.filter(clubroom_chip_number__isnull=False).order_by('last_name')):
+        for i, account in enumerate(Account.all_objects.exclude(clubroom_chip_number='').order_by('last_name')):
 
             row = i+1
 
