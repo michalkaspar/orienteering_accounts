@@ -10,7 +10,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='account',
+            name='clubroom_chip_number',
+        ),
+        migrations.AddField(
             model_name='account',
             name='clubroom_chip_number',
             field=models.CharField(blank=True, default='', max_length=255, verbose_name='Číslo čipu od klubovny'),
