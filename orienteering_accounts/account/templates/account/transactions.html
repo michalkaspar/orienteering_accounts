@@ -8,6 +8,7 @@
 
 {% block main_content %}
     <h1>{{ account.full_name }} - {% trans "Moje konto" %}</h1>
+    <h4>{% trans "Email" %}: {{ account.email }}</h4>
 
     {% include "account/includes/transactions.html" with preview=True %}
 
