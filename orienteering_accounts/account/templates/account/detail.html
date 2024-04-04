@@ -29,6 +29,13 @@
                 {% trans "Email" %}: {{ object.email }}
             </div>
         </div>
+        {% if object.email2 %}
+            <div class="row">
+                <div class="col">
+                    {% trans "Email2" %}: {{ object.email2 }}
+                </div>
+            </div>
+        {% endif %}
         <div class="row">
             <div class="col">
                 {% trans "Pohlaví" %}: {{ object.gender }}
