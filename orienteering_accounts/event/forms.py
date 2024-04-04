@@ -71,17 +71,14 @@ class EntryBillForm(forms.ModelForm):
         return debt_note
 
     def save(self, *args, **kwargs):
-        is_update = bool(self.instance.debt)
-        has_other_debt = bool(self.instance.other_debt)
         entry = super().save(*args, **kwargs)
-        if is_update or entry.debt > Decimal(0):
-            entry.transactions.update_or_create(
-                purpose=Transaction.TransactionPurpose.ENTRY,
-                account=entry.account,
-                defaults=dict(
-                    amount=-entry.debt
-                )
+        entry.transactions.update_or_create(
+            purpose=Transaction.TransactionPurpose.ENTRY,
+            account=entry.account,
+            defaults=dict(
+                amount=-entry.debt
             )
+        )
         if entry.other_debt and entry.other_debt > Decimal(0):
             entry.transactions.update_or_create(
                 purpose=Transaction.TransactionPurpose.ENTRY_OTHER,

@@ -138,10 +138,21 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse('accounts:detail', args=[self.object.pk])
 
-    def form_valid(self, form: forms.Form):
+    def form_valid(self, form: AccountEditForm):
         response = super().form_valid(form)
-        if 'is_active'in form.changed_data:
+        if 'is_active'in form.changed_data and not self.object.is_active:
             self.object.remove_from_google_workspace_group()
+        if form.email_before != self.object.email:
+            self.object.remove_from_google_workspace_group(email=form.email_before)
+            self.object.add_to_google_workspace_group()
+        if form.email2_before != self.object.email2:
+            if not self.object.email2:
+                self.object.remove_from_google_workspace_group(email2=form.email2_before)
+            elif not form.email2_before:
+                self.object.add_to_google_workspace_group()
+            else:
+                self.object.remove_from_google_workspace_group(email2=form.email2_before)
+                self.object.add_to_google_workspace_group()
         return response
 
 

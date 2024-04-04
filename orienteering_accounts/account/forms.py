@@ -68,9 +68,14 @@ class TransactionAddForm(TransactionEditForm):
 
 class AccountEditForm(ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.email_before = self.instance.email
+        self.email2_before = self.instance.email2
+
     class Meta:
         model = Account
-        fields = ['role', 'email', 'is_active', 'clubroom_chip_number']
+        fields = ['role', 'email', 'email2', 'is_active', 'clubroom_chip_number']
 
 
 class AccountPasswordChangeEditForm(PasswordChangeForm, AccountEditForm):

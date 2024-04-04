@@ -107,6 +107,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     init_balance = models.DecimalField(decimal_places=2, max_digits=9, default=Decimal(0))
     leader_key = models.UUIDField(null=True)
     email = models.EmailField(null=True)
+    email2 = models.EmailField(blank=True)
     is_active = models.BooleanField(default=True)
     leader_priority = models.PositiveSmallIntegerField(default=0)
     clubroom_chip_number = models.CharField(max_length=255, blank=True, verbose_name=_('Číslo čipu od klubovny'))
@@ -233,6 +234,12 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         born_year = self.born_year + 2000 if self.born_year < current_year - 2000 else self.born_year + 1900
         return current_year - born_year > 20
 
+    @property
+    def email_recipients(self) -> list[str]:
+        if self.email2:
+            return [self.email, self.email2]
+        return [self.email]
+
     def send_payment_info_email(self):
 
         context = {
@@ -243,7 +250,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         html_content = render_to_string('emails/account_payment_info.html', context)
 
         email_utils.send_email(
-            recipient_list=[self.email],
+            recipient_list=self.email_recipients,
             subject=f'Platba oddílových příspěvků - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
@@ -258,7 +265,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         html_content = render_to_string('emails/account_rest_payment_info.html', context)
 
         email_utils.send_email(
-            recipient_list=[self.email],
+            recipient_list=self.email_recipients,
             subject=f'Platba oddílových příspěvků druhé pololetí - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
@@ -277,7 +284,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         html_content = render_to_string('emails/account_debts_payment_info.html', context)
 
         email_utils.send_email(
-            recipient_list=[self.email],
+            recipient_list=self.email_recipients,
             subject=f'Platba dluhů - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
@@ -300,9 +307,15 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     def add_to_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS):
         google_client.add_member(self.email, group_email=group_email)
+        if self.email2:
+            google_client.add_member(self.email2, group_email=group_email)
 
-    def remove_from_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS):
-        google_client.delete_member(self.email, group_email=group_email)
+    def remove_from_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS, email: str = None, email2: str = None):
+        email = email or self.email
+        email2 = email2 or self.email2
+        google_client.delete_member(email, group_email=group_email)
+        if email2:
+            google_client.delete_member(email2, group_email=group_email)
 
 
 class Transaction(BaseModel):
