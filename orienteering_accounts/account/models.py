@@ -1,3 +1,4 @@
+import typing
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -235,7 +236,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return current_year - born_year > 20
 
     @property
-    def email_recipients(self) -> list[str]:
+    def email_recipients(self) -> typing.List[str]:
         if self.email2:
             return [self.email, self.email2]
         return [self.email]
