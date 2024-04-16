@@ -2,13 +2,15 @@
 {% load i18n event %}
 
 {% block body %}
-    {% trans "Prosím zaplaťte částku" %} {{ event_balance.to_be_paid }} {% trans "CZK" %}<br>
+    {% trans "Prosím zaplaťte částku" %} {{ event_balance.to_be_paid }} {{ event_balance.currency }}<br>
     <br>
     {% trans "na účet" %} {{ event.entry_bank_account }}
     <br>
     {% trans "VS:" %} {{ event_balance.payment_vs }}
     <br>
     {% trans "ORIS:" %} <a href="https://oris.orientacnisporty.cz/Zavod?id={{ event.oris_id }}">{% trans "odkaz" %}</a>
+    <br>
+    {% trans "Přehled vkladů:" %} <a href="https://oris.orientacnisporty.cz/PrehledVkladu?id={{ event.oris_id }}#{{ club_id }}">{% trans "odkaz" %}</a>
     {% get_bulletin_url event as bulletin_url %}
     {% if bulletin_url %}
         <br>

@@ -176,6 +176,6 @@ class ORISClient:
         if response_data:
             for _, club_dict in response_data['Clubs'].items():
                 if club_dict['ClubID'] == club_id:
-                    return EventBalance(**club_dict)
+                    return EventBalance(currency=response_data.get('Currency', 'CZK'), **club_dict)
 
         return None
