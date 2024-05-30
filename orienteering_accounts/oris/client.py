@@ -126,7 +126,7 @@ class ORISClient:
             'eventid': event_id,
             'clubid': club_id
         }
-        response_data = cls.make_get_request('getClubEntry', params=params)
+        response_data = cls.make_get_request('getEventEntries', params=params)
 
         return bool(response_data)
 
