@@ -121,6 +121,17 @@ class ORISClient:
         return entries
 
     @classmethod
+    def club_entry_exists(cls, event_id: int, club_id: int = settings.CLUB_ID) -> bool:
+        params = {
+            'eventid': event_id,
+            'clubid': club_id
+        }
+        response_data = cls.make_get_request('getClubEntry', params=params)
+
+        return bool(response_data)
+
+
+    @classmethod
     def get_event_results(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Dict[str, Result]:
         params = {
             'eventid': event_id,

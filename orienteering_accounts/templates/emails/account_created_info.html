@@ -7,6 +7,6 @@
     {% trans "Do IS byl z ORIS naimportován nový člen " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
     <br>
-    {% trans "Odkaz do IS: " %}<a href="{% url "accounts:detail" account.pk %}">{{ account.full_name }}</a>
+    {% trans "Odkaz do IS: " %}<a href="https://is.skob-zlin.cz{% url "accounts:detail" account.pk %}">{{ account.full_name }}</a>
 
 {% endblock %}

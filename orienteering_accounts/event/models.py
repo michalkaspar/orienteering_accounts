@@ -94,7 +94,7 @@ class Event(models.Model):
                     instance = cls.upsert_from_oris(event)
                 if instance.date and instance.date >= timezone.now().date():
                     instance.update_entries()
-                    if not instance.handled and not instance.handled_disabled and instance.entries.exists():
+                    if instance.should_be_handled():
                         instance.handled = True
                         instance.save(update_fields=['handled'])
 
@@ -266,3 +266,12 @@ class Event(models.Model):
             return True
 
         return False
+
+    def should_be_handled(self) -> bool:
+        if self.handled or self.handled_disabled:
+            return False
+
+        if self.is_relay:
+            return ORISClient.club_entry_exists(self.oris_id)
+
+        return self.entries.exists()
