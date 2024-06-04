@@ -90,7 +90,7 @@ class Event(models.Model):
             for event in ORISClient.get_events(sport=sport, include_unofficial_events=1):
                 try:
                     instance = cls.objects.get(oris_id=event.oris_id)
-                    cls.objects.filter(oris_id=event.oris_id).update(**event.dict())
+                    cls.objects.filter(oris_id=event.oris_id).update(**event.dict(exclude_unset=True))
                     instance.refresh_from_db()
                 except cls.DoesNotExist:
                     instance = cls.upsert_from_oris(event)
