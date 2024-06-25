@@ -67,14 +67,7 @@ class RBBankAPIClient:
         transactions = []
 
         for transaction_data in response['transactions']:
-            transaction = Transaction(
-                transaction_id=transaction_data['transactionId'],
-                amount=transaction_data['amount'],
-                currency=transaction_data['currency'],
-                transaction_type=transaction_data['transactionType'],
-                transaction_date=datetime.fromisoformat(transaction_data['transactionDate']),
-                transaction_description=transaction_data['transactionDescription']
-            )
+            transaction = Transaction(**transaction_data)
             transactions.append(transaction)
 
         if not response['lastPage']:
