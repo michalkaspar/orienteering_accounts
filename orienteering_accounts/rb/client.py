@@ -1,3 +1,4 @@
+import typing
 from datetime import datetime
 
 import requests_pkcs12
@@ -54,7 +55,7 @@ class RBBankAPIClient:
                          bank_account_number: str = settings.CLUB_BANK_ACCOUNT_NUMBER,
                          currency: str = 'CZK',
                          page: int = 1,
-                         ) -> list[Transaction]:
+                         ) -> typing.List[Transaction]:
         params = {
             'from': from_date.isoformat(),
             'to': to_date.isoformat(),
