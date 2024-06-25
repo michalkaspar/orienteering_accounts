@@ -327,7 +327,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     @classmethod
     def process_bank_transaction(cls, bank_transaction: BankTransaction):
         variable_symbol = bank_transaction.variable_symbol
-        amount = bank_transaction.amount.amount
+        amount = bank_transaction.amount.value
 
         if not variable_symbol or amount <= 0:
             return

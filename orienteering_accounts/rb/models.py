@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class TransactionAmount(BaseModel):
-    amount: float
+    value: float
     currency: str
 
 
@@ -57,7 +57,7 @@ class Transaction(BaseModel):
     amount: TransactionAmount
     creditDebitIndication: str
     bookingDate: str
-    valueDate: int
+    valueDate: str
     bankTransactionCode: BankTransactionCode
     entryDetails:TransactionEntryDetails
 
