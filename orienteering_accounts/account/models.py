@@ -213,9 +213,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_variable_symbol(self):
-        if int(self.registration_number[3:5]) > 92:
-            return f'1001{self.registration_number}'
-        return f'1000{self.registration_number}'
+        number = self.registration_number.replace('TZL', '')
+        if int(number[:2]) > 92:
+            return f'1001{number}'
+        return f'1000{number}'
 
     @property
     def club_membership_payment_message(self):
