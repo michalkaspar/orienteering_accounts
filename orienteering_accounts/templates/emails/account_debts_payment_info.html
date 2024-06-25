@@ -4,14 +4,12 @@
 {% block body %}
     {% trans "Ahoj," %}<br>
     <br>
-    {% trans "Prosíme o platbu dluhů za uplynulý rok za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
+    {% trans "Prosíme o platbu dluhů za jaro 2024 za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
-    {% trans "V dluzích jsou započítány závody celé sezóny, soustředění a platby za oddílové ošacení." %}
-    <br>
-    {% trans "V průběhu ledna přijde další e-mail ohledně platby oddílových příspěvků za rok 2023." %}
+    {% trans "V dluzích jsou započítány závody jarní sezóny, soustředění a platby za oddílové ošacení." %}
     <br>
     <br>
-    {% trans "Termín pro uhrazení je do " %}<b>{% trans "30.11.2023." %}</b>
+    {% trans "Termín pro uhrazení je do " %}<b>{% trans "31.7.2024." %}</b>
     <br>
     {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="http://{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
     <br>
@@ -25,6 +23,8 @@
     {% trans "Částka: " %}{{ account.debts_payment_amount }} {% trans "Kč" %}
     <br>
     {% trans "Zpráva pro příjemce: " %}{{ account.debts_payment_message }}
+    <br>
+    {% trans "Variabilní symbol: " %}{{ account.debts_variable_symbol }}
     <br>
     {% trans "QR kód: " %}
     <br>
