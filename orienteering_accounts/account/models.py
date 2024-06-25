@@ -205,11 +205,17 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_payment_qr_url(self):
-        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.debts_payment_amount}&currency=CZK&message={self.debts_payment_message}&size=200"
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.debts_payment_amount}&currency=CZK&message={self.debts_payment_message}&size=200&vs={self.debts_variable_symbol}"
 
     @property
     def debts_payment_message(self):
         return f'OP Mistrovské soutěže {self.full_name}'
+
+    @property
+    def debts_variable_symbol(self):
+        if int(self.registration_number[3:5]) > 92:
+            return f'1001{self.registration_number}'
+        return f'1000{self.registration_number}'
 
     @property
     def club_membership_payment_message(self):
@@ -332,24 +338,15 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         if not variable_symbol or amount <= 0:
             return
 
-        account = cls.objects.filter(registration_number=variable_symbol).first()
-
-        if account:
-            account.transactions.create(
-                amount=amount,
-                purpose=Transaction.TransactionPurpose.DEBTS
-            )
-            logger.info('Processed debts bank transactions', extra={'account': account, 'amount': amount})
-
-        if variable_symbol.endswith('2000'):
-            account = cls.objects.filter(registration_number=variable_symbol[:-4]).first()
+        if variable_symbol.startswith('1001'):
+            account = cls.objects.filter(registration_number=variable_symbol[4:]).first()
 
             if account:
                 account.transactions.create(
                     amount=amount,
-                    purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+                    purpose=Transaction.TransactionPurpose.DEBTS
                 )
-                logger.info('Processed club memebership bank transactions', extra={'account': account, 'amount': amount})
+                logger.info('Processed debts bank transactions', extra={'account': account, 'amount': amount})
 
 
 class Transaction(BaseModel):
