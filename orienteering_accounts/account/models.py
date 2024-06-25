@@ -1,5 +1,7 @@
 import typing
 import uuid
+import logging
+
 from datetime import datetime
 from decimal import Decimal
 
@@ -19,6 +21,10 @@ from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.google.client import client as google_client
+from orienteering_accounts.rb.models import Transaction as BankTransaction
+
+
+logger = logging.getLogger(__name__)
 
 
 class LazyPermission(object):
@@ -317,6 +323,33 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         google_client.delete_member(email, group_email=group_email)
         if email2:
             google_client.delete_member(email2, group_email=group_email)
+
+    @classmethod
+    def process_bank_transaction(cls, bank_transaction: BankTransaction):
+        variable_symbol = bank_transaction.variable_symbol
+        amount = bank_transaction.amount.amount
+
+        if not variable_symbol or amount <= 0:
+            return
+
+        account = cls.objects.filter(registration_number=variable_symbol).first()
+
+        if account:
+            account.transactions.create(
+                amount=amount,
+                purpose=Transaction.TransactionPurpose.DEBTS
+            )
+            logger.info('Processed debts bank transactions', extra={'account': account, 'amount': amount})
+
+        if variable_symbol.endswith('2000'):
+            account = cls.objects.filter(registration_number=variable_symbol[:-4]).first()
+
+            if account:
+                account.transactions.create(
+                    amount=amount,
+                    purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+                )
+                logger.info('Processed club memebership bank transactions', extra={'account': account, 'amount': amount})
 
 
 class Transaction(BaseModel):

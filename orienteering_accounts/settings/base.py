@@ -134,7 +134,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': REDIS_LOCATION,
-        'TIMEOUT': 0,
+        'TIMEOUT': None,
         'OPTIONS': {
             'DB': REDIS_DATABASE_NUMBER_OFFSET + 1,
             'PASSWORD': '',
@@ -317,3 +317,10 @@ GOOGLE_GROUP_MEMBERS = 'clenove@skob-zlin.cz'
 GOOGLE_GROUP_ENTRIES = 'prihlasky@skob-zlin.cz'
 GOOGLE_GROUP_INFO = 'info@skob-zlin.cz'
 GOOGLE_GROUP_TRAINERS = 'treneri@skob-zlin.cz'
+
+RB_API_URL = 'https://api.rb.cz/rbcz/premium/api'
+RB_API_CLIENT_ID = config('PROJECT_RB_API_CLIENT_ID', '')
+RB_API_P12_CERT_PASSWORD = config('PROJECT_RB_API_P12_CERT_PASSWORD', '')
+RB_API_P12_CERT_PATH = config('PROJECT_RB_API_P12_CERT_PATH', '')
+
+LAST_BANK_TRANSACTION_READ_CACHE_KEY_PATTERN = 'last_bank_transaction_read:{bank_account_number}'
