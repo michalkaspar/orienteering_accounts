@@ -344,7 +344,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             registration_number = variable_symbol[4:]
             prefix = variable_symbol[:4]
 
-            account = cls.objects.filter(registration_number=registration_number).first()
+            account = cls.objects.filter(registration_number=f'TZL{registration_number}').first()
 
             if account:
 
@@ -353,6 +353,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                 account.bank_transactions.get_or_create(
                     remote_id=bank_transaction.entryReference,
                     defaults=dict(
+                        date=bank_transaction.valueDate,
                         amount=amount,
                         charged=should_charge,
                         transaction_data=bank_transaction.dict()
@@ -361,7 +362,6 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
                 if should_charge:
                     account.transactions.create(
-                        date=bank_transaction.valueDate,
                         amount=amount,
                         purpose=Transaction.TransactionPurpose.DEBTS
                     )

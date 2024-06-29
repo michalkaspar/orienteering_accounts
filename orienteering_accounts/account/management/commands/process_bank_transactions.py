@@ -28,7 +28,7 @@ class Command(BaseCommand):
         bank_transactions = RBBankAPIClient.get_transactions(from_date=last_read_timestamp, to_date=current_timestamp)
 
         with transaction.atomic():
-            for bank_transaction in bank_transactions:
+            for bank_transaction in reversed(bank_transactions):
                 logger.info(f'Processing bank transaction {bank_transaction.dict()}')
                 Account.process_bank_transaction(bank_transaction)
 
