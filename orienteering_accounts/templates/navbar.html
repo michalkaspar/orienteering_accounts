@@ -29,6 +29,9 @@
                   {% ifperm view_payment_period %}
                     <a class="dropdown-item" href="{% url "accounts:payment_period:list" %}">{% trans "Platební období" %}</a>
                   {% endifperm %}
+                  {% ifperm view_bank_transaction_list %}
+                      <a class="dropdown-item" href="{% url "accounts:bank_transactions" %}">{% trans "Bankovní transakce" %}</a>
+                  {% endifperm %}
               </div>
             </li>
         {% endifperm %}

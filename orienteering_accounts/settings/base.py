@@ -138,7 +138,7 @@ CACHES = {
         'OPTIONS': {
             'DB': REDIS_DATABASE_NUMBER_OFFSET + 1,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.DefaultParser',
         },
         'KEY_PREFIX': config('PROJECT_ENVIRONMENT_TYPE', default='')
     }

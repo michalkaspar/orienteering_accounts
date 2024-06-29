@@ -1,0 +1,35 @@
+{% extends 'base.html' %}{% load i18n core %}
+
+{% block main_content %}
+
+    <h1>{% trans "Bankovní transakce" %}</h1>
+
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Datum" %}</th>
+          <th scope="col">{% trans "Účet" %}</th>
+          <th scope="col">{% trans "Částka" %}</th>
+          <th scope="col">{% trans "Zaúčtováno" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bank_transaction in object_list %}
+        <tr>
+            <td class="c-table__cell">
+                {{ bank_transaction.date|format_date }}
+            </td>
+            <td class="c-table__cell">
+              <a href="{% url 'accounts:detail' bank_transaction.account.pk %}">{{ bank_transaction.account }}</a>
+            </td>
+            <td class="c-table__cell">
+                {{ bank_transaction.amount }}
+            </td>
+            <td class="c-table__cell">
+                {{ bank_transaction.charged|yesno:"Ano,Ne" }}
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock main_content %}

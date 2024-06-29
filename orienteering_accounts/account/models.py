@@ -21,7 +21,7 @@ from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.google.client import client as google_client
-from orienteering_accounts.rb.models import Transaction as BankTransaction
+from orienteering_accounts.rb.models import Transaction as BankTransactionSchema
 
 
 logger = logging.getLogger(__name__)
@@ -332,22 +332,38 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             google_client.delete_member(email2, group_email=group_email)
 
     @classmethod
-    def process_bank_transaction(cls, bank_transaction: BankTransaction):
+    def process_bank_transaction(cls, bank_transaction: BankTransactionSchema):
         variable_symbol = bank_transaction.variable_symbol
         amount = bank_transaction.amount.value
 
         if not variable_symbol or amount <= 0:
             return
 
-        if variable_symbol.startswith('1001'):
-            account = cls.objects.filter(registration_number=variable_symbol[4:]).first()
+        if variable_symbol.startswith('1001') or variable_symbol.startswith('1000'):
+
+            registration_number = variable_symbol[4:]
+            prefix = variable_symbol[:4]
+
+            account = cls.objects.filter(registration_number=registration_number).first()
 
             if account:
-                account.transactions.create(
+
+                should_charge = prefix == '1001'
+
+                account.bank_transactions.create(
                     amount=amount,
-                    purpose=Transaction.TransactionPurpose.DEBTS
+                    charged=should_charge,
+                    transaction_data=bank_transaction.dict()
                 )
-                logger.info('Processed debts bank transactions', extra={'account': account, 'amount': amount})
+
+                if should_charge:
+                    account.transactions.create(
+                        date=bank_transaction.valueDate,
+                        amount=amount,
+                        purpose=Transaction.TransactionPurpose.DEBTS
+                    )
+                    logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
+
 
 
 class Transaction(BaseModel):
@@ -375,3 +391,11 @@ class Transaction(BaseModel):
     @property
     def is_event(self):
         return self.purpose in [self.TransactionPurpose.ENTRY, self.TransactionPurpose.ENTRY_OTHER]
+
+
+class BankTransaction(BaseModel):
+    date = models.DateTimeField(verbose_name=_('Datum'))
+    account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='bank_transactions')
+    amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
+    charged = models.BooleanField(default=False, verbose_name=_('Zúčtováno'))
+    transaction_data = models.JSONField(verbose_name=_('Data transakce'))

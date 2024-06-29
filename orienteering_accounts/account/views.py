@@ -22,7 +22,7 @@ from requests import HTTPError
 from orienteering_accounts.account.filters import AccountFilter
 from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm, \
     TransactionEditForm, AccountPasswordChangeEditForm, AccountPasswordSetEditForm
-from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod
+from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod, BankTransaction
 from orienteering_accounts.account import perms
 from orienteering_accounts.account.forms import RoleForm
 from orienteering_accounts.account.models import Role
@@ -348,3 +348,10 @@ class ClubroomChipNumberExportView(LoginRequiredMixin, PermissionsRequiredMixin,
         response['Content-Disposition'] = 'attachment; filename=accounts.xlsx'
 
         return response
+
+
+class BankTransactionListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
+    model = BankTransaction
+    permissions_required = perms.bank_transaction_view_perms
+    template_name = 'account/bank_transaction/list.html'
+    ordering = ['-date']

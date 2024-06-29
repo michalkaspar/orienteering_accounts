@@ -84,3 +84,10 @@ def view_change_log(account):
 
 
 change_log_view_perms = [view_change_log]
+
+
+def view_bank_transaction_list(account):
+    return account.ifperm(PERMISSION_VIEW_BANK_TRANSACTION_LIST)
+
+
+bank_transaction_view_perms = [view_bank_transaction_list]
