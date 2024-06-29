@@ -350,10 +350,13 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
                 should_charge = prefix == '1001'
 
-                account.bank_transactions.create(
-                    amount=amount,
-                    charged=should_charge,
-                    transaction_data=bank_transaction.dict()
+                account.bank_transactions.get_or_create(
+                    remote_id=bank_transaction.entryReference,
+                    defaults=dict(
+                        amount=amount,
+                        charged=should_charge,
+                        transaction_data=bank_transaction.dict()
+                    )
                 )
 
                 if should_charge:
@@ -394,6 +397,7 @@ class Transaction(BaseModel):
 
 
 class BankTransaction(BaseModel):
+    remote_id = models.CharField(max_length=255, verbose_name=_('ID transakce'), unique=True, db_index=True)
     date = models.DateTimeField(verbose_name=_('Datum'))
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='bank_transactions')
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
