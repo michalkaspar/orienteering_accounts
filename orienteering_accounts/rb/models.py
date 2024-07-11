@@ -39,7 +39,7 @@ class CounterParties(BaseModel):
 
 
 class RelatedParties(BaseModel):
-    counterParty: CounterParties
+    counterParty: CounterParties = None
 
 
 class TransactionDetails(BaseModel):
