@@ -23,7 +23,7 @@
             <td>{{ transaction.created|format_datetime }}</td>
             <td>
                 {% if transaction.is_club_membership %}
-                    <span style="color: blue">{{ transaction.amount }} Kč</span>
+                    <span style="color: blue">{{ transaction.amount|floatformat }} Kč</span>
                 {% else %}
                     {% transaction_amount transaction.amount %}</td>
                 {% endif %}
