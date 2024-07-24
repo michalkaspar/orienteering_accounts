@@ -390,6 +390,10 @@ class Transaction(BaseModel):
     def is_event(self):
         return self.purpose in [self.TransactionPurpose.ENTRY, self.TransactionPurpose.ENTRY_OTHER]
 
+    @property
+    def is_club_membership(self):
+        return self.purpose == self.TransactionPurpose.CLUB_MEMBERSHIP
+
 
 class BankTransaction(BaseModel):
     remote_id = models.CharField(max_length=255, verbose_name=_('ID transakce'), unique=True, db_index=True)
