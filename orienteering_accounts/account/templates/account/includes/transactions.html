@@ -1,7 +1,7 @@
 {% load i18n transaction core account %}
 
 <h3>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h3>
-{% trans "QR pro úhradu dluhů" %}: <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
+<img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
 <h3>{% trans "Proběhlé transakce" %}:</h3>
 <table class="table table-bordered">
     <thead>
