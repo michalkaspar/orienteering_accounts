@@ -21,7 +21,7 @@ class CreditorReferenceInformation(BaseModel):
 class RemittanceInformation(BaseModel):
     unstructured: str = None
     creditorReferenceInformation: CreditorReferenceInformation = None
-    originatorMessage: str
+    originatorMessage: str = None
 
 
 class OrganisationIdentification(BaseModel):
