@@ -45,7 +45,7 @@ class RelatedParties(BaseModel):
 class TransactionDetails(BaseModel):
     references: dict
     relatedParties: RelatedParties
-    remittanceInformation: RemittanceInformation
+    remittanceInformation: RemittanceInformation = None
 
 
 class TransactionEntryDetails(BaseModel):
