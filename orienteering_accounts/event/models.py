@@ -170,7 +170,7 @@ class Event(models.Model):
 
         email_utils.send_email(
             recipient_list=settings.EVENT_PAYMENT_EMAILS_SEND_TO,
-            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - platba',
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.oris_id} {self.name} - platba',
             html_content=html_content
         )
 
