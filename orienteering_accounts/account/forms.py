@@ -78,14 +78,6 @@ class AccountEditForm(ModelForm):
         fields = ['role', 'email', 'email2', 'is_active', 'clubroom_chip_number']
 
 
-class AccountPasswordChangeEditForm(PasswordChangeForm, AccountEditForm):
-    pass
-
-
-class AccountPasswordSetEditForm(SetPasswordForm, AccountEditForm):
-    pass
-
-
 class RoleForm(ModelForm):
     permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.all(),

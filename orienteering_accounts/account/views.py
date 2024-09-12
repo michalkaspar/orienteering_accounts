@@ -5,6 +5,7 @@ import jwt
 from django import forms
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
@@ -21,14 +22,14 @@ from requests import HTTPError
 
 from orienteering_accounts.account.filters import AccountFilter
 from orienteering_accounts.account.forms import TransactionAddForm, AccountEditForm, PaymentPeriodForm, \
-    TransactionEditForm, AccountPasswordChangeEditForm, AccountPasswordSetEditForm
+    TransactionEditForm
 from orienteering_accounts.account.models import Transaction, Account, PaymentPeriod, BankTransaction
 from orienteering_accounts.account import perms
 from orienteering_accounts.account.forms import RoleForm
 from orienteering_accounts.account.models import Role
 
 
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordChangeView
 
 from orienteering_accounts.account.forms import LoginForm
 from orienteering_accounts.core.mixins import PermissionsRequiredMixin
@@ -154,6 +155,25 @@ class AccountEditView(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
                 self.object.remove_from_google_workspace_group(email2=form.email2_before)
                 self.object.add_to_google_workspace_group()
         return response
+
+
+class AccountPasswordSetView(LoginRequiredMixin, PasswordChangeView):
+    template_name = 'account/password_change.html'
+    permissions_required = perms.account_edit_perms
+    form_class = SetPasswordForm
+
+    def get_success_url(self):
+        return reverse('accounts:detail', args=[self.kwargs['pk']])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(user=Account.objects.get(pk=self.kwargs['pk']))
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data.update(user=Account.objects.get(pk=self.kwargs['pk']))
+        return context_data
 
 
 class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
