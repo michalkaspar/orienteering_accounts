@@ -28,7 +28,7 @@ class GoogleAPIClient:
         return [member for member in response.get('members', [])]
 
     def has_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> bool:
-        return member_email in [member['email'] for member in self.get_group_members(group_email=group_email)]
+        return member_email.lower() in [member['email'].lower() for member in self.get_group_members(group_email=group_email)]
 
     def add_member(self, member_email: str, group_email: str = settings.GOOGLE_GROUP_MEMBERS) -> None:
         if not self.has_member(member_email, group_email=group_email):
