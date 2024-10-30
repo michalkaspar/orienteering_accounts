@@ -1,5 +1,6 @@
 import typing
-from datetime import datetime
+
+from datetime import datetime, date
 from decimal import Decimal
 from enum import Enum
 
@@ -23,6 +24,46 @@ class RegisteredUser(BaseModel):
     gender: Gender = Field(alias='Gender')
     born_year: int = Field(alias='Born')
     oris_fee: int = Field(alias='Fee')
+
+
+class ClubMember(BaseModel):
+    id: int = Field(alias='ID')
+    user_id: int = Field(alias='UserID')
+    registration_number: str = Field(alias='RegNum')
+    allow_entry_self: int = Field(alias='AllowEntrySelf')
+    allow_entry_other: int = Field(alias='AllowEntryOther')
+    member_from: date = Field(alias='MemberFrom')
+    member_to: date = Field(alias='MemberTo')
+    valid: int = Field(alias='Valid')
+    username: str = Field(alias='Username')
+    first_name: str = Field(alias='FirstName')
+    last_name: str = Field(alias='LastName')
+    email: str = Field(alias='Email')
+    address_gps_lat: float = Field(alias='AddressGPSLat')
+    address_gps_lon: float = Field(alias='AddressGPSLon')
+    street: str = Field(alias='Street')
+    city: str = Field(alias='City')
+    zip_code: str = Field(alias='Zip')
+    country: str = Field(alias='Country')
+    birthday: date = Field(alias='Birthday')
+    phone: str = Field(alias='Phone')
+    gender: str = Field(alias='Gender')
+    personal_number: str = Field(alias='PersNum')
+    nationality: str = Field(alias='Nationality')
+    si: str = Field(alias='SI')
+    si_sport: int = Field(alias='SISport')
+    si_type: int = Field(alias='SIType')
+    si2: str = Field(alias='SI2')
+    si_sport2: int = Field(alias='SISport2')
+    si_type2: int = Field(alias='SIType2')
+    si3: str = Field(alias='SI3')
+    si_sport3: int = Field(alias='SISport3')
+    si_type3: int = Field(alias='SIType3')
+    iof_id: int = Field(alias='IOFID')
+    show_full_calendar: int = Field(alias='ShowFullCalendar')
+    my_regions_in_calendar: str = Field(alias='MyRegionsInCalendar')
+    do_not_receive_emails_from_oris: int = Field(alias='DoNotReceiveEmailsFromORIS')
+    notify_about_feedback_by_email: int = Field(alias='NotifyAboutFeedbackByEmail')
 
 
 class Organizer(BaseModel):

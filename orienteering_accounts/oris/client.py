@@ -1,5 +1,4 @@
 from collections import defaultdict
-from decimal import Decimal
 
 import requests
 import typing
@@ -11,7 +10,7 @@ from datetime import date
 from pydantic import ValidationError
 
 from orienteering_accounts.oris import choices as oris_choices
-from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry
+from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry, ClubMember
 
 logger = logging.getLogger(__name__)
 
@@ -188,5 +187,19 @@ class ORISClient:
             for _, club_dict in response_data['Clubs'].items():
                 if club_dict['ClubID'] == club_id:
                     return EventBalance(currency=response_data.get('Currency', 'CZK'), **club_dict)
+
+        return None
+
+    @classmethod
+    def get_club_member(cls, user_id: str, club_key: int = settings.CLUB_KEY) -> typing.Optional[ClubMember]:
+        params = {
+            'clubkey': club_key
+        }
+        response_data = cls.make_get_request('getClubUserList', params=params)
+
+        if response_data:
+            for _, club_user_dict in response_data['ClubMembers'].items():
+                if club_user_dict['UserID'] == user_id:
+                    return ClubMember(**club_user_dict)
 
         return None

@@ -7,6 +7,10 @@
 
     {% include "event/includes/event_entries_table.html" with preview=True %}
 
+    <label for="id_email_recipients">{% trans "Příjemci emailu:" %}</label>
+    <input type="text" readonly="readonly" class="form-control js-text-copy" id="id_email_recipients" value="{{ email_recipients }}" data-text-to-copy="{{ email_recipients }}" title="{% trans 'Zkopírováno do schránky' %}">
+
+    
 {% endblock main_content %}
 
 {% block right-sidebar %}

@@ -151,6 +151,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
         if created:
+            club_member = ORISClient.get_club_member(account.oris_id)
+            account.email = club_member.email
+            account.save(update_fields=['email'])  # We update only email from ORIS club member at the moment
+
             account.send_account_created_info_email()
             account.add_to_google_workspace_group()
 

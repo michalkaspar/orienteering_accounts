@@ -19,6 +19,8 @@
     <br>
     {% trans "Přihlášky:" %} <a href="https://oris.orientacnisporty.cz/PrehledPrihlasenych?id={{ event.oris_id }}&club={{ club_id }}">{% trans "odkaz" %}</a>
     <br>
+    {% trans "Přihlášky v IS:" %} <a href="{% url "events:entries" event.id %}">{% trans "odkaz" %}</a>
+    <br>
     {% trans "Místo konání:" %} {{ event.venue }}
     <br>
     {% trans "Region:" %} {{ event.region }}

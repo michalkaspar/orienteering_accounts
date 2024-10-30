@@ -78,6 +78,7 @@ class EventEntriesPreview(View):
 
         return render(request, 'event/event_entries_preview.html', {
             'event': event,
+            'email_recipients': ', '.join(filter(None, event.entries.values_list('account__email', flat=True)))
         })
 
 
