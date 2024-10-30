@@ -199,7 +199,7 @@ class ORISClient:
 
         if response_data:
             for _, club_user_dict in response_data['ClubMembers'].items():
-                if club_user_dict['UserID'] == user_id:
+                if club_user_dict['UserID'] == str(user_id):
                     return ClubMember(**club_user_dict)
 
         return None
