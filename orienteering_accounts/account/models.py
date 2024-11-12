@@ -70,6 +70,10 @@ class Role(BaseModel):
     def get_absolute_url(self):
         return reverse('accounts:role:list')
 
+    @classmethod
+    def get_member_role(cls) -> 'Role':
+        return cls.objects.get(name='Člen')
+
 
 class PaymentPeriod(BaseModel):
     date_from = models.DateField(verbose_name=_('Platnost od'))
@@ -153,6 +157,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         if created:
             club_member = ORISClient.get_club_member(account.oris_id)
             account.email = club_member.email
+            account.role = Role.get_member_role()
             account.save(update_fields=['email'])  # We update only email from ORIS club member at the moment
 
             account.send_account_created_info_email()
@@ -218,8 +223,6 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     @property
     def debts_variable_symbol(self):
         number = self.registration_number.replace('TZL', '')
-        if int(number[:2]) > 92:
-            return f'1001{number}'
         return f'1000{number}'
 
     @property

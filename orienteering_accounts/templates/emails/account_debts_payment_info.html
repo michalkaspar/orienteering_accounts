@@ -6,10 +6,10 @@
     <br>
     {% trans "Prosíme o platbu dluhů za podzim 2024 za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
-    {% trans "V dluzích jsou započítány závody jarní sezóny, soustředění a platby za oddílové ošacení." %}
+    {% trans "V dluzích jsou započítány prázdninové závody a závody podzimní sezóny, soustředění, platby za oddílové ošacení a objednané čelovky Lucifer." %}
     <br>
     <br>
-    {% trans "Termín pro uhrazení je do " %}<b>{% trans "31.7.2024." %}</b>
+    {% trans "Termín pro uhrazení je do " %}<b>{% trans "30.11.2024." %}</b>
     <br>
     {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="http://{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
     <br>
@@ -29,6 +29,9 @@
     {% trans "QR kód: " %}
     <br>
     <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
+    <br>
+    <br>
+    <b>{% trans "Je nezbytné použít uvedený variabilní symbol, jinak nedojde k autkmatickému spárování transakce." %}</b>
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}
