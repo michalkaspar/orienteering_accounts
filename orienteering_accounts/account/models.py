@@ -306,7 +306,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         email_utils.send_email(
             recipient_list=self.email_recipients,
-            subject=f'Platba dluhů jaro 2024 - {self.full_name } {self.registration_number}',
+            subject=f'Platba dluhů podzim 2024 - {self.full_name } {self.registration_number}',
             html_content=html_content
         )
 
