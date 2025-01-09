@@ -226,6 +226,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return f'1000{number}'
 
     @property
+    def club_membership_variable_symbol(self):
+        number = self.registration_number.replace('TZL', '')
+        return f'2025{number}'
+
+    @property
     def club_membership_payment_message(self):
         return f'OP {self.full_name}'
 
@@ -243,7 +248,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def club_membership_payment_qr_url(self):
-        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200"
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200&vs={self.club_membership_variable_symbol}"
 
     @property
     def rest_club_membership_payment_qr_url(self):

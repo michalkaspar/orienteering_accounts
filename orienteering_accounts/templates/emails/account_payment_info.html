@@ -4,51 +4,37 @@
 {% block body %}
     {% trans "Ahoj," %}<br>
     <br>
-    {% trans "Prosíme o platbu oddílových příspěvků pro nadcházející sezonu za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
+    {% trans "Prosíme o platbu oddílových příspěvků pro nadcházející sezonu 2025 za závodníka " %}{{ account.full_name }} {{ account.registration_number }}.
     <br>
     <br>
-    {% trans "Příspěvky pro letošní rok jsou stanoveny na 4000,- Kč pro ročníky narození do roku 2004 včetně, 2000,- Kč pro ostatní. Termín na úhradu byl stanoven do " %}<b>{% trans "15. 2. 2024" %}</b>{% trans " z důvodů registrace závodníků na novou sezónu. Slevy na každého dalšího člena rodiny jsou stále v platnosti, tzn. první člen -200 Kč, druhý -400 Kč, třetí -600 Kč." %}
+    {% trans "Příspěvky pro letošní rok jsou stanoveny na 4000,- Kč pro ročníky narození do roku 2005 včetně, 2000,- Kč pro ostatní. Termín na úhradu byl stanoven do " %}<b>{% trans "15. 2. 2025" %}</b>{% trans " z důvodů registrace závodníků na novou sezónu." %}
     <br>
-    {% trans "Registrace do jedné Sekce (typicky OB) je v ceně příspěvků. Registrace do každé další sekce (MTBO, LOB, Trail-O) je zpoplatněna částkou 200 Kč (bude započítáno do dluhů). Do závodní sezony budou členové zaregistrováni až po zaplacení příspěvků (a případných dluhů za rok 2023, které ještě nebyly zaplaceny! Při dodatečné registraci budou členům strženy do dluhů dodatečné náklady na registraci." %}
+    {% trans "U dospělých je jedinou novinkou, že se u této kategorie již od roku 2025 nebude započítávat sleva 200 Kč za dalšího člena rodiny či domácnosti. Takže například když dospělý zaplatí 2 000 Kč a má v klubu dvě děti do 20 let, tak první zaplatí 3 800 Kč druhé 3 600 Kč. U dětí a mládeže se sleva bude i nadále uplatňovat. Pokud jsou v klubu třeba jen dvě dospělé osoby žijící v jedné domácnosti tak každá zaplatí 2 000 Kč. Důvodem této změny je hlavně dle názoru celého výboru spravedlnost celého systému vybírání příspěvků" %}
+    <br>
+    {% trans "Registrace do jedné Sekce (typicky OB) je v ceně příspěvků. Registrace do každé další sekce (MTBO, LOB, Trail-O) je zpoplatněna částkou 200 Kč (bude započítáno do dluhů). Do závodní sezony budou členové zaregistrováni až po zaplacení příspěvků (a případných dluhů za rok 2024, které ještě nebyly zaplaceny! Při dodatečné registraci budou členům strženy do dluhů dodatečné náklady na registraci. Těm, kteří mají dluh větší než 100kč přijde další email s instrukcemi pro jeho uhrazení." %}
     <br>
     {% trans "Stejně jako loni, ani letos nebudou přijímány hotovostní platby, ale vše musí být uhrazeno na účet klubu. Pokud bude někdo chtít žádat potvrzení kvůli příspěvku od VZP, prosím kontaktujte Míšu Hančíkovou na adrese m.hancikova99@gmail.com. Do emailu prosím uveďte " %}<b>jméno závodníka, datum narození a datum, kdy byla platba provedena. </b>{% trans "Po připsání částky na náš účet Vám bude vystaveno a odesláno emailem potvrzení s datem transakce. Z těchto důvodů, pokud budete žádat pro více členů rodiny, proveďte platby každou zvlášť." %}
     <br>
     <br>
     <b>{% trans "Příspěvky můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
     <br>
-    <br>
     {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
     <br>
-    {% trans "Částka: " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
+    {% trans "Částka (bez rodinných slev): " %}{{ account.club_membership_payment_amount }} {% trans "Kč" %}
     <br>
     {% trans "Zpráva pro příjemce: " %}{{ account.club_membership_payment_message }}
+    <br>
+    {% trans "Variabilní symbol: " %}{{ account.club_membership_variable_symbol }}
     <br>
     {% trans "QR kód: " %}
     <br>
     <img alt="QR platba" src="{{ account.club_membership_payment_qr_url }}"/>
     <br>
-    {% if account.debts_payment_amount >= 1000 %}
-        <br>
-        {% trans "Dále evidujeme, že tvé dluhy přesahují částku 1000,- Kč." %}
-        <br>
-        <br>
-        <b>{% trans "Své dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
-        <br>
-        <br>
-        {% trans "Číslo účtu: " %}{{ club_bank_account_number }}
-        <br>
-        {% trans "Částka: " %}{{ account.debts_payment_amount }} {% trans "Kč" %}
-        <br>
-        {% trans "Zpráva pro příjemce: " %}{{ account.debts_payment_message }}
-        <br>
-        {% trans "QR kód: " %}
-        <br>
-        <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
-        <br>
-    {% endif %}
+    <br>
+    <b>{% trans "Je nezbytné použít uvedený variabilní symbol, jinak nedojde k automatickému spárování transakce." %}</b>
     <br>
     <br>
-    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>15. 2. 2024</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
+    {% trans "Pokud tvou platbu nezaevidujeme do " %}<b>15. 2. 2025</b>{% trans ", nebude ti umožněno se v ORISu přihlašovat na závody." %}
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}
