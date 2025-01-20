@@ -351,14 +351,17 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         if not variable_symbol or amount <= 0:
             return
 
-        if variable_symbol.startswith('1001') or variable_symbol.startswith('1000') or variable_symbol.startswith(datetime.now().year):
+        debts_variable_symbol_prefixes = ('1000', '1001')
+        club_membership_variable_symbol_prefix = str(datetime.now().year)
+
+        if variable_symbol.startswith(debts_variable_symbol_prefixes) or variable_symbol.startswith(club_membership_variable_symbol_prefix):
 
             registration_number = variable_symbol[4:]
 
             account = cls.objects.filter(registration_number=f'TZL{registration_number}').first()
 
             if account:
-                if variable_symbol.startswith(datetime.now().year):
+                if variable_symbol.startswith(club_membership_variable_symbol_prefix):
                     # Membership payment
                     account.transactions.create(
                         amount=amount,
