@@ -85,6 +85,10 @@ class PaymentPeriod(BaseModel):
     def __str__(self):
         return f'{format_date(self.date_from)} - {format_date(self.date_to)}'
 
+    @classmethod
+    def get_last_period(cls) -> 'PaymentPeriod':
+        return cls.objects.order_by('-date_to').first()
+
 
 class AccountManager(BaseUserManager):
 
@@ -344,7 +348,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             google_client.delete_member(email2, group_email=group_email)
 
     @classmethod
-    def process_bank_transaction(cls, bank_transaction: BankTransactionSchema):
+    def process_bank_transaction(cls, bank_transaction: BankTransactionSchema, payment_period: PaymentPeriod):
         variable_symbol = bank_transaction.variable_symbol
         amount = bank_transaction.amount.value
 
@@ -365,7 +369,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                     # Membership payment
                     account.transactions.create(
                         amount=amount,
-                        purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+                        purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+                        period=payment_period
                     )
                     purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
                     logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
