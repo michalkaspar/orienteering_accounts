@@ -351,29 +351,39 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         if not variable_symbol or amount <= 0:
             return
 
-        if variable_symbol.startswith('1001') or variable_symbol.startswith('1000'):
+        if variable_symbol.startswith('1001') or variable_symbol.startswith('1000') or variable_symbol.startswith(datetime.now().year):
 
             registration_number = variable_symbol[4:]
 
             account = cls.objects.filter(registration_number=f'TZL{registration_number}').first()
 
             if account:
+                if variable_symbol.startswith(datetime.now().year):
+                    # Membership payment
+                    account.transactions.create(
+                        amount=amount,
+                        purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+                    )
+                    purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
+                    logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
+                else:
+                    account.transactions.create(
+                        amount=amount,
+                        purpose=Transaction.TransactionPurpose.DEBTS
+                    )
+                    purpose = BankTransaction.BankTransactionPurpose.DEBTS
+                    logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
+
                 account.bank_transactions.get_or_create(
                     remote_id=bank_transaction.entryReference,
                     defaults=dict(
                         date=bank_transaction.valueDate,
                         amount=amount,
                         charged=True,
-                        transaction_data=bank_transaction.dict()
+                        transaction_data=bank_transaction.dict(),
+                        purpose=purpose,
                     )
                 )
-
-                account.transactions.create(
-                    amount=amount,
-                    purpose=Transaction.TransactionPurpose.DEBTS
-                )
-                logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
-
 
 
 class Transaction(BaseModel):
@@ -408,9 +418,15 @@ class Transaction(BaseModel):
 
 
 class BankTransaction(BaseModel):
+
+    class BankTransactionPurpose(models.TextChoices):
+        CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
+        DEBTS = 'DEBTS', _('Dluhy')
+
     remote_id = models.CharField(max_length=255, verbose_name=_('ID transakce'), unique=True, db_index=True)
     date = models.DateTimeField(verbose_name=_('Datum'))
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='bank_transactions')
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
     charged = models.BooleanField(default=False, verbose_name=_('Zúčtováno'))
     transaction_data = models.JSONField(verbose_name=_('Data transakce'))
+    purpose = models.CharField(max_length=50, choices=BankTransactionPurpose.choices, default=BankTransactionPurpose.DEBTS, verbose_name=_('Účel transakce'))

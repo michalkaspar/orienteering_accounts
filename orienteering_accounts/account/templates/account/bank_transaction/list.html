@@ -10,6 +10,7 @@
           <th scope="col">{% trans "Datum" %}</th>
           <th scope="col">{% trans "Účet" %}</th>
           <th scope="col">{% trans "Částka" %}</th>
+          <th scope="col">{% trans "Účel" %}</th>
           <th scope="col">{% trans "Zaúčtováno" %}</th>
         </tr>
       </thead>
@@ -24,6 +25,9 @@
             </td>
             <td class="c-table__cell">
                 {{ bank_transaction.amount }}
+            </td>
+            <td class="c-table__cell">
+                {{ bank_transaction.get_purpose_display }}
             </td>
             <td class="c-table__cell">
                 {{ bank_transaction.charged|yesno:"Ano,Ne" }}
