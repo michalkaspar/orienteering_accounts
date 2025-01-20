@@ -139,7 +139,7 @@ class BaseEntry(BaseModel):
     def account_kwargs(self) -> dict:
         return NotImplemented
 
-    def get_additional_services(self, additional_services: dict[int, dict]) -> list:
+    def get_additional_services(self, additional_services: typing.Dict[int, dict]) -> list:
         pass
 
 
@@ -164,7 +164,7 @@ class Entry(BaseEntry):
     def account_kwargs(self) -> dict:
         return dict(oris_id=self.oris_user_id)
 
-    def get_additional_services(self, additional_services: dict[int, dict]) -> list:
+    def get_additional_services(self, additional_services: typing.Dict[int, dict]) -> list:
         return additional_services.get(self.oris_user_id, [])
 
 
