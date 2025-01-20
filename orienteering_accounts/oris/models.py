@@ -179,10 +179,10 @@ class LegEntry(BaseEntry):
     def account_kwargs(self) -> dict:
         return dict(registration_number=self.registration_number)
 
-    def get_additional_services(self, additional_services: typing.Dict[int, dict]) -> list:
+    def get_additional_services(self, additional_services: typing.Dict[int, typing.List[dict]]) -> list:
         if not self.is_valid:
             return []
-        return [service_dict for service_dict in additional_services.values() if service_dict['RegNo'] == self.registration_number]
+        return [service_dict for service_dicts in additional_services.values() for service_dict in service_dicts if service_dict['RegNo'] == self.registration_number]
 
 
 class Result(BaseModel):
