@@ -132,16 +132,15 @@ class BaseEntry(BaseModel):
     oris_updated: typing.Optional[str] = Field(alias='UpdatedDateTime')
 
     @property
-    def has_additional_services(self) -> bool:
-        return False
-
-    @property
     def is_valid(self) -> bool:
         return NotImplemented
 
     @property
     def account_kwargs(self) -> dict:
         return NotImplemented
+
+    def get_additional_services(self, additional_services: dict[int, dict]) -> list:
+        pass
 
 
 class Entry(BaseEntry):
@@ -158,16 +157,15 @@ class Entry(BaseEntry):
         return v
 
     @property
-    def has_additional_services(self) -> bool:
-        return True
-
-    @property
     def is_valid(self) -> bool:
         return self.oris_user_id is not None
 
     @property
     def account_kwargs(self) -> dict:
         return dict(oris_id=self.oris_user_id)
+
+    def get_additional_services(self, additional_services: dict[int, dict]) -> list:
+        return additional_services.get(self.oris_user_id, [])
 
 
 class LegEntry(BaseEntry):
@@ -180,6 +178,11 @@ class LegEntry(BaseEntry):
     @property
     def account_kwargs(self) -> dict:
         return dict(registration_number=self.registration_number)
+
+    def get_additional_services(self, additional_services: dict[int, dict]) -> list:
+        if not self.is_valid:
+            return []
+        return [service_dict for service_dict in additional_services.values() if service_dict['RegNo'] == self.registration_number]
 
 
 class Result(BaseModel):

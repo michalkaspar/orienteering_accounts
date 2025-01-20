@@ -142,10 +142,7 @@ class Event(models.Model):
 
         for entry in ORISClient.get_event_entries(self.oris_id):
 
-            if entry.has_additional_services:
-                entry_additional_services = additional_services.get(entry.oris_user_id, [])
-            else:
-                entry_additional_services = []
+            entry_additional_services = entry.get_additional_services(additional_services)
 
             entry = Entry.upsert_from_oris(entry, self, entry_additional_services)
             if entry:
