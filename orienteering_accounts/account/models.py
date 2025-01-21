@@ -364,25 +364,27 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
             account = cls.objects.filter(registration_number=f'TZL{registration_number}').first()
 
+            transaction_kwargs = {
+                "amount": amount
+            }
+
             if account:
                 if variable_symbol.startswith(club_membership_variable_symbol_prefix):
                     # Membership payment
-                    account.transactions.create(
-                        amount=amount,
+                    transaction_kwargs.update(
                         purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
                         period=payment_period
                     )
                     purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
                     logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
                 else:
-                    account.transactions.create(
-                        amount=amount,
+                    transaction_kwargs.update(
                         purpose=Transaction.TransactionPurpose.DEBTS
                     )
                     purpose = BankTransaction.BankTransactionPurpose.DEBTS
                     logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
 
-                account.bank_transactions.get_or_create(
+                bank_transaction, created = account.bank_transactions.get_or_create(
                     remote_id=bank_transaction.entryReference,
                     defaults=dict(
                         date=bank_transaction.valueDate,
@@ -392,6 +394,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                         purpose=purpose,
                     )
                 )
+
+                if created:
+                    account.transactions.create(**transaction_kwargs)
 
 
 class Transaction(BaseModel):
