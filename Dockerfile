@@ -1,8 +1,15 @@
 FROM python:3.12
 
-ARG DEBIAN_FRONTEND=noninteractive
-
-ENV PYTHONUNBUFFERED 1
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1 \
+    VENV_PATH="/app/.venv" \
+    ACCEPT_EULA=Y
+ENV POETRY_CONFIG_DIR=$POETRY_HOME \
+    POETRY_CACHE_DIR=$POETRY_HOME/cache \
+    PATH="$POETRY_HOME/bin:$VENV_PATH/bin"
 
 RUN apt update && apt install -y gettext libpq-dev && rm -rf /var/lib/apt/lists/*
 
