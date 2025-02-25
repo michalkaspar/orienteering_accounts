@@ -362,7 +362,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
             registration_number = variable_symbol[4:]
 
-            account = cls.objects.filter(registration_number=f'TZL{registration_number}').first()
+            account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
 
             transaction_kwargs = {
                 "amount": amount
@@ -376,6 +376,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                         period=payment_period
                     )
                     purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
+
+                    if not account.is_active:
+                        account.is_active = True
+                        account.save(update_fields=['is_active'])
+
                     logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
                 else:
                     transaction_kwargs.update(
