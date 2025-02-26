@@ -18,7 +18,7 @@
         {% for bank_transaction in object_list %}
         <tr>
             <td class="c-table__cell">
-                {{ bank_transaction.date|format_date }}
+                {{ bank_transaction.date|format_datetime }}
             </td>
             <td class="c-table__cell">
               <a href="{% url 'accounts:detail' bank_transaction.account.pk %}">{{ bank_transaction.account }}</a>
