@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.core.management import BaseCommand
 
 from orienteering_accounts.account.models import Account
@@ -14,8 +15,8 @@ class Command(BaseCommand):
     def handle(self, **options):
         logger.info(f'Import of registered users from ORIS started')
 
-        registered_ob_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_OB)
-        registered_mtbo_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_MTBO)
+        registered_ob_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_OB, club_id=settings.CLUB_ID)
+        registered_mtbo_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_MTBO, club_id=settings.CLUB_ID)
 
         for registered_user in registered_ob_users + registered_mtbo_users:
             Account.upsert_from_oris(registered_user)

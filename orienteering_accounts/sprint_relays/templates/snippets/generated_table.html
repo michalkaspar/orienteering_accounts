@@ -1,0 +1,23 @@
+<div class="accordion">
+{% for roaster in roasters %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+            <button class="accordion-button collapsed" type="button" class="col-3" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                <span style="margin-right: 20px;">{{ forloop.counter }}</span> {{ roaster.name }}
+            </button>
+        </h2>
+        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}">
+            <div class="accordion-body">
+                {% for runner in roaster.runners %}
+                    <span style="color: {% if forloop.last%}gray{% endif %}">
+                        {{ runner.index }}. {{ runner.first_name }} {{ runner.last_name }} ({{ runner.licence }})
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% if forloop.counter == 40 %}
+    <div style="width: 100%; border-bottom: 2px solid red;"></div>
+    {% endif %}
+{% endfor %}
+</div>

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'orienteering_accounts.account',
     'orienteering_accounts.event',
     'orienteering_accounts.entry',
+    'orienteering_accounts.sprint_relays',
     'anymail',
     "crispy_forms",
     "crispy_bootstrap5"
@@ -124,11 +125,13 @@ REDIS_LOCATION = config('PROJECT_REDIS_LOCATION', default='redis://redis:6379')
 # Marketplace connector reserved databases <REDIS_DATABASE_NUMBER_OFFSET, REDIS_DATABASE_NUMBER_OFFSET+19>
 REDIS_DATABASE_NUMBER_OFFSET = config('PROJECT_REDIS_DATABASE_NUMBER_OFFSET', default=0, cast=int)
 
-# Caches
+REDIS_RANKING_DB_NUMBER = REDIS_DATABASE_NUMBER_OFFSET + 2
 
-MARKETPLACE_CACHE = 'marketplace'
-MARKETPLACE_REDIS_DB_NUMBER = REDIS_DATABASE_NUMBER_OFFSET + 2
-LISTING_RESULTS_CACHE = 'feed_results'
+REDIS_SPRINT_RELAY_RANKING_KEY = 'sprint_relay_ranking_{date}'
+REDIS_RANKING_CACHE_EXPIRATION = 60 * 60 * 24 * 180 # 6 months in seconds
+REDIS_CLUB_USER_RANKING_KEY = 'club_user_ranking'
+
+# Caches
 
 CACHES = {
     'default': {
@@ -141,7 +144,7 @@ CACHES = {
             'PARSER_CLASS': 'redis.connection.DefaultParser',
         },
         'KEY_PREFIX': config('PROJECT_ENVIRONMENT_TYPE', default='')
-    }
+    },
 }
 
 # Password validation
@@ -288,6 +291,7 @@ CLUB_ID = config('PROJECT_CLUB_ID', '')
 
 ORIS_SOURCE_TYPE_BULLETIN_ID = '1'
 
+ORIS_URL = config('PROJECT_ORIS_URL', '')
 ORIS_API_URL = config('PROJECT_ORIS_API_URL', '')
 ORIS_API_USERNAME = config('PROJECT_ORIS_API_USERNAME', '')
 ORIS_API_PASSWORD = config('PROJECT_ORIS_API_PASSWORD', '')

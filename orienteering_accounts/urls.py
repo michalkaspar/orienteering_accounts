@@ -28,7 +28,8 @@ urlpatterns = [
     path('', include('orienteering_accounts.account.urls')),  # TODO temporary
     path('settings/', SettingsEdit.as_view(), name='settings_detail'),
     path('accounts/', include('orienteering_accounts.account.urls')),
-    path('events/', include('orienteering_accounts.event.urls'))
+    path('events/', include('orienteering_accounts.event.urls')),
+    path('sprint-relays/', include('orienteering_accounts.sprint_relays.urls'))
 ]
 
 if settings.DEBUG:

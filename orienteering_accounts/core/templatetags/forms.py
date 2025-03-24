@@ -96,6 +96,8 @@ def form_field(bound_field, css_classes='', icon='', label_on_left=True, label=T
     if not isinstance(bound_field, list) and bound_field.is_hidden:
         css_classes += " u-hidden-visually"
 
+    css_classes += " form-label"
+
     context.update({
         'css_classes': css_classes,
         'icon': icon,

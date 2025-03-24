@@ -41,9 +41,7 @@
                 {% endif %}
               {{ field }}
               {% if field.help_text %}
-                <span class="input-help c-tooltip c-tooltip--right d-flex align-items-center" aria-label="{{ field.help_text|striptags }}">
-                  <i class="fa fa-question-circle u-ml-xsmall u-opacity-medium"></i>
-                </span>
+                <span class="form-text" aria-label="">{{ field.help_text|safe }}</span>
               {% endif %}
             </div>
           {% else %}

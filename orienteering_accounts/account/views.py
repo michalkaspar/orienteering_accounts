@@ -245,7 +245,7 @@ class TransactionEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
 
 
 class AccountTransactionsEmbeddedView(TemplateView):
-    template_name = 'account/embedded.html'
+    template_name = 'accountgenerator.html'
 
     def get(self, request, *args, **kwargs):
         token = request.GET.get('auth')

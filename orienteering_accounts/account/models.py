@@ -1,3 +1,4 @@
+import json
 import typing
 import uuid
 import logging
@@ -5,6 +6,7 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 
+import redis
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
@@ -21,6 +23,7 @@ from orienteering_accounts.oris import models as oris_models
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.google.client import client as google_client
+from orienteering_accounts.oris.models import UserRanking
 from orienteering_accounts.rb.models import Transaction as BankTransactionSchema
 
 
@@ -402,6 +405,12 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
                 if created:
                     account.transactions.create(**transaction_kwargs)
+
+    @property
+    def ranking(self) -> typing.Optional[UserRanking]:
+        ranking_db_client = redis.StrictRedis.from_url(f"{settings.REDIS_LOCATION}/{settings.REDIS_RANKING_DB_NUMBER}")
+        ranking = ranking_db_client.hget(settings.REDIS_CLUB_USER_RANKING_KEY, self.registration_number)
+        return UserRanking(**json.loads(ranking)) if ranking else None
 
 
 class Transaction(BaseModel):

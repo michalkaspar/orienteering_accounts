@@ -195,3 +195,20 @@ class EventBalance(BaseModel):
     to_be_paid: Decimal = Field(alias='ToBePaid')
     payment_vs: typing.Optional[str] = Field(alias='PaymentVS')
     currency: str
+
+
+class UserRanking(BaseModel):
+    index: int
+    date: date
+    first_name: str
+    last_name: str
+    points: Decimal
+    registration_number: str
+    coefficient: Decimal
+    last_index: int
+    gender: Gender
+    licence: typing.Optional[str] = None
+
+    @property
+    def club_code(self) -> str:
+        return self.registration_number[:3]

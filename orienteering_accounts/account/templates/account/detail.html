@@ -67,6 +67,13 @@
                 {% trans "Ročník" %}: {{ object.born_year }}
             </div>
         </div>
+        {% if object.ranking %}
+        <div class="row">
+            <div class="col">
+                {% trans "Ranking" %}: {% trans "Datum" %} {{ object.ranking.date|format_date }}, {% trans "Umístění" %} {{ object.ranking.index }}, {% trans "Body" %} {{ object.ranking.points }}, {% trans "Minule" %} {{ object.ranking.last_index }}
+            </div>
+        </div>
+        {% endif %}
         <div class="row">
             <div class="col">
                 {% include "account/includes/transactions.html" %}

@@ -1,4 +1,7 @@
+import csv
 from collections import defaultdict
+from enum import Enum
+from io import StringIO
 
 import requests
 import typing
@@ -10,7 +13,9 @@ from datetime import date
 from pydantic import ValidationError
 
 from orienteering_accounts.oris import choices as oris_choices
-from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry, ClubMember
+from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry, \
+    ClubMember, UserRanking, Gender
+from orienteering_accounts.core.utils import date as date_utils
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +58,12 @@ class ORISClient:
         return cls.make_request('POST', endpoint, data=data, **kwargs)
 
     @classmethod
-    def get_registered_users(cls, year: int = None, sport: int = oris_choices.SPORT_OB, club_id: int = settings.CLUB_ID) -> typing.List[RegisteredUser]:
+    def get_registered_users(cls,
+                             year: int = None,
+                             sport: int = oris_choices.SPORT_OB,
+                             club_id: typing.Optional[int] = None,
+                             licence: typing.Optional[str] = None,
+                             ) -> typing.List[RegisteredUser]:
         params = {
             'year': year or date.year,
             'sport': sport
@@ -64,8 +74,13 @@ class ORISClient:
 
         for reg_id, registered_user_dict in response_data.items():
 
-            if registered_user_dict.get('ClubID') == club_id:
-                registered_users.append(RegisteredUser(**registered_user_dict))
+            if licence and registered_user_dict.get('Lic') != licence:
+                continue
+
+            if club_id and registered_user_dict.get('ClubID') != club_id:
+                continue
+
+            registered_users.append(RegisteredUser(**registered_user_dict))
 
         return registered_users
 
@@ -203,3 +218,20 @@ class ORISClient:
                     return ClubMember(**club_user_dict)
 
         return None
+
+    @classmethod
+    def get_ranking(cls, gender: Gender, date_: typing.Optional[date], sport: int = oris_choices.SPORT_OB) -> typing.List[UserRanking]:
+        url = f'{settings.ORIS_URL}ranking_export?date={date_.isoformat()}&sport={sport}&gender={gender}&csv=1'
+
+        response = requests.get(url)
+        response.raise_for_status()
+
+        csv_data = response.text.encode(response.encoding).decode('utf-8')
+        csv_reader = csv.DictReader(
+            StringIO(csv_data),
+            delimiter=';',
+            fieldnames=['index', 'last_name', 'first_name', 'registration_number', 'points', 'coefficient', 'last_index']
+        )
+        next(csv_reader)    # skip header
+
+        return [UserRanking(**row, date=date_, gender=gender) for row in csv_reader]

@@ -1,0 +1,73 @@
+{% load i18n static forms %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Table with HTMX</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script>
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.getResponseHeader('HX-Trigger') !== 'showError') {
+                document.getElementById('error-container').innerHTML = '';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('button[hx-get]').addEventListener('click', function() {
+                document.getElementById('table-container').innerHTML = '';
+            });
+        });
+    </script>
+    <style>
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #0c67ed;
+            width: 45px;
+            height: 45px;
+            animation: spin 2s linear infinite;
+            opacity:0;
+            position: absolute;
+            top: 75%;
+            left: 48%;
+            transform: translate(-75%, -50%);
+        }
+        .loader.htmx-request {
+            opacity:1;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="col12" style="text-align: center">
+        <h1>{% trans "Generátor práva startu sprintových štafet" %}</h1>
+    </div>
+    <form id="ranking-form" style="display: flex; align-items: center; justify-content: center;">
+        <div class="col-3">
+            {% form_field ranking_form.date %}
+            <div class="mb-3">
+                {% form_field ranking_form.hosting show_help_text=True %}
+            </div>
+        </div>
+    </form>
+
+    <div id="error-container" class="col12 mb-3" style="text-align: center; color: red;"></div>
+
+    <div class="col12" style="text-align: center">
+        <button hx-get="{% url "sprint_relays:generate" %}" hx-target="#table-container" hx-swap="innerHTML" hx-include="[name='date'], [name='hosting']" hx-indicator="#loader" class="btn btn-primary">{% trans "Vypočítat" %}</button>
+    </div>
+
+    <div class="col12" style="display: flex; align-items: center; justify-content: center; margin-top: 20px;">
+        <div id="table-container" class="col-6"></div>
+    </div>
+
+    <div id="loader" class="loader"></div>
+</body>
+</html>
