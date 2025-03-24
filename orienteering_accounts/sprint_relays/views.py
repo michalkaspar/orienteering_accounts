@@ -43,7 +43,7 @@ class SprintRelaysGeneratorView(TemplateView):
 @dataclasses.dataclass
 class Roaster:
     name: str
-    runners: list[UserRanking]
+    runners: typing.List[UserRanking]
 
     @property
     def is_valid(self) -> bool:
