@@ -1,4 +1,5 @@
-import dataclasses
+import csv
+import io
 import json
 import typing
 from collections import defaultdict
@@ -7,27 +8,25 @@ from datetime import date
 import redis
 from django import forms
 from django.conf import settings
-from django.forms import Form
-from django.forms.widgets import TextInput, ChoiceWidget
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.views import View
 from django.views.generic import TemplateView
+from pydantic import BaseModel
 
-from orienteering_accounts.oris.models import UserRanking, Gender
+from orienteering_accounts.oris.models import UserRanking
 
+
+ranking_db_client = redis.Redis.from_url(
+    f"{settings.REDIS_LOCATION}/{settings.REDIS_RANKING_DB_NUMBER}",
+    decode_responses=True
+)
 
 class SprintRelaysGeneratorView(TemplateView):
     template_name = 'generator.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        ranking_db_client = redis.Redis.from_url(
-            f"{settings.REDIS_LOCATION}/{settings.REDIS_RANKING_DB_NUMBER}",
-            decode_responses=True
-        )
 
         date_choices = [
             date.fromisoformat(key.replace(settings.REDIS_SPRINT_RELAY_RANKING_KEY.format(date=''), ''))
@@ -40,8 +39,7 @@ class SprintRelaysGeneratorView(TemplateView):
         return context
 
 
-@dataclasses.dataclass
-class Roaster:
+class Roaster(BaseModel):
     name: str
     runners: typing.List[UserRanking]
 
@@ -69,14 +67,9 @@ class SprintRelayRankingForm(forms.Form):
         self.fields["date"].choices = date_choices
 
 
-class  SprintRelayGenerateView(View):
+class SprintRelayGenerateView(View):
 
     def get(self, request, *args, **kwargs):
-        ranking_db_client = redis.Redis.from_url(
-            f"{settings.REDIS_LOCATION}/{settings.REDIS_RANKING_DB_NUMBER}",
-            decode_responses=True
-        )
-
         valid_roasters: typing.List[Roaster] = []
         roasters_for_clubs = defaultdict(list)
         hosting: dict[str, str] = {}
@@ -123,6 +116,29 @@ class  SprintRelayGenerateView(View):
                     )
                 )
 
+        request.session['roasters'] = [roaster.json() for roaster in valid_roasters]
+
         return render(request, 'snippets/generated_table.html', {
             'roasters': valid_roasters,
         })
+
+
+class SprintRelayExportView(View):
+
+    def get(self, request, *args, **kwargs):
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=';')
+        writer.writerow(['poradi', 'stafeta', 'clen1', 'rank1', 'clen2', 'rank2', 'clen3', 'rank3', 'clen4', 'rank4'])
+
+        for i, roaster in enumerate(map(lambda r: Roaster.validate(json.loads(r)), request.session['roasters']), start=1):
+
+            row = [i, roaster.name]
+
+            for runner in roaster.runners:
+                row.extend([f"{runner.first_name} {runner.last_name}", runner.index])
+
+            writer.writerow(row)
+
+        response = HttpResponse(output.getvalue(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="sprint-stafety-pravo-startu.csv"'
+        return response

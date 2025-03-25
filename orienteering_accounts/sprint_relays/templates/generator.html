@@ -7,6 +7,7 @@
     <title>Dynamic Table with HTMX</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.2-web/css/all.css' %}">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script>
         document.addEventListener('htmx:afterRequest', function(event) {
@@ -61,7 +62,10 @@
     <div id="error-container" class="col12 mb-3" style="text-align: center; color: red;"></div>
 
     <div class="col12" style="text-align: center">
-        <button hx-get="{% url "sprint_relays:generate" %}" hx-target="#table-container" hx-swap="innerHTML" hx-include="[name='date'], [name='hosting']" hx-indicator="#loader" class="btn btn-primary">{% trans "Vypočítat" %}</button>
+        <button hx-get="{% url "sprint_relays:generate" %}" hx-target="#table-container" hx-swap="innerHTML" hx-include="[name='date'], [name='hosting']" hx-indicator="#loader" class="btn btn-primary">
+            {% trans "Vypočítat" %}
+        </button>
+        <div id="export-link"></div>
     </div>
 
     <div class="col12" style="display: flex; align-items: center; justify-content: center; margin-top: 20px;">

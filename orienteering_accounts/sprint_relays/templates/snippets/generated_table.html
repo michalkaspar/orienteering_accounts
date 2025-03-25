@@ -21,3 +21,6 @@
     {% endif %}
 {% endfor %}
 </div>
+<div id="export-link" hx-swap-oob="true" style="position: absolute; display: inline; left: 54%">
+    <a href="{% url "sprint_relays:export" %}"><i class="fa fa-file-csv" style="font-size: 2em; margin-top: 3px;"></i></a>
+</div>
