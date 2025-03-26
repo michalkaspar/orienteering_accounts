@@ -28,6 +28,9 @@ class Command(BaseCommand):
                     ranking_user.licence = "C"
                     other_users.append(ranking_user)
 
+                if ranking_user.registration_number in registration_number_to_hosting_club_code:
+                    ranking_user.hosting_club_code = registration_number_to_hosting_club_code[ranking_user.registration_number]
+
             #  Sort Elite users by last name
             elite_users.sort(key=lambda x: x.last_name)
 
@@ -40,6 +43,13 @@ class Command(BaseCommand):
 
         man_ranking = ORISClient.get_ranking(gender=Gender.MALE, date_=date_)
         woman_ranking = ORISClient.get_ranking(gender=Gender.FEMALE, date_=date_)
+        clubs = ORISClient.get_clubs()
+        club_hosting = ORISClient.get_club_hosting()
+
+        club_id_to_code = {club.id: club.abbr for club in clubs}
+        registration_number_to_hosting_club_code = {
+            hosting.from_reg_no: club_id_to_code[hosting.to_club_id] for hosting in club_hosting if hosting.is_valid
+        }
 
         registered_elite_users = ORISClient.get_registered_users(licence='E')
         registered_club_users = ORISClient.get_registered_users(club_id=settings.CLUB_ID)

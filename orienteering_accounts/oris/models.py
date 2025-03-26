@@ -208,7 +208,32 @@ class UserRanking(BaseModel):
     last_index: int
     gender: Gender
     licence: typing.Optional[str] = None
+    hosting_club_code: typing.Optional[str] = None
 
     @property
     def club_code(self) -> str:
-        return self.registration_number[:3]
+        return self.hosting_club_code or self.registration_number[:3]
+
+
+class Club(BaseModel):
+    id: int = Field(alias='ID')
+    name: str = Field(alias='Name')
+    abbr: str = Field(alias='Abbr')
+    region: str = Field(alias='Region')
+    number: str = Field(alias='Number')
+
+
+class ClubHosting(BaseModel):
+    id: int = Field(alias='ID')
+    from_club_id: int = Field(alias='FromClubID')
+    to_club_id: int = Field(alias='ToClubID')
+    from_approved: str = Field(alias='FromApproved')
+    to_approved: str = Field(alias='ToApproved')
+    from_reg_no: str = Field(alias='FromRegNo')
+    from_club_user_id: int = Field(alias='FromClubUserID')
+    user_id: int = Field(alias='UserID')
+    approved: int = Field(alias='Approved')
+
+    @property
+    def is_valid(self) -> bool:
+        return self.approved == 1

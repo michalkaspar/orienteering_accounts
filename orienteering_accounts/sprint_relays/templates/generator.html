@@ -10,12 +10,6 @@
     <link rel="stylesheet" href="{% static 'fontawesome-free-5.15.2-web/css/all.css' %}">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script>
-        document.addEventListener('htmx:afterRequest', function(event) {
-            if (event.detail.xhr.getResponseHeader('HX-Trigger') !== 'showError') {
-                document.getElementById('error-container').innerHTML = '';
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('button[hx-get]').addEventListener('click', function() {
                 document.getElementById('table-container').innerHTML = '';
@@ -53,13 +47,8 @@
     <form id="ranking-form" style="display: flex; align-items: center; justify-content: center;">
         <div class="col-3">
             {% form_field ranking_form.date %}
-            <div class="mb-3">
-                {% form_field ranking_form.hosting %}
-            </div>
         </div>
     </form>
-
-    <div id="error-container" class="col12 mb-3" style="text-align: center; color: red;"></div>
 
     <div class="col12" style="text-align: center">
         <button hx-get="{% url "sprint_relays:generate" %}" hx-target="#table-container" hx-swap="innerHTML" hx-include="[name='date'], [name='hosting']" hx-indicator="#loader" class="btn btn-primary">

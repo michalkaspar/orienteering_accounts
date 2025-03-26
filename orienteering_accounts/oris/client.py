@@ -14,8 +14,7 @@ from pydantic import ValidationError
 
 from orienteering_accounts.oris import choices as oris_choices
 from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, EventBalance, Result, LegEntry, BaseEntry, \
-    ClubMember, UserRanking, Gender
-from orienteering_accounts.core.utils import date as date_utils
+    ClubMember, UserRanking, Gender, Club, ClubHosting
 
 logger = logging.getLogger(__name__)
 
@@ -235,3 +234,31 @@ class ORISClient:
         next(csv_reader)    # skip header
 
         return [UserRanking(**row, date=date_, gender=gender) for row in csv_reader]
+
+    @classmethod
+    def get_clubs(cls) -> typing.List[Club]:
+        response_data = cls.make_get_request('getCSOSClubList')
+
+        clubs = []
+
+        if response_data:
+            for _, club_dict in response_data.items():
+                clubs.append(Club(**club_dict))
+
+        return clubs
+
+    @classmethod
+    def get_club_hosting(cls, sport: int = oris_choices.SPORT_OB, year: int = None) -> list[ClubHosting]:
+        params = {
+            'sport': sport,
+            'year': year or date.today().year
+        }
+        response_data = cls.make_get_request('getClubHosting', params=params)
+
+        club_hosting = []
+
+        if response_data:
+            for _, club_hosting_dict in response_data.items():
+                club_hosting.append(ClubHosting(**club_hosting_dict))
+
+        return club_hosting
