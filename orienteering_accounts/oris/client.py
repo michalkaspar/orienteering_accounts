@@ -248,7 +248,7 @@ class ORISClient:
         return clubs
 
     @classmethod
-    def get_club_hosting(cls, sport: int = oris_choices.SPORT_OB, year: int = None) -> list[ClubHosting]:
+    def get_club_hosting(cls, sport: int = oris_choices.SPORT_OB, year: int = None) -> typing.List[ClubHosting]:
         params = {
             'sport': sport,
             'year': year or date.today().year
