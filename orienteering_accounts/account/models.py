@@ -201,7 +201,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         today = date.today()
         return self.transactions.filter(
             purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
-            payment_period__date_to__gte=today,
+            period__date_to__gte=today,
         ).exists()
 
     @property
