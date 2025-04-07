@@ -3,7 +3,7 @@ import typing
 import uuid
 import logging
 
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 import redis
@@ -198,7 +198,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def club_membership_paid(self):
-        return self.transactions.filter(purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP).exists()
+        today = date.today()
+        return self.transactions.filter(
+            purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+            payment_period__date_to__gte=today,
+        ).exists()
 
     @property
     def debts_paid(self):
@@ -212,8 +216,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @classmethod
     def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet['Account']:
-        for account in cls.objects.all():
-            if not (account.debts_paid and account.club_membership_paid):
+        for account in cls.objects.filter(is_late_with_club_membership_payment=False):
+            if not account.club_membership_paid:
                 yield account
 
     def get_transactions_descendant(self):

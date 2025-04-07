@@ -1,0 +1,14 @@
+{% extends "emails/base.html" %}
+{% load i18n event %}
+
+{% block body %}
+    {% trans "Ahoj," %}<br>
+    <br>
+    {% trans "V ORIS byly odebrány startovní práva následujícím členům:" %}
+    <br>
+    {% for account in accounts %}
+        {{ account.registration_number }} - {{ account.first_name }} {{ account.last_name }}<br>
+    {% endfor %}
+    <br>
+
+{% endblock %}
