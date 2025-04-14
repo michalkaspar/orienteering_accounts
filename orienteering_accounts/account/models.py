@@ -3,7 +3,7 @@ import typing
 import uuid
 import logging
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 import redis
@@ -122,6 +122,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     si: str = models.CharField(max_length=30, verbose_name=_('SI'))
     born_year: int = models.PositiveIntegerField(verbose_name=_('Ročník'))
     is_late_with_club_membership_payment = models.BooleanField(default=False)
+    removed_from_google_workspace = models.BooleanField(default=False)
     init_balance = models.DecimalField(decimal_places=2, max_digits=9, default=Decimal(0))
     leader_key = models.UUIDField(null=True)
     email = models.EmailField(null=True)
@@ -218,6 +219,16 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet['Account']:
         for account in cls.objects.filter(is_late_with_club_membership_payment=False):
             if not account.club_membership_paid:
+                yield account
+
+    @classmethod
+    def get_accounts_to_remove_from_google_workspace(cls) -> QuerySet['Account']:
+        today = date.today()
+        for account in cls.objects.filter(removed_from_google_workspace=False):
+            if account.transactions.filter(
+                purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+                period__date_to__lt=today - timedelta(weeks=12),
+            ).exists():
                 yield account
 
     def get_transactions_descendant(self):
@@ -346,6 +357,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         google_client.add_member(self.email, group_email=group_email)
         if self.email2:
             google_client.add_member(self.email2, group_email=group_email)
+        self.removed_from_google_workspace = False
+        self.save(update_fields=['removed_from_google_workspace'])
 
     def remove_from_google_workspace_group(self, group_email: str = settings.GOOGLE_GROUP_MEMBERS, email: str = None, email2: str = None):
         email = email or self.email
@@ -353,6 +366,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         google_client.delete_member(email, group_email=group_email)
         if email2:
             google_client.delete_member(email2, group_email=group_email)
+        self.removed_from_google_workspace = True
+        self.save(update_fields=['removed_from_google_workspace'])
 
     @classmethod
     def process_bank_transaction(cls, bank_transaction: BankTransactionSchema, payment_period: PaymentPeriod):
