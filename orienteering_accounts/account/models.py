@@ -225,9 +225,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     def get_accounts_to_remove_from_google_workspace(cls) -> QuerySet['Account']:
         today = date.today()
         for account in cls.objects.filter(removed_from_google_workspace=False):
-            if account.transactions.filter(
+            if not account.transactions.filter(
                 purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
-                period__date_to__lt=today - timedelta(weeks=12),
+                period__date_to__gte=today - timedelta(weeks=12),
             ).exists():
                 yield account
 
