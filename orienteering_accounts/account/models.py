@@ -162,14 +162,17 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             defaults=registered_user.dict()
         )
 
-        if created:
-            club_member = ORISClient.get_club_member(account.oris_id)
-            account.email = club_member.email
-            account.role = Role.get_member_role()
-            account.save(update_fields=['email'])  # We update only email from ORIS club member at the moment
+        club_member = ORISClient.get_club_member(account.oris_id)
 
-            account.send_account_created_info_email()
+        if club_member.email != account.email:
+            account.remove_from_google_workspace_group()
+            account.email = club_member.email
+            account.save(update_fields=['email'])  # We update only email from ORIS club member at the moment
             account.add_to_google_workspace_group()
+
+        if created:
+            account.role = Role.get_member_role()
+            account.send_account_created_info_email()
 
     @property
     def full_name(self):

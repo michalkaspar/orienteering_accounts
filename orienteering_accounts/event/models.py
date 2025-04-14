@@ -198,7 +198,7 @@ class Event(models.Model):
 
         email_utils.send_email(
             recipient_list=[self.leader.email],
-            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - dluhy',
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.oris_id} {self.name} - dluhy',
             html_content=html_content
         )
 
@@ -230,7 +230,7 @@ class Event(models.Model):
 
         email_utils.send_email(
             recipient_list=[self.leader.email],
-            subject=f'{self.date.strftime("%d.%m.%Y")} {self.name} - přihlášky',
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.oris_id} {self.name} - přihlášky',
             html_content=html_content
         )
 
