@@ -60,7 +60,7 @@ class EntryBillForm(forms.ModelForm):
                 self.initial['debt'] = self.instance.debt_init
 
                 if self.instance.event.did_not_start(self.instance.account.registration_number):
-                    self.initial['debt_note'] = 'Neůčast na závodě.'
+                    self.initial['debt_note'] = 'Neúčast na závodě.'
 
             if not self.instance.other_debt:
                 self.initial['other_debt'] = Decimal(0)
