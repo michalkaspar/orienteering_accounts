@@ -25,11 +25,11 @@ class RemittanceInformation(BaseModel):
 
 
 class OrganisationIdentification(BaseModel):
-    bankCode: str
+    bankCode: str = None
 
 
 class Account(BaseModel):
-    accountNumber: str
+    accountNumber: str = None
 
 
 class CounterParties(BaseModel):
