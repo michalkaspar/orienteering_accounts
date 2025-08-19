@@ -82,6 +82,9 @@ class PaymentPeriod(BaseModel):
     date_from = models.DateField(verbose_name=_('Platnost od'))
     date_to = models.DateField(verbose_name=_('Platnost do'))
 
+    class Meta:
+        ordering = ('-date_to',)
+
     def get_absolute_url(self):
         return reverse('accounts:payment_period:list')
 
@@ -165,7 +168,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         club_member = ORISClient.get_club_member(account.oris_id)
 
         if club_member.email != account.email:
-            account.remove_from_google_workspace_group()
+            if account.email:
+                account.remove_from_google_workspace_group()
             account.email = club_member.email
             account.save(update_fields=['email'])  # We update only email from ORIS club member at the moment
             account.add_to_google_workspace_group()
@@ -390,7 +394,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
 
             transaction_kwargs = {
-                "amount": amount
+                "amount": amount,
+                "note": "Importováno z IB."
             }
 
             if account:
