@@ -4,7 +4,7 @@ from orienteering_accounts.account.views import (
     AccountListView, AccountExportView, AccountDetailView, AccountEditView, TransactionCreate, RoleListView,
     RoleAddView, RoleEditView, AccountTransactionsEmbeddedView, AccountTransactionsView, PaymentPeriodEditView,
     PaymentPeriodListView,
-    PaymentPeriodCreateView, TransactionEdit, ClubroomChipNumberView, ClubroomChipNumberExportView,
+    PaymentPeriodCreateView, TransactionEdit, TransactionDelete, ClubroomChipNumberView, ClubroomChipNumberExportView,
     BankTransactionListView, AccountPasswordSetView
 )
 
@@ -36,6 +36,7 @@ urlpatterns = [
     path('<int:pk>/password-change/', AccountPasswordSetView.as_view(), name='password_change'),
     path('<int:pk>/transaction/add/', TransactionCreate.as_view(), name='transaction_add'),
     path('transaction/<int:pk>/edit/', TransactionEdit.as_view(), name='transaction_edit'),
+    path('transaction/<int:pk>/delete/', TransactionDelete.as_view(), name='transaction_delete'),
     path('transactions/', AccountTransactionsEmbeddedView.as_view(), name='embedded'),
     path('transactions/<uuid:key>/', AccountTransactionsView.as_view(), name='transactions'),
     path('bank-transactions/', BankTransactionListView.as_view(), name='bank_transactions'),

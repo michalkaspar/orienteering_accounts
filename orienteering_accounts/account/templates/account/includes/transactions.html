@@ -35,6 +35,9 @@
                 {% ifperm edit_transaction %}
                     <td><a href="{% url "accounts:transaction_edit" transaction.pk %}">{% trans "Upravit" %}</a></td>
                 {% endifperm %}
+                {% ifperm delete_transaction %}
+                    <td><a href="{% url "accounts:transaction_delete" transaction.pk %}">{% trans "Smazat" %}</a></td>
+                {% endifperm %}
             {% endif %}
         </tr>
     {% endfor %}

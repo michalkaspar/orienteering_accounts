@@ -14,7 +14,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views import View
-from django.views.generic import CreateView, DetailView, UpdateView, ListView, TemplateView
+from django.views.generic import CreateView, DetailView, UpdateView, ListView, TemplateView, DeleteView
 from django.utils.translation import ugettext_lazy as _, gettext
 from django_filters.views import FilterView
 
@@ -236,6 +236,16 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
 
 class TransactionEdit(LoginRequiredMixin, PermissionsRequiredMixin, UpdateView):
     template_name = 'transaction/edit.html'
+    model = Transaction
+    form_class = TransactionEditForm
+    permissions_required = perms.transaction_edit_perms
+
+    def get_success_url(self):
+        return reverse('accounts:detail', args=[self.get_form().instance.account.pk])
+
+
+class TransactionDelete(LoginRequiredMixin, PermissionsRequiredMixin, DeleteView):
+    template_name = 'transaction/delete.html'
     model = Transaction
     form_class = TransactionEditForm
     permissions_required = perms.transaction_edit_perms
