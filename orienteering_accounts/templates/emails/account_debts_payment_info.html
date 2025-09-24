@@ -13,7 +13,7 @@
     <br>
     {% trans "Podrobný přehled dluhů za jednotlivé závody lze nalézt " %}<a href="http://{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
     <br>
-    {% trans "V případě nesrovnalostí či dotazů prosím kontaktuj Romana Zbranka, roman.zbranek@gmail.com." %}
+    {% trans "V případě nesrovnalostí či dotazů prosím kontaktuj Romana Zbranka, zbranek@skob-zlin.cz." %}
     <br>
     <br>
     <b>{% trans "Dluhy můžeš zaplatit pomocí následujících platebních údajů:" %}</b>
@@ -32,6 +32,10 @@
     <br>
     <br>
     <b>{% trans "Je nezbytné použít uvedený variabilní symbol, jinak nedojde k automatickému spárování transakce." %}</b>
+    <br>
+    <b>{% trans "Pokud nebudou dluhy zaplaceny, nebudete zaregistrování pro příští sezónu." %}</b>
+    <br>
+    {% trans "Dluhy je možné platit pomocí stejného variabilního symbolu kdykoli během roku." %}
     <br>
     <br>
     {% trans "Děkujeme za platbu." %}
