@@ -35,10 +35,12 @@
             <td>{% if transaction.author_name %}{{ transaction.author_name }}{% else %}{% trans "Neznámý" %}{% endif %}</td>
             {% if not preview %}
                 {% ifperm edit_transaction %}
-                    <td><a href="{% url "accounts:transaction_edit" transaction.pk %}">{% trans "Upravit" %}</a></td>
-                {% endifperm %}
-                {% ifperm delete_transaction %}
-                    <td><a href="{% url "accounts:transaction_delete" transaction.pk %}">{% trans "Smazat" %}</a></td>
+                    <td>
+                        <a href="{% url "accounts:transaction_edit" transaction.pk %}">{% trans "Upravit" %}</a>
+                        {% ifperm delete_transaction %}
+                            , <a href="{% url "accounts:transaction_delete" transaction.pk %}">{% trans "Smazat" %}</a>
+                        {% endifperm %}
+                    </td>
                 {% endifperm %}
             {% endif %}
         </tr>

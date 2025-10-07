@@ -41,7 +41,7 @@ class ChangeLog(BaseModel):
     change_type = models.CharField(max_length=255, choices=ChangeType.choices, default=ChangeType.UPDATE)
 
     def __str__(self):
-        return f'<a href="{self.instance.get_absolute_url()}">{self.instance}</a>'
+        return f'<a href="{self.instance.get_absolute_url()}">{self.instance}</a>' if self.instance else f'ID {self.instance_id} ({self.instance_type})'
 
     class Meta:
         ordering = ('-created',)
