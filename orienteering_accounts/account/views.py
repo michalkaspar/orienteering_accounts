@@ -252,7 +252,7 @@ class TransactionDelete(LoginRequiredMixin, PermissionsRequiredMixin, DeleteView
     permissions_required = perms.transaction_edit_perms
 
     def get_success_url(self):
-        return reverse('accounts:detail', args=[self.get_form().instance.account.pk])
+        return reverse('accounts:detail', args=[self.object.account.pk])
 
 
 class AccountTransactionsEmbeddedView(TemplateView):
