@@ -387,15 +387,16 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         debts_variable_symbol_prefixes = ('1000', '1001')
         club_membership_variable_symbol_prefix = str(datetime.now().year)
 
-        if variable_symbol.startswith(debts_variable_symbol_prefixes) or variable_symbol.startswith(club_membership_variable_symbol_prefix):
+        if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + (club_membership_variable_symbol_prefix,)):
 
-            registration_number = variable_symbol[4:]
+            registration_number = variable_symbol.strip().lstrip('0')[4:]
 
             account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
 
             transaction_kwargs = {
                 "amount": amount,
-                "note": "Importováno z IB."
+                "note": "Importováno z IB.",
+                "author_name": "Systém",
             }
 
             if account:
@@ -455,6 +456,7 @@ class Transaction(BaseModel):
     purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
     note = models.TextField(verbose_name=_('Poznámka'), blank=True, default='')
     origin_entry = models.ForeignKey('entry.Entry', on_delete=models.SET_NULL, null=True, related_name='transactions')
+    author_name = models.CharField(max_length=255, verbose_name=_('Autor změny'), blank=True, default='')
 
     def __str__(self):
         return f'{self.account} {self.get_purpose_display()} {self.amount}'

@@ -79,8 +79,9 @@ class EntryBillForm(forms.ModelForm):
             purpose=Transaction.TransactionPurpose.ENTRY,
             account=entry.account,
             defaults=dict(
-                amount=-entry.debt
-            )
+                amount=-entry.debt,
+                author_name=entry.event.leader.full_name if entry.event.leader else ''
+            ),
         )
         if entry.other_debt and entry.other_debt > Decimal(0):
             entry.transactions.update_or_create(
@@ -88,7 +89,8 @@ class EntryBillForm(forms.ModelForm):
                 account=entry.account,
                 defaults=dict(
                     amount=-entry.other_debt,
-                    note=entry.debt_note
+                    note=entry.debt_note,
+                    author_name=entry.event.leader.full_name if entry.event.leader else ''
                 )
             )
         else:

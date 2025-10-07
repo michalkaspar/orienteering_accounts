@@ -207,6 +207,7 @@ class TransactionCreate(LoginRequiredMixin, PermissionsRequiredMixin, CreateView
         try:
             with transaction.atomic():
                 created_transaction = form.save()
+                Transaction.objects.filter(pk=created_transaction.pk).update(author_name=self.request.user.full_name)
                 ChangeLog.objects.create(
                     owner_id=self.request.user.pk,
                     instance_type=ContentType.objects.get_for_model(Transaction),
