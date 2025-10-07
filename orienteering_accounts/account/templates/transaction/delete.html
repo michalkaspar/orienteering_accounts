@@ -1,0 +1,5 @@
+<form method="post">{% csrf_token %}
+    <p>Opravdu chcete smazat transakci "{{ object }}"?</p>
+    {{ form }}
+    <input type="submit" value="Confirm">
+</form>
