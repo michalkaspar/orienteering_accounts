@@ -225,19 +225,19 @@ LOGGING = {
         'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'debug.log'),
+            'filename': os.path.join(LOG_DIR, 'app_debug.log'),
             'formatter': 'verbose',
         },
         'file_info': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'info.log'),
+            'filename': os.path.join(LOG_DIR, 'app_info.log'),
             'formatter': 'verbose',
         },
         'file_error': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'error.log'),
+            'filename': os.path.join(LOG_DIR, 'app_error.log'),
             'formatter': 'verbose',
         },
         'console': {
