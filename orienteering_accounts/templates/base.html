@@ -44,10 +44,27 @@
             </ul>
             {% endif %}
             <div class="row" >
-                <div class="col-12">
+                <div class="col-12 col-md-10">
                 {% block main_content %}
                 {% endblock main_content %}
                 </div>
+                {% block right-sidebar %}
+                {% if not request.user.is_anonymous %}
+                    {% ifperm view_change_log %}
+                        <div class="col-12 col-md-2 d-none d-md-block" style="border-left: 2px solid black;">
+                            <h3>{% trans "Historie změn:" %}</h3>
+                            <div class="container">
+                            {% for change_log in request.user.change_logs.all %}
+                                <div class="row">{{ change_log|safe }}</div>
+                                <hr style="margin-top: 5px; margin-bottom: 5px; border-width: 2px;">
+                            {% empty %}
+                                <div class="row">{% trans "Žádné změny" %}</div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    {% endifperm %}
+                {% endif %}
+                {% endblock %}
             </div>
         </div>
     </body>
