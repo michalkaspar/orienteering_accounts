@@ -34,6 +34,9 @@ class RBBankAPIClient:
         )
         response.raise_for_status()
 
+        if response.status_code == 204:
+            return None
+
         return response.json()
 
     @classmethod
@@ -65,6 +68,9 @@ class RBBankAPIClient:
         response: dict = cls.make_get_request(endpoint, params=params)
 
         transactions = []
+
+        if not response:
+            return transactions
 
         for transaction_data in response['transactions']:
             transaction = Transaction(**transaction_data)

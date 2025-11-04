@@ -20,6 +20,7 @@ config = AutoConfig(os.environ.get('DJANGO_CONFIG_ENV_DIR'))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 APP_DIR = config('PROJECT_APP_DIR', default='')
+LOG_DIR = config('PROJECT_LOG_DIR', default='')
 
 PROJECT_NAME = config('PROJECT_NAME', default='orienteering_accounts')
 
@@ -224,19 +225,19 @@ LOGGING = {
         'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'filename': os.path.join(LOG_DIR, 'debug.log'),
             'formatter': 'verbose',
         },
         'file_info': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'info.log',
+            'filename': os.path.join(LOG_DIR, 'info.log'),
             'formatter': 'verbose',
         },
         'file_error': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': 'error.log',
+            'filename': os.path.join(LOG_DIR, 'error.log'),
             'formatter': 'verbose',
         },
         'console': {
