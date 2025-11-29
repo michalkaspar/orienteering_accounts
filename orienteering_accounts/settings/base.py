@@ -270,12 +270,14 @@ LOGGING = {
 # EMAILS #
 ###########
 
-EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-ANYMAIL = {
-    "MAILJET_API_KEY": config('PROJECT_MAILJET_API_KEY', default=''),
-    "MAILJET_SECRET_KEY": config("PROJECT_MAILJET_SECRET_KEY", default='')
-}
+EMAIL_HOST = "smtp-relay.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
 
 DEFAULT_FROM_EMAIL = config('PROJECT_DEFAULT_FROM_EMAIL', default='')
 
