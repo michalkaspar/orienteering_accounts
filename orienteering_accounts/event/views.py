@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import QuerySet
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView
@@ -23,8 +24,12 @@ from django.utils.translation import ugettext_lazy as _
 class EventList(LoginRequiredMixin, FilterView):
     permissions_required = perms.event_view_perms
     template_name = 'event/list.html'
-    queryset = Event.objects.order_by('-date')
     filterset_class = EventFilter
+
+    def get_queryset(self) -> QuerySet[Event]:
+        return Event.objects.filter(
+            date__gte=timezone.now() - timedelta(days=180)
+        ).order_by('-date')
 
 
 class EventDetail(LoginRequiredMixin, View):
