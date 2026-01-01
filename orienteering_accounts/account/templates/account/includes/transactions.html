@@ -2,62 +2,26 @@
 
 <h3>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h3>
 <img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
+
+{% now "Y" as current_year %}
+
 <h3>{% trans "Proběhlé transakce" %}:</h3>
-<table class="table table-bordered">
-    <thead>
-    <tr>
-        <th scope="col">{% trans "Datum a čas vzniku" %}</th>
-        <th scope="col">{% trans "Částka" %}</th>
-        <th scope="col">{% trans "Účel transakce" %}</th>
-        <th scope="col">{% trans "Období" %}</th>
-        <th scope="col">{% trans "Poznámka" %}</th>
-        <th scope="col">{% trans "Autor" %}</th>
-        {% if not preview %}
-            {% ifperm edit_transaction %}
-                <th scope="col">{% trans "Akce" %}</th>
-            {% endifperm %}
-        {% endif %}
-    </tr>
-    </thead>
-    <tbody>
-    {% for transaction in account.get_transactions_descendant %}
-        <tr>
-            <td>{{ transaction.created|format_datetime }}</td>
-            <td>
-                {% if transaction.is_club_membership %}
-                    <span style="color: blue">{{ transaction.amount|floatformat }} Kč</span>
-                {% else %}
-                    {% transaction_amount transaction.amount %}</td>
-                {% endif %}
-            <td>{{ transaction.get_purpose_display }}{% if transaction.is_event %} {{ transaction.origin_entry.event }}{% endif %}</td>
-            <td>{{ transaction.period|default:"-" }}</td>
-            <td>{{ transaction.note }}</td>
-            <td>{% if transaction.author_name %}{{ transaction.author_name }}{% else %}{% trans "Neznámý" %}{% endif %}</td>
-            {% if not preview %}
-                {% ifperm edit_transaction %}
-                    <td>
-                        <a href="{% url "accounts:transaction_edit" transaction.pk %}">{% trans "Upravit" %}</a>
-                        {% ifperm delete_transaction %}
-                            , <a href="{% url "accounts:transaction_delete" transaction.pk %}">{% trans "Smazat" %}</a>
-                        {% endifperm %}
-                    </td>
-                {% endifperm %}
-            {% endif %}
-        </tr>
-    {% endfor %}
-    {% if account.init_balance %}
-        <tr>
-            <td>01.04.2021</td>
-            <td>{% transaction_amount account.init_balance %}</td>
-            <td>{% trans "Dluh z minulých let" %}</td>
-            <td>* - 01.04.2021</td>
-            <td></td>
-            {% if not preview %}
-                {% ifperm edit_transaction %}
-                    <td></td>
-                {% endifperm %}
-            {% endif %}
-        </tr>
-    {% endif %}
-    </tbody>
-</table>
+
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="tab-this-year" data-toggle="tab" data-bs-toggle="tab" href="#pane-this-year" role="tab" aria-controls="pane-this-year" aria-selected="true">{% trans "Letos" %}</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="tab-others" data-toggle="tab" data-bs-toggle="tab" href="#pane-others" role="tab" aria-controls="pane-others" aria-selected="false">{% trans "Ostatní" %}</a>
+    </li>
+  </ul>
+
+<div class="tab-content" style="margin-top: 1rem;">
+    <div class="tab-pane fade show active" id="pane-this-year" role="tabpanel" aria-labelledby="tab-this-year">
+        {% include "account/includes/transactions_table.html" with show_this_year=True show_init_balance=False %}
+    </div>
+
+    <div class="tab-pane fade" id="pane-others" role="tabpanel" aria-labelledby="tab-others">
+        {% include "account/includes/transactions_table.html" with show_this_year=False show_init_balance=True %}
+    </div>
+</div>
