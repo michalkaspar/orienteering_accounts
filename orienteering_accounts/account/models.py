@@ -2,6 +2,7 @@ import json
 import typing
 import uuid
 import logging
+from collections import defaultdict
 
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -11,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-from django.db.models import Sum, QuerySet
+from django.db.models import Sum, QuerySet, Q
 from django.db.models.functions import Coalesce
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -238,8 +239,42 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             ).exists():
                 yield account
 
-    def get_transactions_descendant(self):
-        return self.transactions.order_by('-created')
+    def get_transactions_descendant(self, filters: Q = None) -> list['Transaction']:
+        qs = self.transactions.order_by('-created')
+
+        if filters:
+            qs = qs.filter(filters)
+
+        other_debts_by_origin_entry_id: dict[int, list[Transaction]] = defaultdict(list)
+
+        for other_entry_transaction in qs.filter(
+            purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+            origin_entry__isnull=False
+        ):
+            other_debts_by_origin_entry_id[other_entry_transaction.origin_entry_id].append(other_entry_transaction)
+
+        transactions = []
+
+        for transaction in qs.exclude(purpose=Transaction.TransactionPurpose.ENTRY_OTHER):
+            transaction.other_debts = other_debts_by_origin_entry_id.get(transaction.origin_entry_id, [])
+            # For ENTRY transactions with linked other debts, precompute total amount (base + others)
+            if transaction.purpose == Transaction.TransactionPurpose.ENTRY and transaction.other_debts:
+                others_sum = sum((d.amount for d in transaction.other_debts), Decimal('0'))
+                transaction.total_with_others = (transaction.amount or Decimal('0')) + others_sum
+            transactions.append(transaction)
+
+        return transactions
+
+    def get_transactions_descendant_this_year(self) -> list['Transaction']:
+        return self.get_transactions_descendant(
+            filters=Q(created__year=datetime.now().year)
+        )
+
+    def get_transactions_descendant_other(self) -> list['Transaction']:
+        # Return all transactions except those from the current year
+        return self.get_transactions_descendant(
+            filters=~Q(created__year=datetime.now().year)
+        )
 
     @property
     def debts_payment_qr_url(self):
@@ -472,6 +507,10 @@ class Transaction(BaseModel):
     @property
     def is_event(self):
         return self.purpose in [self.TransactionPurpose.ENTRY, self.TransactionPurpose.ENTRY_OTHER]
+
+    @property
+    def is_entry(self) -> bool:
+        return self.purpose == self.TransactionPurpose.ENTRY
 
     @property
     def is_club_membership(self):

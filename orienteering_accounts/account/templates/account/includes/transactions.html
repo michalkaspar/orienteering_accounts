@@ -18,10 +18,10 @@
 
 <div class="tab-content" style="margin-top: 1rem;">
     <div class="tab-pane fade show active" id="pane-this-year" role="tabpanel" aria-labelledby="tab-this-year">
-        {% include "account/includes/transactions_table.html" with show_this_year=True show_init_balance=False %}
+        {% include "account/includes/transactions_table.html" with transactions=account.get_transactions_descendant_this_year show_init_balance=False %}
     </div>
 
     <div class="tab-pane fade" id="pane-others" role="tabpanel" aria-labelledby="tab-others">
-        {% include "account/includes/transactions_table.html" with show_this_year=False show_init_balance=True %}
+        {% include "account/includes/transactions_table.html" with transactions=account.get_transactions_descendant_other show_init_balance=True %}
     </div>
 </div>
