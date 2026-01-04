@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from orienteering_accounts.account.models import Account
+from orienteering_accounts.account.models import Account, Transaction
 from orienteering_accounts.oris.models import BaseEntry
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class Entry(models.Model):
         return f'{self.event} entry {self.account}'
 
     @classmethod
-    def upsert_from_oris(cls, entry: BaseEntry, event: 'Event', additional_services: dict = {}) -> typing.Optional['Entry']:
+    def upsert_from_oris(cls, entry: BaseEntry, event: 'Event', additional_services: list = None) -> typing.Optional['Entry']:
         if not entry.is_valid:
             return
 
@@ -42,7 +42,7 @@ class Entry(models.Model):
             logger.warning(f'Entry for event {event} not created, account ORIS ID {entry.account_kwargs} does not exists.')
             return
 
-        instance, _ = cls.objects.update_or_create(
+        instance, created = cls.objects.update_or_create(
             account_id=account.pk,
             event_id=event.pk,
             defaults={
@@ -50,6 +50,27 @@ class Entry(models.Model):
                 **entry.dict(exclude={'oris_user_id', 'registration_number'})
             }
         )
+
+        if created:
+            instance.transactions.create(
+                account=entry.account,
+                amount=-instance.fee_after_club_discount,
+                purpose=Transaction.TransactionPurpose.ENTRY,
+                author_name="System",
+                is_future=True
+            )
+
+            if additional_services:
+                for service in additional_services:
+                    instance.transactions.create(
+                        account=entry.account,
+                        amount=-Decimal(service['TotalFee']),
+                        purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                        author_name="System",
+                        note=service['NameCZ'],
+                        is_future=True
+                    )
+
 
         return instance
 
@@ -75,7 +96,7 @@ class Entry(models.Model):
         return fee
 
     @property
-    def debt_init(self):
+    def additional_services_cost_sum(self) -> Decimal:
         additional_services_cost_sum = Decimal(0)
 
         self.additional_services: list
@@ -84,6 +105,8 @@ class Entry(models.Model):
             for service in self.additional_services:
                 additional_services_cost_sum += Decimal(service['TotalFee'])
 
-        # FIXME solve late entries properly
+        return additional_services_cost_sum
 
-        return self.fee_after_club_discount + additional_services_cost_sum
+    @property
+    def debt_init(self):
+        return self.fee_after_club_discount + self.additional_services_cost_sum

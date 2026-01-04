@@ -148,7 +148,9 @@ class Event(models.Model):
             if entry:
                 account_ids.add(entry.account_id)
 
-        self.entries.exclude(account_id__in=account_ids).delete()
+        for entry in self.entries.exclude(account_id__in=account_ids):
+            entry.transactions.filter(is_future=True).delete()
+            entry.delete()
 
     def send_payment_info_email(self):
 

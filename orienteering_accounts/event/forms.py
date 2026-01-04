@@ -73,13 +73,20 @@ class EntryBillForm(forms.ModelForm):
 
         return debt_note
 
+    def clean_debt(self):
+        debt = self.cleaned_data['debt']
+        if debt - self.instance.additional_services_cost_sum < Decimal(0):
+            raise ValidationError("Dluh nemůže být nižší než součet doplňkových služeb.")
+        return debt
+
     def save(self, *args, **kwargs):
         entry = super().save(*args, **kwargs)
         entry.transactions.update_or_create(
             purpose=Transaction.TransactionPurpose.ENTRY,
             account=entry.account,
             defaults=dict(
-                amount=-entry.debt,
+                amount=-(entry.debt - entry.additional_services_cost_sum),
+                is_future=False,
                 author_name=entry.event.leader.full_name if entry.event.leader else ''
             ),
         )
@@ -98,7 +105,18 @@ class EntryBillForm(forms.ModelForm):
             entry.transactions.filter(
                 purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                 account=entry.account
+            ).exclude(
+                author_name="System"
             ).delete()
+
+        # Additional services
+        entry.transactions.filter(
+            purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+            account=entry.account,
+            author_name="System"
+        ).update(
+            is_future=False
+        )
 
         return entry
 

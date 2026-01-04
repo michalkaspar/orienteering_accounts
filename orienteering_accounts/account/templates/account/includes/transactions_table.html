@@ -22,12 +22,16 @@
     {% for transaction in transactions %}
         {# Main row. If ENTRY with other_debts, the whole row toggles a collapse with details. #}
         <tr
-            {% if transaction.is_entry and transaction.other_debts %}
-                class="tx-toggle-row"
+            {% if transaction.is_entry %}
+                {% if transaction.other_debts %}
+                class="tx-toggle-row {% if transaction.is_future %}future{% endif %}"
                 style="cursor: pointer;"
                 data-toggle="collapse" data-bs-toggle="collapse"
                 data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
                 aria-controls="tx-details-{{ transaction.id }}" aria-expanded="false"
+                {% elif transaction.is_future %}
+                style="background-color: #fff4e5;"
+                {% endif %}
             {% endif %}
         >
             <td>{{ transaction.created|format_datetime }}</td>
@@ -154,15 +158,29 @@
 table .tx-toggle-row td {
     background-color: #f2f6ff; /* výraznější podbarvení */
 }
+table .tx-toggle-row.future td {
+    background-color: #fff6e9; /* výraznější podbarvení */
+}
 table .tx-toggle-row:hover td {
     background-color: #e6efff; /* silnější zvýraznění při hoveru */
+}
+table .tx-toggle-row.future:hover td {
+    background-color: #fff3e0; /* silnější zvýraznění při hoveru */
 }
 /* Tenčí levý proužek pro lepší orientaci */
 table .tx-toggle-row td:first-child {
     border-left: 5px solid #b6d4fe; /* o něco výraznější akcentní proužek */
 }
+
+table .tx-toggle-row.future td:first-child {
+    border-left: 5px solid #feeab6;
+}
 /* Když je rozbaleno, mírně zvýraznit pozadí */
 tr.tx-toggle-row[aria-expanded="true"] td {
     background-color: #e0eaff; /* ještě o stupeň výraznější při rozbalení */
+}
+/* Když je rozbaleno, mírně zvýraznit pozadí */
+tr.tx-toggle-row.future[aria-expanded="true"] td {
+    background-color: #fdf1db; /* ještě o stupeň výraznější při rozbalení */
 }
 </style>

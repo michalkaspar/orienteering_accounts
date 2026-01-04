@@ -497,6 +497,7 @@ class Transaction(BaseModel):
     note = models.TextField(verbose_name=_('Poznámka'), blank=True, default='')
     origin_entry = models.ForeignKey('entry.Entry', on_delete=models.SET_NULL, null=True, related_name='transactions')
     author_name = models.CharField(max_length=255, verbose_name=_('Autor změny'), blank=True, default='')
+    is_future = models.BooleanField(default=False, verbose_name=_('Budoucí transakce'))
 
     def __str__(self):
         return f'{self.account} {self.get_purpose_display()} {self.amount}'
