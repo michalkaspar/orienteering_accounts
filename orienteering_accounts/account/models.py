@@ -375,7 +375,22 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         email_utils.send_email(
             recipient_list=self.email_recipients,
-            subject=f'Platba dluhů 2025 - {self.full_name } {self.registration_number}',
+            subject=f'Upozornění na záporný zůstatek v IS - {self.full_name} {self.registration_number}',
+            html_content=html_content
+        )
+
+    def send_entry_rights_removed_info_email(self):
+        context = {
+            'account': self,
+            'club_bank_account_number': f'{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}',
+            'domain': settings.PROJECT_DOMAIN
+        }
+
+        html_content = render_to_string('emails/account_entry_rights_removed_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=self.email_recipients,
+            subject=f'Odebrání přihlašovacích práv v ORIS - {self.full_name} {self.registration_number}',
             html_content=html_content
         )
 

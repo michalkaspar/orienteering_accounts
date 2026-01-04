@@ -4,11 +4,12 @@
 {% block body %}
     {% trans "Ahoj," %}<br>
     <br>
-    {% trans "U závodníka " %}{{ account.full_name }} {{ account.registration_number }} {% trans "evidujeme záporný zůstatek na účtu v IS." %}.
+    {% trans "U závodníka " %}{{ account.full_name }} {{ account.registration_number }} {% trans "bylo zablokováno přihlašování na závody v ORIS, neboť zůstatek na účtu v IS klesnul pod -2000 Kč." %}.
     <br>
     <br>
     {% trans "Aktuální zůstatek účtu je " %}{{ account.balance }} {% trans "Kč." %}
     <br>
+    {% trans "K odblokování přihlašování dojde po připsání dlužné částky na bankovní účet SKOB Zlín." %}
     <br>
     {% trans "Podrobný přehled transakcí lze nalézt " %}<a href="http://{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
     <br>
@@ -31,8 +32,6 @@
     <br>
     <br>
     <b>{% trans "Je nezbytné použít uvedený variabilní symbol, jinak nedojde k automatickému spárování transakce." %}</b>
-    <br>
-    <b>{% trans "Pokud stav konta klesne pod -2000 Kč, bude ti zablokováno přihlašování na závody v ORIS." %}</b>
     <br>
     {% trans "Dluhy je možné platit pomocí stejného variabilního symbolu kdykoli během roku." %}
     <br>
