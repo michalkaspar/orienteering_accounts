@@ -464,8 +464,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                         account.is_active = True
                         account.save(update_fields=['is_active'])
 
-                    if account.remove_from_google_workspace:
-                        account.remove_from_google_workspace = False
+                    if account.removed_from_google_workspace:
+                        account.removed_from_google_workspace = False
                         account.add_to_google_workspace_group()
                         account.save(update_fields=['remove_from_google_workspace'])
 
