@@ -8,7 +8,7 @@ import typing
 import logging
 
 from django.conf import settings
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import ValidationError
 
