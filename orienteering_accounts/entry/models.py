@@ -51,25 +51,26 @@ class Entry(models.Model):
             }
         )
 
-        if created:
-            instance.transactions.create(
-                account=entry.account,
-                amount=-instance.fee_after_club_discount,
-                purpose=Transaction.TransactionPurpose.ENTRY,
-                author_name="System",
-                is_future=True
-            )
-
-            if additional_services:
-                for service in additional_services:
-                    instance.transactions.create(
-                        account=entry.account,
-                        amount=-Decimal(service['TotalFee']),
-                        purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
-                        author_name="System",
-                        note=service['NameCZ'],
-                        is_future=True
-                    )
+        #  TODO credit system - disable for now
+        #if created:
+        #    instance.transactions.create(
+        #        account=entry.account,
+        #        amount=-instance.fee_after_club_discount,
+        #        purpose=Transaction.TransactionPurpose.ENTRY,
+        #        author_name="System",
+        #        is_future=True
+        #    )
+#
+        #    if additional_services:
+        #        for service in additional_services:
+        #            instance.transactions.create(
+        #                account=entry.account,
+        #                amount=-Decimal(service['TotalFee']),
+        #                purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+        #                author_name="System",
+        #                note=service['NameCZ'],
+        #                is_future=True
+        #            )
 
 
         return instance

@@ -178,6 +178,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         if created:
             account.role = Role.get_member_role()
             account.send_account_created_info_email()
+            account.save()
 
     @property
     def full_name(self):
@@ -292,7 +293,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     @property
     def club_membership_variable_symbol(self):
         number = self.registration_number.replace('TZL', '')
-        return f'2025{number}'
+        return f'{date.year}{number}'
 
     @property
     def club_membership_payment_message(self):
@@ -435,9 +436,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             return
 
         debts_variable_symbol_prefixes = ('1000', '1001')
-        club_membership_variable_symbol_prefix = str(datetime.now().year)
+        current_year = datetime.now().year
+        club_membership_variable_symbol_prefixes = (str(current_year), str(current_year - 1))
 
-        if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + (club_membership_variable_symbol_prefix,)):
+        if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + club_membership_variable_symbol_prefixes):
 
             registration_number = variable_symbol.strip().lstrip('0')[4:]
 
@@ -450,7 +452,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             }
 
             if account:
-                if variable_symbol.startswith(club_membership_variable_symbol_prefix):
+                if variable_symbol.startswith(club_membership_variable_symbol_prefixes):
                     # Membership payment
                     transaction_kwargs.update(
                         purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,

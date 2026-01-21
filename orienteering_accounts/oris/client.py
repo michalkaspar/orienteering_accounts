@@ -8,7 +8,7 @@ import typing
 import logging
 
 from django.conf import settings
-from datetime import date
+from datetime import datetime
 
 from pydantic import ValidationError
 
@@ -64,12 +64,15 @@ class ORISClient:
                              licence: typing.Optional[str] = None,
                              ) -> typing.List[RegisteredUser]:
         params = {
-            'year': year or date.year,
+            'year': year or datetime.now().year,
             'sport': sport
         }
         response_data = cls.make_get_request('getRegistration', params=params)
 
         registered_users = []
+
+        if not response_data:
+            return registered_users
 
         for reg_id, registered_user_dict in response_data.items():
 
