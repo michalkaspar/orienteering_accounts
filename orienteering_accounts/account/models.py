@@ -240,13 +240,13 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             ).exists():
                 yield account
 
-    def get_transactions_descendant(self, filters: Q = None) -> list['Transaction']:
+    def get_transactions_descendant(self, filters: Q = None) -> typing.List['Transaction']:
         qs = self.transactions.order_by('-created')
 
         if filters:
             qs = qs.filter(filters)
 
-        other_debts_by_origin_entry_id: dict[int, list[Transaction]] = defaultdict(list)
+        other_debts_by_origin_entry_id: dict[int, typing.List[Transaction]] = defaultdict(list)
 
         for other_entry_transaction in qs.filter(
             purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
@@ -266,12 +266,12 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         return transactions
 
-    def get_transactions_descendant_this_year(self) -> list['Transaction']:
+    def get_transactions_descendant_this_year(self) -> typing.List['Transaction']:
         return self.get_transactions_descendant(
             filters=Q(created__year=datetime.now().year)
         )
 
-    def get_transactions_descendant_other(self) -> list['Transaction']:
+    def get_transactions_descendant_other(self) -> typing.List['Transaction']:
         # Return all transactions except those from the current year
         return self.get_transactions_descendant(
             filters=~Q(created__year=datetime.now().year)
