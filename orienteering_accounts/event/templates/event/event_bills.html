@@ -11,10 +11,42 @@
         <table class="table table-bordered">
         <thead>
             <tr>
-                <th>{% trans "Jméno a Příjmení" %}</th>
-                <th>{% trans "Registrační číslo" %}</th>
-                <th>{% trans "Kategorie" %}</th>
-                <th>{% trans "Startovné" %}</th>
+                <th>
+                    <a href="?sort=name&order={% if current_sort == 'name' and current_order == 'asc' %}desc{% else %}asc{% endif %}" 
+                       style="text-decoration: none; color: inherit;">
+                        {% trans "Jméno a Příjmení" %}
+                        {% if current_sort == 'name' %}
+                            {% if current_order == 'asc' %}▲{% else %}▼{% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort=registration_number&order={% if current_sort == 'registration_number' and current_order == 'asc' %}desc{% else %}asc{% endif %}" 
+                       style="text-decoration: none; color: inherit;">
+                        {% trans "Registrační číslo" %}
+                        {% if current_sort == 'registration_number' %}
+                            {% if current_order == 'asc' %}▲{% else %}▼{% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort=category&order={% if current_sort == 'category' and current_order == 'asc' %}desc{% else %}asc{% endif %}" 
+                       style="text-decoration: none; color: inherit;">
+                        {% trans "Kategorie" %}
+                        {% if current_sort == 'category' %}
+                            {% if current_order == 'asc' %}▲{% else %}▼{% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort=fee&order={% if current_sort == 'fee' and current_order == 'asc' %}desc{% else %}asc{% endif %}" 
+                       style="text-decoration: none; color: inherit;">
+                        {% trans "Startovné" %}
+                        {% if current_sort == 'fee' %}
+                            {% if current_order == 'asc' %}▲{% else %}▼{% endif %}
+                        {% endif %}
+                    </a>
+                </th>
                 <th>{% trans "Startovné po příspěvku oddílu" %}</th>
                 {% for _, additional_service in event.additional_services.items %}
                     <th>{{ additional_service.NameCZ }}</th>

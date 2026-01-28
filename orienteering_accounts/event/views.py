@@ -93,13 +93,34 @@ class EventBills(View):
         get_object_or_404(Account, leader_key=key)
         event = get_object_or_404(Event, pk=pk)
 
-        entries_qs = event.entries.order_by('account__registration_number')
+        # Get sorting parameters from query string
+        sort_by = request.GET.get('sort', 'account__registration_number')
+        order = request.GET.get('order', 'asc')
+        
+        # Define allowed sort fields to prevent SQL injection
+        allowed_sorts = {
+            'name': 'account__last_name',
+            'registration_number': 'account__registration_number',
+            'category': 'category_name',
+            'fee': 'fee',
+        }
+        
+        # Validate and get the sort field
+        sort_field = allowed_sorts.get(sort_by, 'account__registration_number')
+        
+        # Apply order direction
+        if order == 'desc':
+            sort_field = f'-{sort_field}'
+        
+        entries_qs = event.entries.order_by(sort_field)
 
         return render(request, 'event/event_bills.html', {
             'event': event,
             'formset': EventEntryBillFormSet(
                 queryset=entries_qs
-            )
+            ),
+            'current_sort': sort_by,
+            'current_order': order,
         })
 
     def post(self, request, pk, key):
