@@ -314,6 +314,10 @@ ACCOUNT_CREATED_EMAILS_SEND_TO = config('PROJECT_ACCOUNT_CREATED_EMAILS_SEND_TO'
 CLUB_BANK_ACCOUNT_NUMBER = config('PROJECT_CLUB_BANK_ACCOUNT_NUMBER', '')
 CLUB_BANK_CODE = config('PROJECT_CLUB_BANK_CODE', '')
 
+# Maximum negative balance before entry rights are removed (in CZK)
+# When balance reaches this threshold, entry rights in ORIS and Google Workspace access are removed
+MAXIMUM_NEGATIVE_BALANCE = -2000
+
 ORIS_STAGE_RACE_ID = 13
 ORIS_RELAY_RACE_IDS = [5, 6, 15]
 
