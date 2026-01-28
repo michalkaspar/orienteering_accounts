@@ -1,9 +1,15 @@
 <div class="accordion">
+{% load custom_filters %}
 {% for roaster in roasters %}
-    <div class="accordion-item">
+    <div class="accordion-item" {% if not roaster.is_qualified %}style="background-color: #ffcccc;"{% endif %}>
         <h2 class="accordion-header" id="heading{{ forloop.counter }}">
-            <button class="accordion-button collapsed" type="button" class="col-3" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
-                <span style="margin-right: 20px;">{{ forloop.counter }}</span> {{ roaster.name }}
+            <button class="accordion-button collapsed" type="button" class="col-3" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}" {% if not roaster.is_qualified %}style="background-color: #ffcccc;"{% endif %}>
+                {% if roaster.is_qualified %}
+                    <span style="margin-right: 20px;">{{ roasters|qualified_count_before:forloop.counter0 }}</span>
+                {% else %}
+                    <span style="margin-right: 20px; visibility: hidden;">-</span>
+                {% endif %}
+                {{ roaster.name }}
             </button>
         </h2>
         <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}">
@@ -16,7 +22,7 @@
             </div>
         </div>
     </div>
-    {% if forloop.counter == 45 %}
+    {% if roaster.is_qualified and roasters|qualified_count_before:forloop.counter0 == 45 %}
     <div style="width: 100%; border-bottom: 2px solid red;"></div>
     {% endif %}
 {% endfor %}
