@@ -75,7 +75,7 @@ class Event(models.Model):
 
     @property
     def oris_url(self):
-        return "https://oris.orientacnisporty.cz/Zavod?id=" + str(self.oris_id)
+        return "https://oris.ceskyorientak.cz/Zavod?id=" + str(self.oris_id)
 
     @property
     def organizers(self):
