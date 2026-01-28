@@ -42,6 +42,7 @@ class SprintRelaysGeneratorView(TemplateView):
 class Roaster(BaseModel):
     name: str
     runners: typing.List[UserRanking]
+    is_qualified: bool = True
 
     @property
     def is_valid(self) -> bool:
@@ -65,6 +66,7 @@ class SprintRelayGenerateView(View):
     def get(self, request, *args, **kwargs):
         valid_roasters: typing.List[Roaster] = []
         roasters_for_clubs = defaultdict(list)
+        qualified_relays_per_club = defaultdict(int)
 
         sprint_relay_ranking = ranking_db_client.lrange(settings.REDIS_SPRINT_RELAY_RANKING_KEY.format(date=request.GET.get('date')), 0, -1)
 
@@ -78,6 +80,13 @@ class SprintRelayGenerateView(View):
                     club_roaster.runners.append(user_ranking)
 
                     if club_roaster.is_valid:
+                        # Check if this club already has 5 qualified relays
+                        if qualified_relays_per_club[user_ranking.club_code] < 5:
+                            club_roaster.is_qualified = True
+                            qualified_relays_per_club[user_ranking.club_code] += 1
+                        else:
+                            club_roaster.is_qualified = False
+                        
                         #  Put roaster to valid roasters only once
                         valid_roasters.append(club_roaster)
 
@@ -106,14 +115,19 @@ class SprintRelayExportView(View):
         writer = csv.writer(output, delimiter=';')
         writer.writerow(['poradi', 'stafeta', 'clen1', 'rank1', 'clen2', 'rank2', 'clen3', 'rank3', 'clen4', 'rank4'])
 
-        for i, roaster in enumerate(map(lambda r: Roaster.validate(json.loads(r)), request.session['roasters']), start=1):
+        qualified_counter = 1
+        for roaster in map(lambda r: Roaster.validate(json.loads(r)), request.session['roasters']):
+            # Only export qualified relays
+            if not roaster.is_qualified:
+                continue
 
-            row = [i, roaster.name]
+            row = [qualified_counter, roaster.name]
 
             for runner in roaster.runners:
                 row.extend([f"{runner.first_name} {runner.last_name}", runner.index])
 
             writer.writerow(row)
+            qualified_counter += 1
 
         response = HttpResponse(output.getvalue(), content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="sprint-stafety-pravo-startu.csv"'
