@@ -277,6 +277,17 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             filters=~Q(created__year=datetime.now().year)
         )
 
+    def get_transactions_other_sum(self) -> Decimal:
+        """Calculate the sum of all transactions from previous years (excluding current year)"""
+        result = self.transactions.filter(
+            ~Q(created__year=datetime.now().year)
+        ).exclude(
+            purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Decimal(0))
+        )
+        return Decimal(str(self.init_balance + result['total']))
+
     @property
     def debts_payment_qr_url(self):
         return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.debts_payment_amount}&currency=CZK&message={self.debts_payment_message}&size=200&vs={self.debts_variable_symbol}"

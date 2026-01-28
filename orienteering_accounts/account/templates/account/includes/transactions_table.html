@@ -4,8 +4,9 @@
 <table class="table table-bordered">
     <thead>
     <tr>
-        <th scope="col">{% trans "Datum a čas vzniku" %}</th>
-        <th scope="col">{% trans "Částka" %}</th>
+        <th scope="col" style="width: 40px;"></th>
+        <th scope="col" style="min-width: 160px;">{% trans "Datum a čas vzniku" %}</th>
+        <th scope="col" style="white-space: nowrap;">{% trans "Částka" %}</th>
         <th scope="col">{% trans "Účel transakce" %}</th>
         <th scope="col">{% trans "Období" %}</th>
         <th scope="col">{% trans "Poznámka" %}</th>
@@ -34,8 +35,13 @@
                 {% endif %}
             {% endif %}
         >
+            <td class="text-center">
+                {% if transaction.is_entry and transaction.other_debts %}
+                    <span class="tx-expand-icon">+</span>
+                {% endif %}
+            </td>
             <td>{{ transaction.created|format_datetime }}</td>
-            <td>
+            <td style="white-space: nowrap;">
                 {% if transaction.is_club_membership %}
                     <span style="color: blue">{{ transaction.amount|floatformat }} Kč</span>
                 {% elif transaction.is_entry and transaction.other_debts %}
@@ -106,11 +112,26 @@
 
     {% if show_init_balance and account.init_balance %}
         <tr>
+            <td></td>
             <td>01.04.2021</td>
-            <td>{% transaction_amount account.init_balance %}</td>
+            <td style="white-space: nowrap;">{% transaction_amount account.init_balance %}</td>
             <td>{% trans "Dluh z minulých let" %}</td>
             <td>* - 01.04.2021</td>
             <td></td>
+            {% if not preview %}
+                {% ifperm edit_transaction %}
+                    <td></td>
+                {% endifperm %}
+            {% endif %}
+        </tr>
+    {% endif %}
+
+    {% if show_other_years_sum %}
+        <tr style="background-color: #f8f9fa; font-weight: bold; border-top: 3px solid #dee2e6;">
+            <td></td>
+            <td colspan="1">{% trans "Součet z minulých let" %}</td>
+            <td style="white-space: nowrap;">{% transaction_amount account.get_transactions_other_sum %}</td>
+            <td colspan="4"></td>
             {% if not preview %}
                 {% ifperm edit_transaction %}
                     <td></td>
@@ -154,33 +175,21 @@
     </script>
 
 <style>
-/* Vizuální odlišení řádků s dropdownem */
-table .tx-toggle-row td {
-    background-color: #f2f6ff; /* výraznější podbarvení */
-}
+/* Vizuální odlišení řádků s dropdownem - pouze pro budoucí transakce */
 table .tx-toggle-row.future td {
     background-color: #fff6e9; /* výraznější podbarvení */
-}
-table .tx-toggle-row:hover td {
-    background-color: #e6efff; /* silnější zvýraznění při hoveru */
 }
 table .tx-toggle-row.future:hover td {
     background-color: #fff3e0; /* silnější zvýraznění při hoveru */
 }
-/* Tenčí levý proužek pro lepší orientaci */
-table .tx-toggle-row td:first-child {
-    border-left: 5px solid #b6d4fe; /* o něco výraznější akcentní proužek */
-}
-
-table .tx-toggle-row.future td:first-child {
-    border-left: 5px solid #feeab6;
-}
-/* Když je rozbaleno, mírně zvýraznit pozadí */
-tr.tx-toggle-row[aria-expanded="true"] td {
-    background-color: #e0eaff; /* ještě o stupeň výraznější při rozbalení */
-}
 /* Když je rozbaleno, mírně zvýraznit pozadí */
 tr.tx-toggle-row.future[aria-expanded="true"] td {
     background-color: #fdf1db; /* ještě o stupeň výraznější při rozbalení */
+}
+/* Styling pro ikonu rozbalení */
+.tx-expand-icon {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #666;
 }
 </style>
