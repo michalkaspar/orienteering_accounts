@@ -271,6 +271,9 @@ class Event(models.Model):
     def should_be_handled(self) -> bool:
         if self.handled or self.handled_disabled:
             return False
+        
+        if self.is_stage:
+            return False
 
         if self.is_relay:
             return ORISClient.club_entry_exists(self.oris_id)
