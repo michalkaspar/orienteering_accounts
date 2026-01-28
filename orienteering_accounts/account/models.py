@@ -293,6 +293,11 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.debts_payment_amount}&currency=CZK&message={self.debts_payment_message}&size=200&vs={self.debts_variable_symbol}"
 
     @property
+    def debts_payment_qr_url_no_amount(self):
+        """QR code URL for debt payment without amount (keeps variable symbol for automatic matching)"""
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&currency=CZK&message={self.debts_payment_message}&size=200&vs={self.debts_variable_symbol}"
+
+    @property
     def debts_payment_message(self):
         return f'OP Mistrovské soutěže {self.full_name}'
 
