@@ -488,7 +488,23 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                     purpose = BankTransaction.BankTransactionPurpose.DEBTS
                     logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
 
-                bank_transaction, created = account.bank_transactions.get_or_create(
+                # Extract sender name and receiver note from bank transaction
+                sender_name = ''
+                receiver_note = ''
+                try:
+                    if bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty:
+                        sender_name = bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty.name or ''
+                except AttributeError:
+                    pass
+                
+                try:
+                    if bank_transaction.entryDetails.transactionDetails.remittanceInformation:
+                        remittance = bank_transaction.entryDetails.transactionDetails.remittanceInformation
+                        receiver_note = remittance.unstructured or remittance.originatorMessage or ''
+                except AttributeError:
+                    pass
+
+                bank_transaction_obj, created = account.bank_transactions.get_or_create(
                     remote_id=bank_transaction.entryReference,
                     defaults=dict(
                         date=bank_transaction.valueDate,
@@ -496,10 +512,13 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                         charged=True,
                         transaction_data=bank_transaction.dict(),
                         purpose=purpose,
+                        sender_name=sender_name,
+                        receiver_note=receiver_note,
                     )
                 )
 
                 if created:
+                    transaction_kwargs['origin_bank_transaction'] = bank_transaction_obj
                     account.transactions.create(**transaction_kwargs)
 
     @property
@@ -524,6 +543,7 @@ class Transaction(BaseModel):
     purpose = models.CharField(max_length=50, choices=TransactionPurpose.choices, default=TransactionPurpose.CLUB_MEMBERSHIP, verbose_name=_('Účel transakce'))
     note = models.TextField(verbose_name=_('Poznámka'), blank=True, default='')
     origin_entry = models.ForeignKey('entry.Entry', on_delete=models.SET_NULL, null=True, related_name='transactions')
+    origin_bank_transaction = models.ForeignKey('account.BankTransaction', on_delete=models.SET_NULL, null=True, related_name='transactions')
     author_name = models.CharField(max_length=255, verbose_name=_('Autor změny'), blank=True, default='')
     is_future = models.BooleanField(default=False, verbose_name=_('Budoucí transakce'))
 
@@ -544,6 +564,10 @@ class Transaction(BaseModel):
     @property
     def is_club_membership(self):
         return self.purpose == self.TransactionPurpose.CLUB_MEMBERSHIP
+    
+    @property
+    def is_bank_transaction(self) -> bool:
+        return self.origin_bank_transaction is not None
 
 
 class BankTransaction(BaseModel):
@@ -559,3 +583,5 @@ class BankTransaction(BaseModel):
     charged = models.BooleanField(default=False, verbose_name=_('Zúčtováno'))
     transaction_data = models.JSONField(verbose_name=_('Data transakce'))
     purpose = models.CharField(max_length=50, choices=BankTransactionPurpose.choices, default=BankTransactionPurpose.DEBTS, verbose_name=_('Účel transakce'))
+    sender_name = models.CharField(max_length=255, verbose_name=_('Jméno odesílatele'), blank=True, default='')
+    receiver_note = models.TextField(verbose_name=_('Poznámka pro příjemce'), blank=True, default='')

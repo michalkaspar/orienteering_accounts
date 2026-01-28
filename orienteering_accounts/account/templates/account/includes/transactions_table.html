@@ -21,7 +21,7 @@
     <tbody>
     {# show_this_year is expected as boolean. When true → only current year; when false → all except current year. #}
     {% for transaction in transactions %}
-        {# Main row. If ENTRY with other_debts, the whole row toggles a collapse with details. #}
+        {# Main row. If ENTRY with other_debts or BANK_TRANSACTION, the whole row toggles a collapse with details. #}
         <tr
             {% if transaction.is_entry %}
                 {% if transaction.other_debts %}
@@ -33,10 +33,18 @@
                 {% elif transaction.is_future %}
                 style="background-color: #fff4e5;"
                 {% endif %}
+            {% elif transaction.is_bank_transaction %}
+                class="tx-toggle-row"
+                style="cursor: pointer;"
+                data-toggle="collapse" data-bs-toggle="collapse"
+                data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
+                aria-controls="tx-details-{{ transaction.id }}" aria-expanded="false"
             {% endif %}
         >
             <td class="text-center">
                 {% if transaction.is_entry and transaction.other_debts %}
+                    <span class="tx-expand-icon">+</span>
+                {% elif transaction.is_bank_transaction %}
                     <span class="tx-expand-icon">+</span>
                 {% endif %}
             </td>
@@ -100,6 +108,42 @@
                                             <td class="text-right">{% transaction_amount debt.amount %}</td>
                                         </tr>
                                     {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {% elif transaction.is_bank_transaction %}
+            {# Details row for bank transactions showing sender name and receiver note #}
+            <tr class="tx-details-row">
+                <td colspan="100" style="padding: 0; border-top: none;">
+                    <div id="tx-details-{{ transaction.id }}" class="collapse" data-parent="#tx-table-{{ forloop.parentloop.counter0|default:0 }}">
+                        <div class="p-3" style="background: #f8f9fa;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>{% trans "Detaily bankovní transakce" %}</strong>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <tbody>
+                                        {% if transaction.origin_bank_transaction.sender_name %}
+                                        <tr>
+                                            <td style="width: 200px;"><strong>{% trans "Odesílatel" %}:</strong></td>
+                                            <td>{{ transaction.origin_bank_transaction.sender_name }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if transaction.origin_bank_transaction.receiver_note %}
+                                        <tr>
+                                            <td style="width: 200px;"><strong>{% trans "Zpráva pro příjemce" %}:</strong></td>
+                                            <td>{{ transaction.origin_bank_transaction.receiver_note }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if not transaction.origin_bank_transaction.sender_name and not transaction.origin_bank_transaction.receiver_note %}
+                                        <tr>
+                                            <td colspan="2" class="text-muted">{% trans "Žádné další informace nejsou k dispozici" %}</td>
+                                        </tr>
+                                        {% endif %}
                                     </tbody>
                                 </table>
                             </div>
