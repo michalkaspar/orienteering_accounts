@@ -309,7 +309,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
     @property
     def club_membership_variable_symbol(self):
         number = self.registration_number.replace('TZL', '')
-        return f'{str(date.year)}{number}'
+        return f'{datetime.now().year}{number}'
 
     @property
     def club_membership_payment_message(self):
