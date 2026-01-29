@@ -1,83 +1,82 @@
 {% extends "base.html" %}{% load i18n transaction core account %}
 
 {% block main_content %}
-    <h1>{% trans "Detail účtu" %}</h1>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-7">
-                <h2>{{ object.full_name }}</h2>
-            </div>
-            <div class="col-5">
-            {% ifperm edit_account %}
-                    <a class="btn btn-secondary" href="{% url "accounts:edit" object.pk %}">{% trans "Upravit" %}</a>
-            {% endifperm %}
-            {% ifperm edit_account %}
-                    <a class="btn btn-secondary" href="{% url "accounts:password_change" object.pk %}">{% trans "Změna hesla" %}</a>
-            {% endifperm %}
-            {% ifperm add_transaction %}
-                    <a class="btn btn-success" href="{% url "accounts:transaction_add" object.pk %}">{% trans "Přidat transakci" %}</a>
-            {% endifperm %}
-            </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>{{ object.full_name }}</h2>
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Registrační číslo" %}: {{ object.registration_number }}
-            </div>
+        <div class="col-md-6 text-end">
+        {% ifperm edit_account %}
+                <a class="btn btn-secondary" href="{% url "accounts:edit" object.pk %}">{% trans "Upravit" %}</a>
+        {% endifperm %}
+        {% ifperm edit_account %}
+                <a class="btn btn-secondary" href="{% url "accounts:password_change" object.pk %}">{% trans "Změna hesla" %}</a>
+        {% endifperm %}
+        {% ifperm add_transaction %}
+                <a class="btn btn-success" href="{% url "accounts:transaction_add" object.pk %}">{% trans "Přidat transakci" %}</a>
+        {% endifperm %}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Email" %}: {{ object.email }}
-            </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "Registrační číslo" %}:</strong> {{ object.registration_number }}
         </div>
-        {% if object.email2 %}
-            <div class="row">
-                <div class="col">
-                    {% trans "Email2" %}: {{ object.email2 }}
-                </div>
-            </div>
-        {% endif %}
-        <div class="row">
-            <div class="col">
-                {% trans "Pohlaví" %}: {{ object.gender }}
-            </div>
+        <div class="col-md-6">
+            <strong>{% trans "Licence" %}:</strong> {{ object.licence }}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Licence" %}: {{ object.licence }}
-            </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "Křestní jméno" %}:</strong> {{ object.first_name }}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Křestní jméno" %}: {{ object.first_name }}
-            </div>
+        <div class="col-md-6">
+            <strong>{% trans "Příjmení" %}:</strong> {{ object.last_name }}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Příjmení" %}: {{ object.last_name }}
-            </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "Email" %}:</strong> {{ object.email }}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "SI Čip" %}: {{ object.si }}
-            </div>
+        <div class="col-md-6">
+            <strong>{% trans "Pohlaví" %}:</strong> {{ object.gender }}
         </div>
-        <div class="row">
-            <div class="col">
-                {% trans "Ročník" %}: {{ object.born_year }}
-            </div>
+    </div>
+    {% if object.email2 %}
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "Email2" %}:</strong> {{ object.email2 }}
         </div>
-        {% if object.ranking %}
-        <div class="row">
-            <div class="col">
-                {% trans "Ranking" %}: {% trans "Datum" %} {{ object.ranking.date|format_date }}, {% trans "Umístění" %} {{ object.ranking.index }}, {% trans "Body" %} {{ object.ranking.points }}, {% trans "Minule" %} {{ object.ranking.last_index }}
-            </div>
+        <div class="col-md-6">
+            <strong>{% trans "Ročník" %}:</strong> {{ object.born_year }}
         </div>
-        {% endif %}
-        <div class="row">
-            <div class="col">
-                {% include "account/includes/transactions.html" %}
-            </div>
+    </div>
+    {% else %}
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "Ročník" %}:</strong> {{ object.born_year }}
+        </div>
+        <div class="col-md-6">
+            <strong>{% trans "SI Čip" %}:</strong> {{ object.si }}
+        </div>
+    </div>
+    {% endif %}
+    {% if object.email2 %}
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>{% trans "SI Čip" %}:</strong> {{ object.si }}
+        </div>
+    </div>
+    {% endif %}
+    {% if object.ranking %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <strong>{% trans "Ranking" %}:</strong> {% trans "Datum" %} {{ object.ranking.date|format_date }}, {% trans "Umístění" %} {{ object.ranking.index }}, {% trans "Body" %} {{ object.ranking.points }}, {% trans "Minule" %} {{ object.ranking.last_index }}
+        </div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col">
+            {% include "account/includes/transactions.html" %}
         </div>
     </div>
 {% endblock %}

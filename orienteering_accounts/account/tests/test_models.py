@@ -69,8 +69,8 @@ class TransactionSignalTestCase(TestCase):
         mock_send_email.assert_not_called()
 
     @patch('orienteering_accounts.account.models.Account.send_debts_payment_info_email')
-    def test_negative_balance_email_not_sent_on_update(self, mock_send_email):
-        """Test that email is NOT sent when a transaction is updated (only on create)"""
+    def test_negative_balance_email_not_sent_on_non_amount_update(self, mock_send_email):
+        """Test that email is NOT sent when a transaction is updated but amount doesn't change"""
         # Create account with negative balance
         account = baker.make('account.Account', init_balance=Decimal('0'), email='test@example.com')
         
@@ -85,12 +85,59 @@ class TransactionSignalTestCase(TestCase):
         # Reset the mock
         mock_send_email.reset_mock()
         
-        # Update the transaction
+        # Update the transaction (but not the amount)
         transaction.note = "Updated note"
         transaction.save()
         
         # Verify email was NOT sent again on update
         mock_send_email.assert_not_called()
+
+    @patch('orienteering_accounts.account.models.Account.send_debts_payment_info_email')
+    def test_negative_balance_email_sent_on_amount_update(self, mock_send_email):
+        """Test that email IS sent when a transaction amount is updated causing negative balance"""
+        # Create account with positive balance
+        account = baker.make('account.Account', init_balance=Decimal('100'), email='test@example.com')
+        
+        # Create a small negative transaction (balance still positive)
+        transaction = baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('-50'),
+            purpose=Transaction.TransactionPurpose.ENTRY
+        )
+        
+        # Reset the mock (no email sent yet as balance is still positive)
+        mock_send_email.reset_mock()
+        
+        # Update the transaction amount to make balance negative
+        transaction.amount = Decimal('-200')
+        transaction.save()
+        
+        # Verify email was sent after amount update
+        mock_send_email.assert_called_once()
+
+    @patch('orienteering_accounts.account.models.Account.send_debts_payment_info_email')
+    def test_negative_balance_email_sent_on_transaction_deletion(self, mock_send_email):
+        """Test that email IS sent when a transaction is deleted and balance becomes negative"""
+        # Create account with positive balance due to positive transaction
+        account = baker.make('account.Account', init_balance=Decimal('-100'), email='test@example.com')
+        
+        # Create a positive transaction (balance becomes 0)
+        transaction = baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('100'),
+            purpose=Transaction.TransactionPurpose.DEBTS
+        )
+        
+        # Reset the mock
+        mock_send_email.reset_mock()
+        
+        # Delete the transaction (balance becomes -100 again)
+        transaction.delete()
+        
+        # Verify email was sent after deletion
+        mock_send_email.assert_called_once()
 
     @patch('orienteering_accounts.account.models.Account.send_debts_payment_info_email')
     def test_negative_balance_email_sent_when_balance_becomes_negative(self, mock_send_email):
@@ -264,6 +311,89 @@ class EntryRightsRemovalSignalTestCase(TestCase):
             amount=Decimal('-2000'),
             purpose=Transaction.TransactionPurpose.ENTRY
         )
+        
+        # Verify all actions were taken
+        mock_remove_oris.assert_called_once()
+        mock_remove_google.assert_called_once()
+        mock_send_email.assert_called_once()
+        
+        # Verify the flag was set
+        account.refresh_from_db()
+        self.assertTrue(account.is_late_with_club_membership_payment)
+
+    @patch('orienteering_accounts.account.models.Account.send_entry_rights_removed_info_email')
+    @patch('orienteering_accounts.account.models.Account.remove_from_google_workspace_group')
+    @patch('orienteering_accounts.account.models.Account.remove_entry_rights_in_oris')
+    def test_entry_rights_removed_on_amount_update(
+        self, mock_remove_oris, mock_remove_google, mock_send_email
+    ):
+        """Test that entry rights are removed when transaction amount is updated crossing threshold"""
+        # Create account with balance slightly above threshold
+        account = baker.make(
+            'account.Account',
+            init_balance=Decimal('0'),
+            email='test@example.com',
+            oris_club_member_id=12345,
+            is_late_with_club_membership_payment=False
+        )
+        
+        # Create a transaction that makes balance negative but above threshold
+        transaction = baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('-1500'),
+            purpose=Transaction.TransactionPurpose.ENTRY
+        )
+        
+        # Reset mocks
+        mock_remove_oris.reset_mock()
+        mock_remove_google.reset_mock()
+        mock_send_email.reset_mock()
+        
+        # Update transaction amount to cross the threshold
+        transaction.amount = Decimal('-2500')
+        transaction.save()
+        
+        # Verify all actions were taken
+        mock_remove_oris.assert_called_once()
+        mock_remove_google.assert_called_once()
+        mock_send_email.assert_called_once()
+        
+        # Verify the flag was set
+        account.refresh_from_db()
+        self.assertTrue(account.is_late_with_club_membership_payment)
+
+    @patch('orienteering_accounts.account.models.Account.send_entry_rights_removed_info_email')
+    @patch('orienteering_accounts.account.models.Account.remove_from_google_workspace_group')
+    @patch('orienteering_accounts.account.models.Account.remove_entry_rights_in_oris')
+    def test_entry_rights_removed_on_transaction_deletion(
+        self, mock_remove_oris, mock_remove_google, mock_send_email
+    ):
+        """Test that entry rights are removed when transaction deletion causes balance to cross threshold"""
+        # Create account with negative balance kept above threshold by positive transaction
+        account = baker.make(
+            'account.Account',
+            init_balance=Decimal('-2500'),
+            email='test@example.com',
+            oris_club_member_id=12345,
+            is_late_with_club_membership_payment=False
+        )
+        
+        # Create a positive transaction (balance becomes -1500, above threshold)
+        transaction = baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('1000'),
+            purpose=Transaction.TransactionPurpose.DEBTS
+        )
+        
+        # Reset mocks
+        mock_remove_oris.reset_mock()
+        mock_remove_google.reset_mock()
+        mock_send_email.reset_mock()
+        
+        # Delete the positive transaction (balance becomes -2500, below threshold)
+        transaction.delete()
         
         # Verify all actions were taken
         mock_remove_oris.assert_called_once()

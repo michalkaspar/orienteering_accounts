@@ -236,4 +236,26 @@ tr.tx-toggle-row.future[aria-expanded="true"] td {
     font-size: 1.2em;
     color: #666;
 }
+/* Normal border for expandable rows */
+tr.tx-toggle-row td {
+    border-bottom-width: 1px !important;
+    border-bottom-color: #dee2e6 !important;
+}
+/* Remove borders from details row to avoid double border appearance */
+tr.tx-details-row {
+    border-top: none !important;
+    border-bottom: none !important;
+}
+tr.tx-details-row td {
+    border-top: none !important;
+    border-bottom: none !important;
+}
+/* Ensure collapsed details don't add any visual thickness */
+tr.tx-details-row .collapse:not(.show) {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
 </style>
