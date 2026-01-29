@@ -53,7 +53,7 @@ class Entry(models.Model):
 
         if created:
             instance.transactions.create(
-                account=entry.account,
+                account=account,
                 amount=-instance.fee_after_club_discount,
                 purpose=Transaction.TransactionPurpose.ENTRY,
                 author_name="System",
@@ -63,7 +63,7 @@ class Entry(models.Model):
             if additional_services:
                 for service in additional_services:
                     instance.transactions.create(
-                        account=entry.account,
+                        account=account,
                         amount=-Decimal(service['TotalFee']),
                         purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                         author_name="System",
