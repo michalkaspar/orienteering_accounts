@@ -7,4 +7,5 @@ class AccountConfig(AppConfig):
 
     def ready(self):
         # Import signals to register them
-        import orienteering_accounts.account.signals
+        # import orienteering_accounts.account.signals
+        pass
