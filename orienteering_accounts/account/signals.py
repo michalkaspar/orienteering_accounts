@@ -103,7 +103,7 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     account = instance.account
     amount_changed = False
 
-    if instance.amount and instance.mount > Decimal(0):
+    if instance.amount and instance.amount > Decimal(0):
         # Positive amount transactions do not affect debt checks
         if account.balance >= Decimal(0) and account.is_late_with_club_membership_payment:
             # If balance is now non-negative, reset late payment status
