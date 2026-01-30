@@ -52,13 +52,14 @@ class Entry(models.Model):
         )
 
         if created:
-            instance.transactions.create(
-                account=account,
-                amount=-instance.fee_after_club_discount,
-                purpose=Transaction.TransactionPurpose.ENTRY,
-                author_name="System",
-                is_future=True
-            )
+            if instance.fee_after_club_discount != 0:
+                instance.transactions.create(
+                    account=account,
+                    amount=-instance.fee_after_club_discount,
+                    purpose=Transaction.TransactionPurpose.ENTRY,
+                    author_name="System",
+                    is_future=True
+                )
 
             if additional_services:
                 for service in additional_services:
@@ -67,7 +68,7 @@ class Entry(models.Model):
                         amount=-Decimal(service['TotalFee']),
                         purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                         author_name="System",
-                        note=service['NameCZ'],
+                        note=service['Service']['NameCZ'],
                         is_future=True
                     )
 
@@ -80,7 +81,7 @@ class Entry(models.Model):
 
         if self.event.is_relay:
             fee = Decimal(0)
-        elif self.event.is_stage or self.event.did_not_start(self.account.registration_number):
+        elif self.event.is_multi_stage or self.event.is_stage or self.event.did_not_start(self.account.registration_number):
             # In case of stage event or runner
             fee = category_entry_fee
         else:

@@ -538,7 +538,7 @@ class Transaction(BaseModel):
     class TransactionPurpose(models.TextChoices):
         CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
         OTHER = 'JINÉ', _('Jiné')
-        DEBTS = 'DLUHY', _('Dluhy')
+        DEBTS = 'DLUHY', _('Kredity')
         ENTRY = 'ENTRY', _('Účast na závodech')
         ENTRY_OTHER = 'ENTRY_OTHER', _('Další náklady na závodech')
 

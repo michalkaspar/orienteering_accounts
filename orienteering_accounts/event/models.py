@@ -246,8 +246,12 @@ class Event(models.Model):
         return Decimal(0)
 
     @property
-    def is_stage(self):
+    def is_multi_stage(self):
         return True if self.discipline and self.discipline.get('oris_id') == settings.ORIS_STAGE_RACE_ID else False
+
+    @property
+    def is_stage(self):
+        return True if self.level and self.level.get('oris_id') == settings.ORIS_LEVEL_STAGE else False
 
     @property
     def is_relay(self):

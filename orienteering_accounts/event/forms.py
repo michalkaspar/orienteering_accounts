@@ -59,7 +59,7 @@ class EntryBillForm(forms.ModelForm):
             else:
                 self.initial['debt'] = self.instance.debt_init
 
-                if not self.instance.event.is_stage and self.instance.event.did_not_start(self.instance.account.registration_number):
+                if not (self.instance.event.is_stage or self.instance.is_multi_stage) and self.instance.event.did_not_start(self.instance.account.registration_number):
                     self.initial['debt_note'] = 'Neúčast na závodě.'
 
             if not self.instance.other_debt:

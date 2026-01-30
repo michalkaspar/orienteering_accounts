@@ -37,7 +37,7 @@ def check_and_send_negative_balance_email(account):
     
     # Check if balance is negative but NOT at or below the maximum threshold
     # (to avoid sending both emails)
-    if balance < 0 and balance > maximum_threshold:
+    if 0 > balance > maximum_threshold:
         try:
             account.send_debts_payment_info_email()
             logger.info(
@@ -74,14 +74,6 @@ def check_and_remove_entry_rights(account):
                     f'({account.registration_number}). Balance: {balance}'
                 )
             
-            # Remove from Google Workspace
-            if account.email and not account.removed_from_google_workspace:
-                account.remove_from_google_workspace_group()
-                logger.info(
-                    f'Removed from Google Workspace: {account.full_name} '
-                    f'({account.registration_number}). Balance: {balance}'
-                )
-            
             # Mark account as late with payment
             account.is_late_with_club_membership_payment = True
             account.save(update_fields=['is_late_with_club_membership_payment'])
@@ -110,7 +102,15 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     """
     account = instance.account
     amount_changed = False
-    
+
+    if instance.amount and instance.mount > Decimal(0):
+        # Positive amount transactions do not affect debt checks
+        if account.balance >= Decimal(0) and account.is_late_with_club_membership_payment:
+            # If balance is now non-negative, reset late payment status
+            account.is_late_with_club_membership_payment = False
+            account.add_entry_rights_in_oris()
+            account.save(update_fields=['is_late_with_club_membership_payment'])
+
     if not created and instance.pk in _transaction_old_amount:
         # Transaction was updated - check if amount changed
         old_amount = _transaction_old_amount.pop(instance.pk)
