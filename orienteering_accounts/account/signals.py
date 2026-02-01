@@ -24,7 +24,7 @@ def check_balance(account):
     threshold, as the entry rights removed email will be sent instead.
     """
     balance = account.balance
-    old_balance = _account_old_balance[account.account_id]
+    old_balance = _account_old_balance[account.id]
     maximum_threshold = Decimal(str(settings.MAXIMUM_NEGATIVE_BALANCE))
     
     if balance > maximum_threshold:
