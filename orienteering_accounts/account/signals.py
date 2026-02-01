@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from django.conf import settings
-from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.models.signals import post_save, post_delete, pre_save, pre_delete
 from django.dispatch import receiver
 from orienteering_accounts.account.models import Transaction
 
@@ -13,6 +13,11 @@ _account_old_balance = {}
 
 @receiver(pre_save, sender=Transaction)
 def store_old_account_balance(sender, instance, **kwargs):
+    _account_old_balance[instance.account_id] = instance.account.balance
+
+
+@receiver(pre_delete, sender=Transaction)
+def store_old_account_balance_on_delete(sender, instance, **kwargs):
     _account_old_balance[instance.account_id] = instance.account.balance
 
 
