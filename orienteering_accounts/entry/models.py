@@ -79,7 +79,7 @@ class Entry(models.Model):
     def fee_after_club_discount(self):
         category_entry_fee = self.event.get_category_fee(self.category_name)
 
-        if self.event.is_relay:
+        if self.event.is_relay or self.event.organizer_1.get("abbr") == "TZL":
             fee = Decimal(0)
         elif self.event.is_multi_stage or self.event.is_stage or self.event.did_not_start(self.account.registration_number):
             # In case of stage event or runner
