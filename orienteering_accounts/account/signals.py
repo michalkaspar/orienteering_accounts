@@ -91,7 +91,7 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     """
     account = instance.account
 
-    if instance.amount and instance.amount > Decimal(0) and not instance.is_club_membership:
+    if instance.amount and instance.amount != Decimal(0) and not instance.is_club_membership:
         check_balance(account)
 
 
