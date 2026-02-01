@@ -483,7 +483,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
                     if account.removed_from_google_workspace:
                         account.removed_from_google_workspace = False
                         account.add_to_google_workspace_group()
-                        account.save(update_fields=['remove_from_google_workspace'])
+                        account.save(update_fields=['removed_from_google_workspace'])
 
                     logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
                 else:
