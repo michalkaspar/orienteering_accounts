@@ -457,7 +457,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
         if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + club_membership_variable_symbol_prefixes):
 
-            registration_number = variable_symbol.strip().lstrip('0')[4:]
+            variable_symbol = variable_symbol.strip().lstrip('0')
+            registration_number = variable_symbol[4:]
 
             account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
 
