@@ -7,25 +7,16 @@ from orienteering_accounts.account.models import Transaction
 
 logger = logging.getLogger(__name__)
 
-# Store the old amount before update to detect changes
-_transaction_old_amount = {}
+
+_account_old_balance = {}
 
 
 @receiver(pre_save, sender=Transaction)
-def store_old_transaction_amount(sender, instance, **kwargs):
-    """
-    Store the old amount before a transaction is updated.
-    This allows us to detect if the amount changed.
-    """
-    if instance.pk:
-        try:
-            old_transaction = Transaction.objects.get(pk=instance.pk)
-            _transaction_old_amount[instance.pk] = old_transaction.amount
-        except Transaction.DoesNotExist:
-            pass
+def store_old_account_balance(sender, instance, **kwargs):
+    _account_old_balance[instance.account_id] = instance.account.balance
 
 
-def check_and_send_negative_balance_email(account):
+def check_balance(account):
     """
     Helper function to check balance and send negative balance email if needed.
     
@@ -33,38 +24,35 @@ def check_and_send_negative_balance_email(account):
     threshold, as the entry rights removed email will be sent instead.
     """
     balance = account.balance
+    old_balance = _account_old_balance[account.account_id]
     maximum_threshold = Decimal(str(settings.MAXIMUM_NEGATIVE_BALANCE))
     
-    # Check if balance is negative but NOT at or below the maximum threshold
-    # (to avoid sending both emails)
-    if 0 > balance > maximum_threshold:
-        try:
-            account.send_debts_payment_info_email()
+    if balance > maximum_threshold:
+
+        if old_balance <= maximum_threshold:
+            # Balance was previously at or below max threshold, add back entry rights
+            account.add_entry_rights_in_oris()
             logger.info(
-                f'Negative balance email sent to {account.full_name} '
+                f'ORIS entry rights restored for {account.full_name} '
                 f'({account.registration_number}). Balance: {balance}'
             )
-        except Exception as e:
-            logger.error(
-                f'Failed to send negative balance email to {account.full_name} '
-                f'({account.registration_number}): {str(e)}'
-            )
+            return
 
-
-def check_and_remove_entry_rights(account):
-    """
-    Helper function to check balance and remove entry rights if threshold is reached.
-    
-    Remove ORIS entry rights and Google Workspace access when account balance
-    reaches or falls below the maximum negative balance threshold (from settings).
-    Also sends notification email to the user.
-    """
-    balance = account.balance
-    maximum_threshold = Decimal(str(settings.MAXIMUM_NEGATIVE_BALANCE))
-    
-    # Check if balance has crossed the maximum negative threshold
-    # and entry rights haven't been removed yet
-    if balance <= maximum_threshold and not account.is_late_with_club_membership_payment:
+        if balance < Decimal(0) and balance < old_balance:
+            # Balance is negative and decreased, send negative balance email
+            try:
+                account.send_debts_payment_info_email()
+                logger.info(
+                    f'Negative balance email sent to {account.full_name} '
+                    f'({account.registration_number}). Balance: {balance}'
+                )
+            except Exception as e:
+                logger.error(
+                    f'Failed to send negative balance email to {account.full_name} '
+                    f'({account.registration_number}): {str(e)}'
+                )
+    elif old_balance > maximum_threshold:
+        # Balance is at or below maximum threshold, remove entry rights
         try:
             # Remove entry rights in ORIS
             if account.oris_club_member_id:
@@ -73,18 +61,14 @@ def check_and_remove_entry_rights(account):
                     f'ORIS entry rights removed for {account.full_name} '
                     f'({account.registration_number}). Balance: {balance}'
                 )
-            
-            # Mark account as late with payment
-            account.is_late_with_club_membership_payment = True
-            account.save(update_fields=['is_late_with_club_membership_payment'])
-            
+
             # Send notification email
             account.send_entry_rights_removed_info_email()
             logger.info(
                 f'Entry rights removed email sent to {account.full_name} '
                 f'({account.registration_number}). Balance: {balance}'
             )
-            
+
         except Exception as e:
             logger.error(
                 f'Failed to remove entry rights for {account.full_name} '
@@ -101,25 +85,9 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     - An existing transaction's amount is changed
     """
     account = instance.account
-    amount_changed = False
 
-    if instance.amount and instance.amount > Decimal(0):
-        # Positive amount transactions do not affect debt checks
-        if account.balance >= Decimal(0) and account.is_late_with_club_membership_payment:
-            # If balance is now non-negative, reset late payment status
-            account.is_late_with_club_membership_payment = False
-            account.add_entry_rights_in_oris()
-            account.save(update_fields=['is_late_with_club_membership_payment'])
-
-    if not created and instance.pk in _transaction_old_amount:
-        # Transaction was updated - check if amount changed
-        old_amount = _transaction_old_amount.pop(instance.pk)
-        amount_changed = old_amount != instance.amount
-    
-    # Only proceed if transaction was created or amount changed
-    if created or amount_changed:
-        check_and_send_negative_balance_email(account)
-        check_and_remove_entry_rights(account)
+    if instance.amount and instance.amount > Decimal(0) and not instance.is_club_membership:
+        check_balance(account)
 
 
 @receiver(post_delete, sender=Transaction)
@@ -129,11 +97,5 @@ def handle_transaction_delete(sender, instance, **kwargs):
     Check balance and trigger appropriate actions when a transaction is deleted.
     """
     account = instance.account
-    
-    # Clean up stored old amount if it exists
-    if instance.pk in _transaction_old_amount:
-        _transaction_old_amount.pop(instance.pk)
-    
-    # Check balance after deletion
-    check_and_send_negative_balance_email(account)
-    check_and_remove_entry_rights(account)
+    if not instance.is_club_membership:
+        check_balance(account)
