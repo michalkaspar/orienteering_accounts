@@ -49,7 +49,7 @@ SERVER_EMAIL = config('PROJECT_SERVER_EMAIL', default='')
 SENTRY_URL = config('PROJECT_SENTRY_URL', default='')
 
 sentry_sdk.init(
-    dsn=SENTRY_DSN,
+    dsn=SENTRY_URL,
     integrations=[DjangoIntegration()],
     # Add data like request headers and IP for users,
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
