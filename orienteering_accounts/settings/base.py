@@ -218,58 +218,20 @@ MEDIA_URL = '/media/'
 
 LOGGING = {
     'version': 1,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(processName)s (%(process)d) %(threadName)s (%(thread)d) <%(name)s> %(message)s'
-        },
-        'plain': {
-            'format': '%(asctime)s %(levelname)s <%(name)s> %(message)s'
-        },
-    },
-    'filters': {
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
-    },
+    "disable_existing_loggers": False,
     'handlers': {
-        'file_debug': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'app_debug.log'),
-            'formatter': 'verbose',
-        },
-        'file_info': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'app_info.log'),
-            'formatter': 'verbose',
-        },
-        'file_error': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'app_error.log'),
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'filters': ['require_debug_true'],
-            'class': 'logging.StreamHandler',
-            'formatter': 'plain',
+        'logtail': {
+            'class': 'logtail.LogtailHandler',
+            'source_token': config('PROJECT_LOGTAIL_SOURCE_TOKEN', default=''),
+            'host': 'https://s1711978.eu-fsn-3.betterstackdata.com',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['file_debug', 'file_info', 'file_error'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
         'orienteering_accounts': {
-            'handlers': ['file_debug', 'file_info', 'file_error'],
+            "handlers": [
+                "logtail",
+            ],
             'level': 'DEBUG',
-            'propagate': False,
         },
     },
 }

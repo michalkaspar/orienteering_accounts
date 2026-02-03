@@ -18,3 +18,4 @@ google-auth-oauthlib==1.2.0
 requests-pkcs12==1.25
 requests==2.26.0
 sentry-sdk[django]==2.51.0
+logtail-python==0.3.4
