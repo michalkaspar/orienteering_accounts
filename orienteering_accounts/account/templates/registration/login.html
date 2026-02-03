@@ -1,31 +1,137 @@
-{% extends 'base.html' %}{% load i18n forms %}
+{% extends 'base.html' %}{% load i18n forms static %}
 
 {% block main_content %}
-<div class="container">
-    <div class="row">
-        <h1>{% trans 'Přihlášení' %}</h1>
+
+<style>
+    .login-header {
+        text-align: center;
+        padding: 40px 0 30px;
+    }
+    .login-logo {
+        max-width: 200px;
+        height: auto;
+        margin-bottom: 20px;
+    }
+    .login-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .login-box {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .feature-icon {
+        color: #0066cc;
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+    .feature-box {
+        text-align: center;
+        padding: 20px;
+    }
+</style>
+
+<div class="login-container">
+    <!-- Header with Logo -->
+    <div class="login-header">
+        <img src="{% static 'logo.png' %}" alt="SKOB Zlín" class="login-logo">
+        <h1 class="mt-3">{% trans 'Systém správy členských účtů' %}</h1>
+        <p class="lead text-muted">SKOB Zlín, z.s.</p>
     </div>
-    <form method="post">
-        {% csrf_token %}
 
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger" role="alert">
-                {% for error in form.non_field_errors %}
-                    {{ error }}
-                {% endfor %}
+    <!-- Info Section -->
+    <div class="info-section">
+        <h3 class="mb-4">{% trans 'O systému' %}</h3>
+        <p>
+            Vítejte v aplikaci pro správu členských účtů SKOB Zlín. Tento systém slouží členům klubu 
+            k přehledu o svých členských účtech, transakcích a dalších informacích souvisejících s členstvím.
+        </p>
+        
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-wallet feature-icon"></i>
+                    <h5>{% trans 'Přehled účtu' %}</h5>
+                    <p class="text-muted small">Sledování stavu členského účtu a historie transakcí</p>
+                </div>
             </div>
-        {% endif %}
-
-        <div class="row">
-            {% form_field form.username %}
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-receipt feature-icon"></i>
+                    <h5>{% trans 'Platby a příspěvky' %}</h5>
+                    <p class="text-muted small">Evidence plateb za závody a členské příspěvky</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-user-check feature-icon"></i>
+                    <h5>{% trans 'Členské údaje' %}</h5>
+                    <p class="text-muted small">Správa osobních údajů a registračních informací</p>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="row">
-            {% form_field form.password %}
+    <!-- Login Form -->
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="login-box">
+                <h2 class="text-center mb-4">{% trans 'Přihlášení' %}</h2>
+                
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        {% form_field form.username %}
+                    </div>
+
+                    <div class="mb-3">
+                        {% form_field form.password %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="fas fa-sign-in-alt me-2"></i>{% trans 'Přihlásit se' %}
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 text-center">
+                    <p class="text-muted small">
+                        {% trans 'Přístup do systému mají pouze členové klubu SKOB Zlín.' %}<br>
+                        {% trans 'V případě problémů s přihlášením kontaktujte správce klubu.' %}
+                    </p>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <button class="btn btn-success" type="submit">{% trans 'Odeslat' %}</button>
-
-    </form>
+    <!-- Additional Info -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <p class="text-muted">
+                <a href="https://skob-zlin.cz/" target="_blank" class="text-decoration-none">
+                    <i class="fas fa-external-link-alt me-1"></i>{% trans 'Navštivte webové stránky klubu' %}
+                </a>
+            </p>
+        </div>
+    </div>
 </div>
 {% endblock %}

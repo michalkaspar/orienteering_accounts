@@ -43,13 +43,17 @@
                 {% endfor %}
             </ul>
             {% endif %}
-            <div class="row" >
-                <div class="col-12 col-md-10">
-                {% block main_content %}
-                {% endblock main_content %}
-                </div>
-                {% block right-sidebar %}
+            <div class="row">
                 {% if not request.user.is_anonymous %}
+                <div class="col-12 col-md-10">
+                {% else %}
+                <div class="col-12">
+                {% endif %}
+                    {% block main_content %}
+                    {% endblock main_content %}
+                </div>
+                {% if not request.user.is_anonymous %}
+                {% block right-sidebar %}
                     {% ifperm view_change_log %}
                         <div class="col-12 col-md-2 d-none d-md-block" style="border-left: 2px solid black;">
                             <h3>{% trans "Historie změn:" %}</h3>
@@ -63,9 +67,45 @@
                             </div>
                         </div>
                     {% endifperm %}
-                {% endif %}
                 {% endblock %}
+                {% endif %}
             </div>
         </div>
+        
+        {% block footer %}
+        <footer class="footer mt-5 py-4 bg-light border-top">
+            <div class="container" style="max-width: 1280px;">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>SKOB Zlín, z.s.</h5>
+                        <p class="text-muted small">
+                            Sportovní klub orientačního běhu<br>
+                            Zlín
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>{% trans "Odkazy" %}</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="https://skob-zlin.cz/" target="_blank" class="text-decoration-none">{% trans "Webové stránky klubu" %}</a></li>
+                            <li><a href="https://oris.orientacnisporty.cz/" target="_blank" class="text-decoration-none">ORIS</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>{% trans "Informace" %}</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'privacy_policy' %}" class="text-decoration-none">{% trans "Ochrana osobních údajů" %}</a></li>
+                            <li><a href="{% url 'terms_of_service' %}" class="text-decoration-none">{% trans "Podmínky používání" %}</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="row">
+                    <div class="col-12 text-center text-muted small">
+                        <p class="mb-0">© {{ "now"|date:"Y" }} SKOB Zlín, z.s. {% trans "Všechna práva vyhrazena." %}</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        {% endblock %}
     </body>
 </html>

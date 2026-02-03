@@ -13,6 +13,14 @@ from orienteering_accounts.account.models import Transaction, Role, Permission, 
 class LoginForm(AuthenticationForm):
     def __init__(self, request=None, *args, **kwargs):
         super(LoginForm, self).__init__(request=request, *args, **kwargs)
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': _('Registrační číslo')
+        })
+        self.fields['password'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': _('Heslo')
+        })
 
 
 class PaymentPeriodForm(forms.ModelForm):
