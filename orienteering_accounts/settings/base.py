@@ -15,6 +15,7 @@ from datetime import timedelta
 from decouple import AutoConfig, Csv
 
 import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 config = AutoConfig(os.environ.get('DJANGO_CONFIG_ENV_DIR'))
 
@@ -48,7 +49,8 @@ SERVER_EMAIL = config('PROJECT_SERVER_EMAIL', default='')
 SENTRY_URL = config('PROJECT_SENTRY_URL', default='')
 
 sentry_sdk.init(
-    dsn=SENTRY_URL,
+    dsn=SENTRY_DSN,
+    integrations=[DjangoIntegration()],
     # Add data like request headers and IP for users,
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
     send_default_pii=True,
@@ -257,20 +259,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'plain',
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': True,
-        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file_debug', 'file_info', 'file_error', 'mail_admins'],
+            'handlers': ['file_debug', 'file_info', 'file_error'],
             'level': 'ERROR',
             'propagate': False,
         },
         'orienteering_accounts': {
-            'handlers': ['file_debug', 'file_info', 'file_error', 'mail_admins'],
+            'handlers': ['file_debug', 'file_info', 'file_error'],
             'level': 'DEBUG',
             'propagate': False,
         },
