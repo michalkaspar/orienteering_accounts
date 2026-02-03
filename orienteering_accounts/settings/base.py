@@ -14,6 +14,8 @@ import os
 from datetime import timedelta
 from decouple import AutoConfig, Csv
 
+import sentry_sdk
+
 config = AutoConfig(os.environ.get('DJANGO_CONFIG_ENV_DIR'))
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -42,6 +44,15 @@ ALLOWED_HOSTS = config('PROJECT_ALLOWED_HOSTS', cast=Csv(), default='')
 ADMINS = [(email, email) for email in config('PROJECT_ADMINS', default='', cast=Csv())]
 
 SERVER_EMAIL = config('PROJECT_SERVER_EMAIL', default='')
+
+SENTRY_URL = config('PROJECT_SENTRY_URL', default='')
+
+sentry_sdk.init(
+    dsn=SENTRY_URL,
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
 
 # Application definition
 
