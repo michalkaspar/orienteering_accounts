@@ -21,31 +21,33 @@
     <tbody>
     {# show_this_year is expected as boolean. When true → only current year; when false → all except current year. #}
     {% for transaction in transactions %}
-        {# Main row. If ENTRY with other_debts or BANK_TRANSACTION, the whole row toggles a collapse with details. #}
+        {# Main row. If ENTRY with other_debts or BANK_TRANSACTION, clicking the icon toggles a collapse with details. #}
         <tr
             {% if transaction.is_entry %}
                 {% if transaction.other_debts %}
                 class="tx-toggle-row {% if transaction.is_future %}future{% endif %}"
-                style="cursor: pointer;"
-                data-toggle="collapse" data-bs-toggle="collapse"
-                data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
+                id="tx-row-{{ transaction.id }}"
                 aria-controls="tx-details-{{ transaction.id }}" aria-expanded="false"
                 {% elif transaction.is_future %}
                 style="background-color: #fff4e5;"
                 {% endif %}
             {% elif transaction.is_bank_transaction %}
                 class="tx-toggle-row"
-                style="cursor: pointer;"
-                data-toggle="collapse" data-bs-toggle="collapse"
-                data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
+                id="tx-row-{{ transaction.id }}"
                 aria-controls="tx-details-{{ transaction.id }}" aria-expanded="false"
             {% endif %}
         >
-            <td class="text-center">
+            <td class="text-center tx-icon-cell">
                 {% if transaction.is_entry and transaction.other_debts %}
-                    <span class="tx-expand-icon">+</span>
+                    <span class="tx-expand-icon" 
+                          data-toggle="collapse" data-bs-toggle="collapse"
+                          data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
+                          style="cursor: pointer;">+</span>
                 {% elif transaction.is_bank_transaction %}
-                    <span class="tx-expand-icon">+</span>
+                    <span class="tx-expand-icon"
+                          data-toggle="collapse" data-bs-toggle="collapse"
+                          data-target="#tx-details-{{ transaction.id }}" data-bs-target="#tx-details-{{ transaction.id }}"
+                          style="cursor: pointer;">+</span>
                 {% endif %}
             </td>
             <td>{{ transaction.created|format_datetime }}</td>
@@ -186,22 +188,25 @@
     </tbody>
 </table>
 
-{# Enhance UX: clicking anywhere in the togglable row opens/closes the details. Prevent toggle when clicking links/buttons inside. #}
+{# Enhance UX: clicking the expand icon opens/closes the details and toggles the icon between + and -. #}
 <script>
     (function() {
         try {
-            var table = document.currentScript ? document.currentScript.previousElementSibling : null;
             // Delegate on document to cover multiple tables on the page
             document.addEventListener('click', function(e) {
-                var row = e.target.closest('tr.tx-toggle-row');
+                // Only handle clicks on the expand icon
+                var icon = e.target.closest('.tx-expand-icon');
+                if (!icon) return;
+                
+                var row = icon.closest('tr.tx-toggle-row');
                 if (!row) return;
-                // If clicking on an interactive element, don't toggle
-                var interactive = e.target.closest('a, button, input, select, textarea, label');
-                if (interactive) return;
-                var target = row.getAttribute('data-bs-target') || row.getAttribute('data-target');
+                
+                var target = icon.getAttribute('data-bs-target') || icon.getAttribute('data-target');
                 if (!target) return;
+                
                 var panel = document.querySelector(target);
                 if (!panel) return;
+                
                 // Toggle collapse compatible with Bootstrap 4 and 5
                 if (window.jQuery && typeof jQuery(panel).collapse === 'function') {
                     jQuery(panel).collapse('toggle');
@@ -209,8 +214,32 @@
                     // Fallback: simple class toggle if Bootstrap JS is not available
                     panel.classList.toggle('show');
                 }
+                
+                // Toggle the icon and aria-expanded state
                 var expanded = row.getAttribute('aria-expanded') === 'true';
                 row.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                icon.textContent = expanded ? '+' : '-';
+            }, false);
+            
+            // Listen to Bootstrap collapse events to ensure icon stays in sync
+            document.addEventListener('shown.bs.collapse', function(e) {
+                var panel = e.target;
+                var icon = document.querySelector('[data-bs-target="#' + panel.id + '"], [data-target="#' + panel.id + '"]');
+                if (icon) {
+                    icon.textContent = '-';
+                    var row = icon.closest('tr.tx-toggle-row');
+                    if (row) row.setAttribute('aria-expanded', 'true');
+                }
+            }, false);
+            
+            document.addEventListener('hidden.bs.collapse', function(e) {
+                var panel = e.target;
+                var icon = document.querySelector('[data-bs-target="#' + panel.id + '"], [data-target="#' + panel.id + '"]');
+                if (icon) {
+                    icon.textContent = '+';
+                    var row = icon.closest('tr.tx-toggle-row');
+                    if (row) row.setAttribute('aria-expanded', 'false');
+                }
             }, false);
         } catch (err) {
             // no-op
@@ -235,6 +264,14 @@ tr.tx-toggle-row.future[aria-expanded="true"] td {
     font-weight: bold;
     font-size: 1.2em;
     color: #666;
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+}
+.tx-expand-icon:hover {
+    color: #333;
 }
 /* Normal border for expandable rows */
 tr.tx-toggle-row td {
