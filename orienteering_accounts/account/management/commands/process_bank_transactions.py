@@ -28,11 +28,13 @@ class Command(BaseCommand):
 
         bank_transactions = RBBankAPIClient.get_transactions(from_date=last_read_timestamp, to_date=current_timestamp)
 
-        with transaction.atomic():
-            for bank_transaction in reversed(bank_transactions):
-                logger.info(f'Processing bank transaction {bank_transaction.dict()}')
-                Account.process_bank_transaction(bank_transaction, payment_period)
-
+        for bank_transaction in reversed(bank_transactions):
+            logger.info(f'Processing bank transaction {bank_transaction.dict()}')
+            try:
+                with transaction.atomic():
+                    Account.process_bank_transaction(bank_transaction, payment_period)
+            except:
+                logger.exception(f'Error processing bank transaction', extra={'transaction_data': bank_transaction.dict()})
         cache.set(last_read_timestamp_cache_key, current_timestamp)
 
         logger.info(f'Processing of bank transactions from RB API finished')

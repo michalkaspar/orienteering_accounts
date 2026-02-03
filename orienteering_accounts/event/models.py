@@ -4,7 +4,7 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import QuerySet
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -88,17 +88,18 @@ class Event(models.Model):
     def import_from_oris(cls):
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO, oris_choices.SPORT_LOB]:
             for event in ORISClient.get_events(sport=sport, include_unofficial_events=1):
-                try:
-                    instance = cls.objects.get(oris_id=event.oris_id)
-                    cls.objects.filter(oris_id=event.oris_id).update(**event.dict(exclude_unset=True))
-                    instance.refresh_from_db()
-                except cls.DoesNotExist:
-                    instance = cls.upsert_from_oris(event)
-                if instance.date and instance.date >= timezone.now().date():
-                    instance.update_entries()
-                    if instance.should_be_handled():
-                        instance.handled = True
-                        instance.save(update_fields=['handled'])
+                with transaction.atomic():
+                    try:
+                        instance = cls.objects.get(oris_id=event.oris_id)
+                        cls.objects.filter(oris_id=event.oris_id).update(**event.dict(exclude_unset=True))
+                        instance.refresh_from_db()
+                    except cls.DoesNotExist:
+                        instance = cls.upsert_from_oris(event)
+                    if instance.date and instance.date >= timezone.now().date():
+                        instance.update_entries()
+                        if instance.should_be_handled():
+                            instance.handled = True
+                            instance.save(update_fields=['handled'])
 
     @classmethod
     def refresh_from_oris(cls):
