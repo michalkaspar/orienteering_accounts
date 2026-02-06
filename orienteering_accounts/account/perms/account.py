@@ -94,3 +94,10 @@ def view_bank_transaction_list(account):
 
 
 bank_transaction_view_perms = [view_bank_transaction_list]
+
+
+def view_all_bank_transactions(account):
+    return account.ifperm(PERMISSION_VIEW_ALL_BANK_TRANSACTIONS)
+
+
+all_bank_transaction_view_perms = [view_all_bank_transactions]

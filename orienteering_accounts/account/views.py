@@ -386,3 +386,18 @@ class BankTransactionListView(LoginRequiredMixin, PermissionsRequiredMixin, List
     permissions_required = perms.bank_transaction_view_perms
     template_name = 'account/bank_transaction/list.html'
     ordering = ['-date']
+
+    def get_queryset(self):
+        # Only show transactions that are linked to an account
+        return BankTransaction.objects.filter(account__isnull=False).order_by(*self.ordering)
+
+
+class AllBankTransactionsView(LoginRequiredMixin, PermissionsRequiredMixin, ListView):
+    model = BankTransaction
+    permissions_required = perms.all_bank_transaction_view_perms
+    template_name = 'account/all_bank_transactions/list.html'
+    ordering = ['-date']
+
+    def get_queryset(self):
+        # Show all transactions
+        return BankTransaction.objects.all().order_by(*self.ordering)

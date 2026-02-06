@@ -448,84 +448,91 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         variable_symbol = bank_transaction.variable_symbol
         amount = bank_transaction.amount.value
 
-        if not variable_symbol or amount <= 0:
-            return
+        # Extract sender name and receiver note from bank transaction
+        sender_name = ''
+        receiver_note = ''
+        try:
+            if bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty:
+                sender_name = bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty.name or ''
+        except AttributeError:
+            pass
+        
+        try:
+            if bank_transaction.entryDetails.transactionDetails.remittanceInformation:
+                remittance = bank_transaction.entryDetails.transactionDetails.remittanceInformation
+                receiver_note = remittance.unstructured or remittance.originatorMessage or ''
+        except AttributeError:
+            pass
 
-        debts_variable_symbol_prefixes = ('1000', '1001')
-        current_year = datetime.now().year
-        club_membership_variable_symbol_prefixes = (str(current_year), str(current_year - 1))
+        # Default values for all transactions
+        account = None
+        purpose = BankTransaction.BankTransactionPurpose.UNKNOWN
+        charged = False
 
-        if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + club_membership_variable_symbol_prefixes):
+        # Try to match transaction to an account if we have valid data
+        if variable_symbol and amount > 0:
+            debts_variable_symbol_prefixes = ('1000', '1001')
+            current_year = datetime.now().year
+            club_membership_variable_symbol_prefixes = (str(current_year), str(current_year - 1))
 
-            variable_symbol = variable_symbol.strip().lstrip('0')
-            registration_number = variable_symbol[4:]
+            if any(prefix in variable_symbol for prefix in debts_variable_symbol_prefixes + club_membership_variable_symbol_prefixes):
+                variable_symbol = variable_symbol.strip().lstrip('0')
+                registration_number = variable_symbol[4:]
 
-            account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
+                account = cls.all_objects.filter(registration_number=f'TZL{registration_number}').first()
 
-            transaction_kwargs = {
-                "amount": amount,
-                "note": "Importováno z IB.",
-                "author_name": "Systém",
-            }
+                if account:
+                    charged = True
+                    transaction_kwargs = {
+                        "amount": amount,
+                        "note": "Importováno z IB.",
+                        "author_name": "Systém",
+                    }
 
-            if account:
-                if variable_symbol.startswith(club_membership_variable_symbol_prefixes):
-                    # Membership payment
-                    transaction_kwargs.update(
-                        purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
-                        period=payment_period
-                    )
-                    purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
+                    if variable_symbol.startswith(club_membership_variable_symbol_prefixes):
+                        # Membership payment
+                        transaction_kwargs.update(
+                            purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP,
+                            period=payment_period
+                        )
+                        purpose = BankTransaction.BankTransactionPurpose.CLUB_MEMBERSHIP
 
-                    if not account.is_active:
-                        account.is_active = True
-                        account.save(update_fields=['is_active'])
+                        if not account.is_active:
+                            account.is_active = True
+                            account.save(update_fields=['is_active'])
 
-                    if account.removed_from_google_workspace:
-                        account.removed_from_google_workspace = False
-                        account.add_to_google_workspace_group()
-                        account.save(update_fields=['removed_from_google_workspace'])
+                        if account.removed_from_google_workspace:
+                            account.removed_from_google_workspace = False
+                            account.add_to_google_workspace_group()
+                            account.save(update_fields=['removed_from_google_workspace'])
 
-                    logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
-                else:
-                    transaction_kwargs.update(
-                        purpose=Transaction.TransactionPurpose.DEBTS
-                    )
-                    purpose = BankTransaction.BankTransactionPurpose.DEBTS
-                    logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
+                        logger.info('Processed and charged entry bank transactions', extra={'account': account, 'amount': amount})
+                    else:
+                        transaction_kwargs.update(
+                            purpose=Transaction.TransactionPurpose.DEBTS
+                        )
+                        purpose = BankTransaction.BankTransactionPurpose.DEBTS
+                        logger.info('Processed and charged debts bank transactions', extra={'account': account, 'amount': amount})
 
-                # Extract sender name and receiver note from bank transaction
-                sender_name = ''
-                receiver_note = ''
-                try:
-                    if bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty:
-                        sender_name = bank_transaction.entryDetails.transactionDetails.relatedParties.counterParty.name or ''
-                except AttributeError:
-                    pass
-                
-                try:
-                    if bank_transaction.entryDetails.transactionDetails.remittanceInformation:
-                        remittance = bank_transaction.entryDetails.transactionDetails.remittanceInformation
-                        receiver_note = remittance.unstructured or remittance.originatorMessage or ''
-                except AttributeError:
-                    pass
+        # Save ALL bank transactions, regardless of whether we found a matching account
+        bank_transaction_obj, created = BankTransaction.objects.get_or_create(
+            remote_id=bank_transaction.entryReference,
+            defaults=dict(
+                date=bank_transaction.valueDate,
+                account=account,
+                amount=amount,
+                charged=charged,
+                transaction_data=bank_transaction.dict(),
+                purpose=purpose,
+                sender_name=sender_name,
+                receiver_note=receiver_note,
+            )
+        )
 
-                bank_transaction_obj, created = account.bank_transactions.get_or_create(
-                    remote_id=bank_transaction.entryReference,
-                    defaults=dict(
-                        date=bank_transaction.valueDate,
-                        amount=amount,
-                        charged=True,
-                        transaction_data=bank_transaction.dict(),
-                        purpose=purpose,
-                        sender_name=sender_name,
-                        receiver_note=receiver_note,
-                    )
-                )
-
-                if created:
-                    transaction_kwargs['origin_bank_transaction'] = bank_transaction_obj
-                    account.transactions.create(**transaction_kwargs)
+        # Only create account transaction if we found a matching account and transaction was newly created
+        if created and account and charged:
+            transaction_kwargs['origin_bank_transaction'] = bank_transaction_obj
+            account.transactions.create(**transaction_kwargs)
 
     @property
     def ranking(self) -> typing.Optional[UserRanking]:
@@ -581,10 +588,11 @@ class BankTransaction(BaseModel):
     class BankTransactionPurpose(models.TextChoices):
         CLUB_MEMBERSHIP = 'CLUB_MEMBERSHIP', _('Oddílový příspěvek')
         DEBTS = 'DEBTS', _('Dluhy')
+        UNKNOWN = 'UNKNOWN', _('Neznámý')
 
     remote_id = models.CharField(max_length=255, verbose_name=_('ID transakce'), unique=True, db_index=True)
     date = models.DateTimeField(verbose_name=_('Datum'))
-    account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='bank_transactions')
+    account = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='bank_transactions', null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=9, verbose_name=_('Částka'))
     charged = models.BooleanField(default=False, verbose_name=_('Zúčtováno'))
     transaction_data = models.JSONField(verbose_name=_('Data transakce'))
