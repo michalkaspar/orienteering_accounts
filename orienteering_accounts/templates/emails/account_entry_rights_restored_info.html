@@ -1,0 +1,24 @@
+{% extends "emails/base.html" %}
+{% load i18n event %}
+
+{% block body %}
+    {% trans "Ahoj," %}<br>
+    <br>
+    {% trans "U závodníka " %}{{ account.full_name }} {{ account.registration_number }} {% trans "bylo odblokováno přihlašování na závody v ORIS, neboť zůstatek na účtu v IS se vrátil nad -2000 Kč." %}
+    <br>
+    <br>
+    {% trans "Aktuální zůstatek účtu je " %}{{ account.balance }} {% trans "Kč." %}
+    <br>
+    {% trans "Nyní se můžeš opět přihlašovat na závody přes ORIS." %}
+    <br>
+    {% trans "Podrobný přehled transakcí lze nalézt " %}<a href="http://{{ domain }}{% url "accounts:transactions" account.key %}">{% trans "zde." %}</a>
+    <br>
+    {% trans "V případě nesrovnalostí či dotazů prosím kontaktuj Romana Zbranka, zbranek@skob-zlin.cz." %}
+    <br>
+    <br>
+    {% trans "Děkujeme za platbu." %}
+    <br>
+    <br>
+    {% trans "Za SKOB Zlín, Michal Kašpar, administrátor IS." %}
+
+{% endblock %}

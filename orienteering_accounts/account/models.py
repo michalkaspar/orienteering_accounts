@@ -411,6 +411,20 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             html_content=html_content
         )
 
+    def send_entry_rights_restored_info_email(self):
+        context = {
+            'account': self,
+            'domain': settings.PROJECT_DOMAIN
+        }
+
+        html_content = render_to_string('emails/account_entry_rights_restored_info.html', context)
+
+        email_utils.send_email(
+            recipient_list=self.email_recipients,
+            subject=f'Odblokování přihlašovacích práv v ORIS - {self.full_name} {self.registration_number}',
+            html_content=html_content
+        )
+
     def send_account_created_info_email(self):
         context = {
             'account': self

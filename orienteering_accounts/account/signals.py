@@ -36,11 +36,24 @@ def check_balance(account):
 
         if old_balance <= maximum_threshold:
             # Balance was previously at or below max threshold, add back entry rights
-            account.add_entry_rights_in_oris()
-            logger.info(
-                f'ORIS entry rights restored for {account.full_name} '
-                f'({account.registration_number}). Balance: {balance}'
-            )
+            try:
+                account.add_entry_rights_in_oris()
+                logger.info(
+                    f'ORIS entry rights restored for {account.full_name} '
+                    f'({account.registration_number}). Balance: {balance}'
+                )
+                
+                # Send unblock notification email
+                account.send_entry_rights_restored_info_email()
+                logger.info(
+                    f'Entry rights restored email sent to {account.full_name} '
+                    f'({account.registration_number}). Balance: {balance}'
+                )
+            except Exception as e:
+                logger.error(
+                    f'Failed to restore entry rights for {account.full_name} '
+                    f'({account.registration_number}): {str(e)}'
+                )
             return
 
         if balance < Decimal(0) and balance < old_balance:
