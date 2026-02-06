@@ -7,9 +7,8 @@
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
-          <th scope="col" style="width: 40px;"></th>
           <th scope="col">{% trans "Datum" %}</th>
-          <th scope="col">{% trans "Informace o plátci" %}</th>
+          <th scope="col">{% trans "Název plátce" %}</th>
           <th scope="col">{% trans "Variabilní symbol" %}</th>
           <th scope="col">{% trans "Částka" %}</th>
           <th scope="col">{% trans "Účet" %}</th>
@@ -17,36 +16,20 @@
       </thead>
       <tbody>
         {% for bank_transaction in object_list %}
-        <tr class="bt-toggle-row" 
-            id="bt-row-{{ bank_transaction.id }}"
-            aria-controls="bt-details-{{ bank_transaction.id }}" 
-            aria-expanded="false">
-            <td class="text-center bt-icon-cell">
-                <span class="bt-expand-icon" 
-                      data-toggle="collapse" data-bs-toggle="collapse"
-                      data-target="#bt-details-{{ bank_transaction.id }}" data-bs-target="#bt-details-{{ bank_transaction.id }}"
-                      style="cursor: pointer;">+</span>
-            </td>
+        <tr>
             <td>
                 {{ bank_transaction.date|format_datetime }}
             </td>
             <td>
-                {% if bank_transaction.sender_name %}
-                    <div><strong>{% trans "Jméno" %}:</strong> {{ bank_transaction.sender_name }}</div>
-                {% endif %}
                 {% with counterParty=bank_transaction.transaction_data.entryDetails.transactionDetails.relatedParties.counterParty %}
-                    {% if counterParty %}
-                        {% if counterParty.name %}
-                            <div><strong>{% trans "Název protistrany" %}:</strong> {{ counterParty.name }}</div>
-                        {% endif %}
-                        {% if counterParty.account.accountNumber %}
-                            <div><strong>{% trans "Číslo účtu" %}:</strong> {{ counterParty.account.accountNumber }}{% if counterParty.organisationIdentification.bankCode %}/{{ counterParty.organisationIdentification.bankCode }}{% endif %}</div>
-                        {% endif %}
+                    {% if counterParty.name %}
+                        {{ counterParty.name }}
+                    {% elif bank_transaction.sender_name %}
+                        {{ bank_transaction.sender_name }}
+                    {% else %}
+                        <span class="text-muted">-</span>
                     {% endif %}
                 {% endwith %}
-                {% if not bank_transaction.sender_name and not bank_transaction.transaction_data.entryDetails.transactionDetails.relatedParties.counterParty %}
-                    <span class="text-muted">-</span>
-                {% endif %}
             </td>
             <td>
                 {% with variable_symbol=bank_transaction.transaction_data.entryDetails.transactionDetails.remittanceInformation.creditorReferenceInformation.variable %}
@@ -68,283 +51,7 @@
                 {% endif %}
             </td>
         </tr>
-        {# Details row showing full transaction_data JSON #}
-        <tr class="bt-details-row">
-            <td colspan="6" style="padding: 0; border-top: none;">
-                <div id="bt-details-{{ bank_transaction.id }}" class="collapse">
-                    <div class="p-3" style="background: #f8f9fa;">
-                        <div class="mb-2">
-                            <strong>{% trans "Kompletní data transakce" %}</strong>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0">
-                                <tbody>
-                                    {% if bank_transaction.transaction_data.entryReference %}
-                                    <tr>
-                                        <td style="width: 250px;"><strong>{% trans "Reference záznamu" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.entryReference }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% if bank_transaction.transaction_data.amount %}
-                                    <tr>
-                                        <td><strong>{% trans "Částka (hodnota)" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.amount.value }} {{ bank_transaction.transaction_data.amount.currency }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% if bank_transaction.transaction_data.creditDebitIndication %}
-                                    <tr>
-                                        <td><strong>{% trans "Typ pohybu" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.creditDebitIndication }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% if bank_transaction.transaction_data.bookingDate %}
-                                    <tr>
-                                        <td><strong>{% trans "Datum zaúčtování" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.bookingDate }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% if bank_transaction.transaction_data.valueDate %}
-                                    <tr>
-                                        <td><strong>{% trans "Datum valuta" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.valueDate }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% if bank_transaction.transaction_data.bankTransactionCode.code %}
-                                    <tr>
-                                        <td><strong>{% trans "Kód bankovní transakce" %}:</strong></td>
-                                        <td>{{ bank_transaction.transaction_data.bankTransactionCode.code }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    {% with transactionDetails=bank_transaction.transaction_data.entryDetails.transactionDetails %}
-                                        {% if transactionDetails %}
-                                            <tr>
-                                                <td colspan="2" class="bg-light"><strong>{% trans "Detaily transakce" %}</strong></td>
-                                            </tr>
-                                            
-                                            {% with counterParty=transactionDetails.relatedParties.counterParty %}
-                                                {% if counterParty %}
-                                                    {% if counterParty.name %}
-                                                    <tr>
-                                                        <td><strong>{% trans "Název protistrany" %}:</strong></td>
-                                                        <td>{{ counterParty.name }}</td>
-                                                    </tr>
-                                                    {% endif %}
-                                                    
-                                                    {% if counterParty.account.accountNumber %}
-                                                    <tr>
-                                                        <td><strong>{% trans "Číslo účtu protistrany" %}:</strong></td>
-                                                        <td>{{ counterParty.account.accountNumber }}</td>
-                                                    </tr>
-                                                    {% endif %}
-                                                    
-                                                    {% if counterParty.organisationIdentification.bankCode %}
-                                                    <tr>
-                                                        <td><strong>{% trans "Kód banky protistrany" %}:</strong></td>
-                                                        <td>{{ counterParty.organisationIdentification.bankCode }}</td>
-                                                    </tr>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endwith %}
-                                            
-                                            {% with remittanceInfo=transactionDetails.remittanceInformation %}
-                                                {% if remittanceInfo %}
-                                                    {% if remittanceInfo.unstructured %}
-                                                    <tr>
-                                                        <td><strong>{% trans "Nestrukturované informace" %}:</strong></td>
-                                                        <td>{{ remittanceInfo.unstructured }}</td>
-                                                    </tr>
-                                                    {% endif %}
-                                                    
-                                                    {% with creditorRef=remittanceInfo.creditorReferenceInformation %}
-                                                        {% if creditorRef %}
-                                                            {% if creditorRef.variable %}
-                                                            <tr>
-                                                                <td><strong>{% trans "Variabilní symbol" %}:</strong></td>
-                                                                <td>{{ creditorRef.variable }}</td>
-                                                            </tr>
-                                                            {% endif %}
-                                                            
-                                                            {% if creditorRef.constant %}
-                                                            <tr>
-                                                                <td><strong>{% trans "Konstantní symbol" %}:</strong></td>
-                                                                <td>{{ creditorRef.constant }}</td>
-                                                            </tr>
-                                                            {% endif %}
-                                                            
-                                                            {% if creditorRef.specific %}
-                                                            <tr>
-                                                                <td><strong>{% trans "Specifický symbol" %}:</strong></td>
-                                                                <td>{{ creditorRef.specific }}</td>
-                                                            </tr>
-                                                            {% endif %}
-                                                        {% endif %}
-                                                    {% endwith %}
-                                                    
-                                                    {% if remittanceInfo.originatorMessage %}
-                                                    <tr>
-                                                        <td><strong>{% trans "Zpráva zadavatele" %}:</strong></td>
-                                                        <td>{{ remittanceInfo.originatorMessage }}</td>
-                                                    </tr>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endwith %}
-                                        {% endif %}
-                                    {% endwith %}
-                                    
-                                    <tr>
-                                        <td colspan="2" class="bg-light"><strong>{% trans "Další informace" %}</strong></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td><strong>{% trans "Účel transakce" %}:</strong></td>
-                                        <td>{{ bank_transaction.get_purpose_display }}</td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td><strong>{% trans "Zaúčtováno" %}:</strong></td>
-                                        <td>{{ bank_transaction.charged|yesno:"Ano,Ne" }}</td>
-                                    </tr>
-                                    
-                                    {% if bank_transaction.receiver_note %}
-                                    <tr>
-                                        <td><strong>{% trans "Poznámka pro příjemce" %}:</strong></td>
-                                        <td>{{ bank_transaction.receiver_note }}</td>
-                                    </tr>
-                                    {% endif %}
-                                    
-                                    <tr>
-                                        <td colspan="2" class="bg-light"><strong>{% trans "Celá JSON struktura" %}</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2">
-                                            <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; font-size: 0.85rem;">{{ bank_transaction.transaction_data|safe }}</pre>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
         {% endfor %}
       </tbody>
     </table>
 {% endblock main_content %}
-
-{% block extra_js %}
-{# Enhance UX: clicking the expand icon opens/closes the details and toggles the icon between + and -. #}
-<script>
-    (function() {
-        try {
-            // Delegate on document to cover the table
-            document.addEventListener('click', function(e) {
-                // Only handle clicks on the expand icon
-                var icon = e.target.closest('.bt-expand-icon');
-                if (!icon) return;
-                
-                var row = icon.closest('tr.bt-toggle-row');
-                if (!row) return;
-                
-                var target = icon.getAttribute('data-bs-target') || icon.getAttribute('data-target');
-                if (!target) return;
-                
-                var panel = document.querySelector(target);
-                if (!panel) return;
-                
-                // Toggle collapse compatible with Bootstrap 4 and 5
-                if (window.jQuery && typeof jQuery(panel).collapse === 'function') {
-                    jQuery(panel).collapse('toggle');
-                } else {
-                    // Fallback: simple class toggle if Bootstrap JS is not available
-                    panel.classList.toggle('show');
-                }
-                
-                // Toggle the icon and aria-expanded state
-                var expanded = row.getAttribute('aria-expanded') === 'true';
-                row.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-                icon.textContent = expanded ? '+' : '-';
-            }, false);
-            
-            // Listen to Bootstrap collapse events to ensure icon stays in sync
-            document.addEventListener('shown.bs.collapse', function(e) {
-                var panel = e.target;
-                var icon = document.querySelector('[data-bs-target="#' + panel.id + '"], [data-target="#' + panel.id + '"]');
-                if (icon) {
-                    icon.textContent = '-';
-                    var row = icon.closest('tr.bt-toggle-row');
-                    if (row) row.setAttribute('aria-expanded', 'true');
-                }
-            }, false);
-            
-            document.addEventListener('hidden.bs.collapse', function(e) {
-                var panel = e.target;
-                var icon = document.querySelector('[data-bs-target="#' + panel.id + '"], [data-target="#' + panel.id + '"]');
-                if (icon) {
-                    icon.textContent = '+';
-                    var row = icon.closest('tr.bt-toggle-row');
-                    if (row) row.setAttribute('aria-expanded', 'false');
-                }
-            }, false);
-        } catch (err) {
-            // no-op
-        }
-    })();
-</script>
-
-<style>
-/* Styling for expand icon */
-.bt-expand-icon {
-    font-weight: bold;
-    font-size: 1.2em;
-    color: #666;
-    cursor: pointer;
-    user-select: none;
-    display: inline-block;
-    width: 20px;
-    text-align: center;
-}
-.bt-expand-icon:hover {
-    color: #333;
-}
-
-/* Normal border for expandable rows */
-tr.bt-toggle-row td {
-    border-bottom-width: 1px !important;
-    border-bottom-color: #dee2e6 !important;
-}
-
-/* Remove borders from details row to avoid double border appearance */
-tr.bt-details-row {
-    border-top: none !important;
-    border-bottom: none !important;
-}
-tr.bt-details-row td {
-    border-top: none !important;
-    border-bottom: none !important;
-}
-
-/* Ensure collapsed details don't add any visual thickness */
-tr.bt-details-row .collapse:not(.show) {
-    display: none !important;
-    height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-}
-
-/* Clickable row styling */
-tr.bt-toggle-row {
-    cursor: pointer;
-}
-tr.bt-toggle-row:hover td {
-    background-color: #f5f5f5;
-}
-</style>
-{% endblock extra_js %}
