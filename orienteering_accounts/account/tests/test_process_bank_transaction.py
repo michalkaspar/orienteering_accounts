@@ -2,12 +2,14 @@ from datetime import datetime
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 from model_bakery import baker
 
 from orienteering_accounts.account.models import Account, BankTransaction, Transaction, PaymentPeriod
+from orienteering_accounts.account.services import process_bank_transactions_batch
 from orienteering_accounts.rb.models import (
     Transaction as BankTransactionSchema,
     TransactionAmount,
@@ -608,3 +610,82 @@ class ProcessBankTransactionTestCase(TestCase):
         remittance = saved_transaction.transaction_data['entryDetails']['transactionDetails']['remittanceInformation']
         self.assertEqual(remittance['creditorReferenceInformation']['constant'], '0308')
         self.assertEqual(remittance['creditorReferenceInformation']['specific'], '1234567890')
+
+    def test_process_bank_transactions_batch(self):
+        """Test that process_bank_transactions_batch processes multiple transactions"""
+        bank_transactions = [
+            self._create_bank_transaction_schema(entry_reference='TX_BATCH_1', amount_value=100.0),
+            self._create_bank_transaction_schema(entry_reference='TX_BATCH_2', amount_value=200.0),
+        ]
+        process_bank_transactions_batch(bank_transactions, self.payment_period)
+        self.assertEqual(BankTransaction.objects.count(), 2)
+        self.assertEqual(
+            set(BankTransaction.objects.values_list('remote_id', flat=True)),
+            {'TX_BATCH_1', 'TX_BATCH_2'}
+        )
+
+
+class VerifyBankTransactionsCommandTestCase(TestCase):
+    """Test suite for verify_bank_transactions management command"""
+
+    def setUp(self):
+        self.payment_period = baker.make('account.PaymentPeriod')
+
+    def _create_bank_transaction_schema(self, entry_reference='TX123456', amount_value=100.0):
+        current_date = timezone.now().isoformat()
+        return BankTransactionSchema(
+            entryReference=entry_reference,
+            amount=TransactionAmount(value=amount_value, currency='CZK'),
+            creditDebitIndication='CRDT',
+            bookingDate=current_date,
+            valueDate=current_date,
+            bankTransactionCode=BankTransactionCode(code='PMNT'),
+            entryDetails=TransactionEntryDetails(
+                transactionDetails=TransactionDetails(
+                    references={},
+                    relatedParties=RelatedParties(),
+                    remittanceInformation=None
+                )
+            )
+        )
+
+    @patch('orienteering_accounts.account.management.commands.verify_bank_transactions.RBBankAPIClient')
+    def test_reimports_missing_transactions(self, mock_rb_client):
+        """Test that verify_bank_transactions reimports only missing transactions"""
+        tx1 = self._create_bank_transaction_schema(entry_reference='TX_VERIFY_1', amount_value=100.0)
+        tx2 = self._create_bank_transaction_schema(entry_reference='TX_VERIFY_2', amount_value=200.0)
+        mock_rb_client.get_transactions.return_value = [tx1, tx2]
+
+        BankTransaction.objects.create(
+            remote_id='TX_VERIFY_1',
+            date=timezone.now(),
+            amount=Decimal('100.0'),
+            charged=False,
+            transaction_data={},
+            purpose=BankTransaction.BankTransactionPurpose.UNKNOWN,
+        )
+
+        call_command('verify_bank_transactions')
+
+        self.assertEqual(BankTransaction.objects.count(), 2)
+        self.assertTrue(BankTransaction.objects.filter(remote_id='TX_VERIFY_1').exists())
+        self.assertTrue(BankTransaction.objects.filter(remote_id='TX_VERIFY_2').exists())
+
+    @patch('orienteering_accounts.account.management.commands.verify_bank_transactions.RBBankAPIClient')
+    def test_skips_when_all_imported(self, mock_rb_client):
+        """Test that verify_bank_transactions does nothing when all are already imported"""
+        tx1 = self._create_bank_transaction_schema(entry_reference='TX_ALL_IMPORTED', amount_value=100.0)
+        mock_rb_client.get_transactions.return_value = [tx1]
+
+        BankTransaction.objects.create(
+            remote_id='TX_ALL_IMPORTED',
+            date=timezone.now(),
+            amount=Decimal('100.0'),
+            charged=False,
+            transaction_data={},
+            purpose=BankTransaction.BankTransactionPurpose.UNKNOWN,
+        )
+
+        call_command('verify_bank_transactions')
+
+        self.assertEqual(BankTransaction.objects.count(), 1)

@@ -5,9 +5,10 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from django.core.cache import cache
 from django.utils import timezone
-from django.db import transaction
+from requests.exceptions import HTTPError
 
-from orienteering_accounts.account.models import Account, PaymentPeriod
+from orienteering_accounts.account.models import PaymentPeriod
+from orienteering_accounts.account.services import process_bank_transactions_batch
 from orienteering_accounts.rb.client import RBBankAPIClient
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
 
     def handle(self, **options):
-        logger.info(f'Processing of bank transactions from RB API started')
+        logger.info('Processing of bank transactions from RB API started')
 
         last_read_timestamp_cache_key = settings.LAST_BANK_TRANSACTION_READ_CACHE_KEY_PATTERN.format(
             bank_account_number=settings.CLUB_BANK_ACCOUNT_NUMBER
@@ -26,15 +27,23 @@ class Command(BaseCommand):
         current_timestamp = timezone.now()
         payment_period = PaymentPeriod.get_last_period()
 
-        bank_transactions = RBBankAPIClient.get_transactions(from_date=last_read_timestamp, to_date=current_timestamp)
+        try:
+            bank_transactions = RBBankAPIClient.get_transactions(
+                from_date=last_read_timestamp, to_date=current_timestamp
+            )
 
-        for bank_transaction in reversed(bank_transactions):
-            logger.info(f'Processing bank transaction {bank_transaction.dict()}')
-            try:
-                with transaction.atomic():
-                    Account.process_bank_transaction(bank_transaction, payment_period)
-            except:
-                logger.exception(f'Error processing bank transaction', extra={'transaction_data': bank_transaction.dict()})
-        cache.set(last_read_timestamp_cache_key, current_timestamp)
+            process_bank_transactions_batch(bank_transactions, payment_period)
 
-        logger.info(f'Processing of bank transactions from RB API finished')
+            cache.set(last_read_timestamp_cache_key, current_timestamp)
+
+            logger.info('Processing of bank transactions from RB API finished')
+        except HTTPError as e:
+            logger.error(
+                'Failed to fetch bank transactions from RB API: %s %s - %s. '
+                'Cache not updated; next run will retry the same time range.',
+                e.response.status_code if e.response else '?',
+                e.response.url if e.response else '?',
+                str(e),
+                exc_info=True,
+            )
+            raise
