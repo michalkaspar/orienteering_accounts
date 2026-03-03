@@ -51,7 +51,7 @@ class Entry(models.Model):
             }
         )
 
-        if created and event.handled:
+        if created:
             if instance.fee_after_club_discount != 0:
                 instance.transactions.create(
                     account=account,
