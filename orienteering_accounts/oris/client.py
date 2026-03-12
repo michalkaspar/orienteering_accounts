@@ -223,7 +223,7 @@ class ORISClient:
 
     @classmethod
     def get_ranking(cls, gender: Gender, date_: typing.Optional[date], sport: int = oris_choices.SPORT_OB) -> typing.List[UserRanking]:
-        url = f'{settings.ORIS_URL}ranking_export?date={date_.isoformat()}&sport={sport}&gender={gender}&csv=1'
+        url = f'{settings.ORIS_URL}ranking_export?date={date_.isoformat()}&sport={sport}&gender={gender}&ranktype=8&csv=1'
 
         response = requests.get(url)
         response.raise_for_status()
