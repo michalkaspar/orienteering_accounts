@@ -1,4 +1,3 @@
-import csv
 import io
 import json
 import typing
@@ -6,8 +5,10 @@ from collections import defaultdict
 from datetime import date
 
 import redis
+import xlsxwriter
 from django import forms
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views import View
@@ -111,9 +112,13 @@ class SprintRelayGenerateView(View):
 class SprintRelayExportView(View):
 
     def get(self, request, *args, **kwargs):
-        output = io.StringIO()
-        writer = csv.writer(output, delimiter=';')
-        writer.writerow(['poradi', 'stafeta', 'clen1', 'rank1', 'clen2', 'rank2', 'clen3', 'rank3', 'clen4', 'rank4'])
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet()
+
+        headers = ['poradi', 'stafeta', 'clen1', 'rank1', 'clen2', 'rank2', 'clen3', 'rank3', 'clen4', 'rank4']
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header)
 
         qualified_counter = 1
         for roaster in map(lambda r: Roaster.validate(json.loads(r)), request.session['roasters']):
@@ -121,14 +126,23 @@ class SprintRelayExportView(View):
             if not roaster.is_qualified:
                 continue
 
-            row = [qualified_counter, roaster.name]
+            worksheet.write(qualified_counter, 0, qualified_counter)
+            worksheet.write(qualified_counter, 1, roaster.name)
 
+            col = 2
             for runner in roaster.runners:
-                row.extend([f"{runner.first_name} {runner.last_name}", runner.index])
+                worksheet.write(qualified_counter, col, f"{runner.first_name} {runner.last_name}")
+                worksheet.write(qualified_counter, col + 1, runner.index)
+                col += 2
 
-            writer.writerow(row)
             qualified_counter += 1
 
-        response = HttpResponse(output.getvalue(), content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="sprint-stafety-pravo-startu.csv"'
+        workbook.close()
+        output.seek(0)
+
+        response = HttpResponse(
+            ContentFile(output.read()),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="sprint-stafety-pravo-startu.xlsx"'
         return response
