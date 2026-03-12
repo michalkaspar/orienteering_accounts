@@ -28,11 +28,11 @@ class SprintRelaysGeneratorView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        date_choices = [
+        date_choices = sorted([
             date.fromisoformat(key.replace(settings.REDIS_SPRINT_RELAY_RANKING_KEY.format(date=''), ''))
             for key in
             ranking_db_client.keys(pattern=settings.REDIS_SPRINT_RELAY_RANKING_KEY.format(date="*"))
-        ]
+        ], reverse=True)
         context['ranking_form'] = SprintRelayRankingForm(
             date_choices=[(d.isoformat(), d.strftime('%d.%m.%Y')) for d in date_choices]
         )

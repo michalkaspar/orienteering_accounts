@@ -236,7 +236,8 @@ class ORISClient:
         )
         next(csv_reader)    # skip header
 
-        return [UserRanking(**row, date=date_, gender=gender) for row in csv_reader]
+        rankings = [UserRanking(**row, date=date_, gender=gender) for row in csv_reader]
+        return [r for r in rankings if r.registration_number and (int(r.registration_number[5]) >= 5) == (gender == Gender.FEMALE)]
 
     @classmethod
     def get_clubs(cls) -> typing.List[Club]:
