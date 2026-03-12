@@ -2,6 +2,7 @@ import logging
 import typing
 from datetime import datetime
 from decimal import Decimal
+from encodings import search_function
 
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -52,14 +53,13 @@ class Entry(models.Model):
         )
 
         if created:
-            if instance.fee_after_club_discount != 0:
-                instance.transactions.create(
-                    account=account,
-                    amount=-instance.fee_after_club_discount,
-                    purpose=Transaction.TransactionPurpose.ENTRY,
-                    author_name="System",
-                    is_future=True
-                )
+            instance.transactions.create(
+                account=account,
+                amount=-instance.fee_after_club_discount_future,
+                purpose=Transaction.TransactionPurpose.ENTRY,
+                author_name="System",
+                is_future=True
+            )
 
             if additional_services:
                 for service in additional_services:
@@ -75,13 +75,14 @@ class Entry(models.Model):
 
         return instance
 
-    @property
-    def fee_after_club_discount(self):
+    def get_feed_after_club_discount(self, check_started: bool = False) -> Decimal:
         category_entry_fee = self.event.get_category_fee(self.category_name)
 
         if self.event.is_relay or self.event.organizer_1.get("abbr") == "TZL":
             fee = Decimal(0)
-        elif self.event.is_multi_stage or self.event.is_stage or self.event.did_not_start(self.account.registration_number):
+        elif self.event.is_multi_stage or self.event.is_stage or (
+                check_started and self.event.did_not_start(self.account.registration_number)
+        ):
             # In case of stage event or runner
             fee = category_entry_fee
         else:
@@ -95,6 +96,14 @@ class Entry(models.Model):
             fee += late_entry_fee
 
         return fee
+
+    @property
+    def fee_after_club_discount(self) -> Decimal:
+        return self.get_feed_after_club_discount(check_started=True)
+
+    @property
+    def fee_after_club_discount_future(self):
+        return self.get_feed_after_club_discount(check_started=False)
 
     @property
     def additional_services_cost_sum(self) -> Decimal:

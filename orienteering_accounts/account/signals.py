@@ -33,11 +33,11 @@ def check_balance(account):
     maximum_threshold = Decimal(str(settings.MAXIMUM_NEGATIVE_BALANCE))
     
     if balance > maximum_threshold:
+        account.add_entry_rights_in_oris()
 
         if old_balance <= maximum_threshold:
             # Balance was previously at or below max threshold, add back entry rights
             try:
-                account.add_entry_rights_in_oris()
                 logger.info(
                     f'ORIS entry rights restored for {account.full_name} '
                     f'({account.registration_number}). Balance: {balance}'
