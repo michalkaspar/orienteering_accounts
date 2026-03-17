@@ -2,8 +2,17 @@
 
 {% block main_content %}
     <div class="row mb-3">
-        <div class="col-md-6">
-            <h2>{{ object.full_name }}</h2>
+        <div class="col-md-6 d-flex align-items-center">
+            <h2 class="mb-0">{{ object.full_name }}</h2>
+            {% if object.membership_paid_to_date %}
+                {% if object.club_membership_paid %}
+                    <span class="badge bg-success ms-2">{% trans "Příspěvky do" %} {{ object.membership_paid_to_date|format_date }}</span>
+                {% else %}
+                    <span class="badge bg-danger ms-2">{% trans "Příspěvky do" %} {{ object.membership_paid_to_date|format_date }}</span>
+                {% endif %}
+            {% else %}
+                <span class="badge bg-danger ms-2">{% trans "Příspěvky nezaplaceny" %}</span>
+            {% endif %}
         </div>
         <div class="col-md-6 text-end">
         {% ifperm edit_account %}

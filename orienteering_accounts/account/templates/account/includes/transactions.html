@@ -1,7 +1,46 @@
 {% load i18n transaction core account %}
 
 <h3>{% trans "Stav konta" %}: {% transaction_amount account.balance %}</h3>
-<img alt="QR platba" src="{{ account.debts_payment_qr_url }}"/>
+
+<div class="row mb-3 mt-3">
+    <div class="col-sm-6 mb-2">
+        <button class="btn btn-outline-primary w-100 qr-tab-btn" type="button" data-qr-target="#qr-debts" data-active-class="btn-primary" data-inactive-class="btn-outline-primary">
+            <i class="fas fa-qrcode"></i> {% trans "QR platba kredity" %}
+        </button>
+    </div>
+    <div class="col-sm-6 mb-2">
+        <button class="btn btn-outline-secondary w-100 qr-tab-btn" type="button" data-qr-target="#qr-membership" data-active-class="btn-secondary" data-inactive-class="btn-outline-secondary">
+            <i class="fas fa-qrcode"></i> {% trans "QR příspěvky" %}
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col-12">
+        <div id="qr-debts" class="qr-panel" style="display:none;">
+            <div class="card card-body text-center">
+                <img alt="{% trans 'QR platba kredity' %}" src="{{ account.debts_payment_qr_url }}" class="img-fluid mx-auto"/>
+            </div>
+        </div>
+        <div id="qr-membership" class="qr-panel" style="display:none;">
+            <div class="card card-body text-center">
+                <img alt="{% trans 'QR příspěvky' %}" src="{{ account.club_membership_payment_qr_url }}" class="img-fluid mx-auto"/>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(function() {
+    $('.qr-tab-btn').on('click', function() {
+        var target = $(this).data('qr-target');
+        $('.qr-panel').hide();
+        $(target).show();
+        $('.qr-tab-btn').each(function() {
+            $(this).removeClass($(this).data('active-class')).addClass($(this).data('inactive-class'));
+        });
+        $(this).removeClass($(this).data('inactive-class')).addClass($(this).data('active-class'));
+    });
+});
+</script>
 
 {% now "Y" as current_year %}
 

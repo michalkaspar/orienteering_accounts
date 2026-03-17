@@ -1,0 +1,15 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block body %}
+    {% trans "Ahoj," %}<br>
+    <br>
+    {% trans "Byl přijat příspěvek od člena" %} {{ account.full_name }} ({{ account.registration_number }}), {% trans "který není registrován v ORIS pro aktuální sezónu." %}
+    <br>
+    <br>
+    {% trans "Je potřeba tohoto člena zaregistrovat v ORIS pro danou sezónu." %}
+    <br>
+    <br>
+    {% trans "Odkaz do IS: " %}<a href="https://is.skob-zlin.cz{% url "accounts:detail" account.pk %}">{{ account.full_name }}</a>
+
+{% endblock %}
