@@ -9,6 +9,15 @@
 {% block main_content %}
     <h1>{{ account.full_name }} - {% trans "Moje konto" %}</h1>
     <h4>{% trans "Email" %}: {{ account.email }}</h4>
+    {% if object.membership_paid_to_date %}
+        {% if object.club_membership_paid %}
+            <span class="badge bg-success ms-2">{% trans "Příspěvky do" %} {{ object.membership_paid_to_date|format_date }}</span>
+        {% else %}
+            <span class="badge bg-danger ms-2">{% trans "Příspěvky do" %} {{ object.membership_paid_to_date|format_date }}</span>
+        {% endif %}
+    {% else %}
+        <span class="badge bg-danger ms-2">{% trans "Příspěvky nezaplaceny" %}</span>
+    {% endif %}
 
     {% include "account/includes/transactions.html" with preview=True %}
 
