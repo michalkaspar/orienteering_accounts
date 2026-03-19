@@ -7,9 +7,8 @@
 {% endblock %}
 
 {% block main_content %}
-    <h1>{{ account.full_name }} - {% trans "Moje konto" %}</h1>
-    <div class="col-md-6 d-flex align-items-center">
-        <h4>{% trans "Email" %}: {{ account.email }}</h4>
+    <div class="d-flex align-items-center">
+        <h1>{{ account.full_name }} - {% trans "Moje konto" %}</h1>
         {% if account.membership_paid_to_date %}
             {% if account.club_membership_paid %}
                 <span class="badge bg-success ms-2">{% trans "Příspěvky do" %} {{ account.membership_paid_to_date|format_date }}</span>
@@ -20,7 +19,8 @@
             <span class="badge bg-danger ms-2">{% trans "Příspěvky nezaplaceny" %}</span>
         {% endif %}
     </div>
-
+    <h4>{% trans "Email" %}: {{ account.email }}</h4>
+    
     {% include "account/includes/transactions.html" with preview=True %}
 
 {% endblock main_content %}
