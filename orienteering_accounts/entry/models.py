@@ -55,7 +55,7 @@ class Entry(models.Model):
         if created:
             instance.transactions.create(
                 account=account,
-                amount=-instance.fee_after_club_discount_future,
+                amount=-event.to_czk(instance.fee_after_club_discount_future),
                 purpose=Transaction.TransactionPurpose.ENTRY,
                 author_name="System",
                 is_future=True
@@ -65,7 +65,7 @@ class Entry(models.Model):
                 for service in additional_services:
                     instance.transactions.create(
                         account=account,
-                        amount=-Decimal(service['TotalFee']),
+                        amount=-event.to_czk(Decimal(service['TotalFee'])),
                         purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                         author_name="System",
                         note=service['Service']['NameCZ'],

@@ -63,8 +63,8 @@
                     <td>{{ entry.account.full_name }}</td>
                     <td>{{ entry.account.registration_number }}</td>
                     <td>{{ entry.category_name }}</td>
-                    <td>{{ entry.fee }}</td>
-                    <td>{{ entry.fee_after_club_discount }}</td>
+                    <td>{{ entry.fee }}{% if event.currency != "CZK" %} {{ event.currency }}{% endif %}</td>
+                    <td>{{ entry.fee_after_club_discount }}{% if event.currency != "CZK" %} {{ event.currency }}{% endif %}</td>
                     {% for _, additional_service in event.additional_services.items %}
                         <td>{% entry_additional_service_value entry additional_service %}</td>
                     {% endfor %}

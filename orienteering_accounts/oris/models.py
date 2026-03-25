@@ -117,6 +117,7 @@ class Event(BaseModel):
     entry_bank_account: typing.Optional[str] = Field(alias='EntryBankAccount', default='')
     links: typing.Any = Field(alias='Links', default={})
     additional_services: typing.Any = Field(alias='Services', default={})
+    currency: str = Field(alias='Currency', default='CZK')
 
     @validator('entry_date_1', 'entry_date_2', 'entry_date_3')
     def never_empty(cls, v: str) -> typing.Optional[str]:

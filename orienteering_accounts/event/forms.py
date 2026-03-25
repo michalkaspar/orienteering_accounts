@@ -85,7 +85,7 @@ class EntryBillForm(forms.ModelForm):
             purpose=Transaction.TransactionPurpose.ENTRY,
             account=entry.account,
             defaults=dict(
-                amount=-(entry.debt - entry.additional_services_cost_sum),
+                amount=-entry.event.to_czk(entry.debt - entry.additional_services_cost_sum),
                 is_future=False,
                 author_name=entry.event.leader.full_name if entry.event.leader else ''
             ),
@@ -95,7 +95,7 @@ class EntryBillForm(forms.ModelForm):
                 purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                 account=entry.account,
                 defaults=dict(
-                    amount=-entry.other_debt,
+                    amount=-entry.event.to_czk(entry.other_debt),
                     note=entry.debt_note,
                     author_name=entry.event.leader.full_name if entry.event.leader else ''
                 )

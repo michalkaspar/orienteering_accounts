@@ -16,7 +16,7 @@
           <td>{% if preview %}{{ entry.account }}{% else %}<a href="{% url 'accounts:detail' entry.account.id %}">{{ entry.account }}</a>{% endif %}</td>
           <td>{{ entry.account.email|default:"-" }}</td>
           <td>{{ entry.category_name }}</td>
-          <td>{{ entry.fee }}</td>
+          <td>{{ entry.fee }}{% if event.currency != "CZK" %} {{ event.currency }}{% endif %}</td>
           <td>{{ entry.oris_club_note|default:"-" }}</td>
         </tr>
         {% endfor %}

@@ -17,6 +17,7 @@ from orienteering_accounts.entry.models import Entry
 from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.oris import choices as oris_choices
+from orienteering_accounts.oris.exchange_rates import get_exchange_rate_to_czk
 from orienteering_accounts.oris.models import Result
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ class Event(models.Model):
     entry_bank_account = models.CharField(max_length=255, blank=True, default='')
     links = models.JSONField(default=dict)
     additional_services = models.JSONField(default=dict)
+    currency = models.CharField(max_length=3, default='CZK')
+    exchange_rate = models.DecimalField(decimal_places=6, max_digits=12, default=Decimal('1'))
     bills_solved = models.BooleanField(default=False)
 
     ### Internals
@@ -72,6 +75,9 @@ class Event(models.Model):
 
     def __str__(self):
         return f'{self.name} {self.date}'
+
+    def to_czk(self, amount: Decimal) -> Decimal:
+        return (amount * self.exchange_rate).quantize(Decimal('1'))
 
     @property
     def oris_url(self):
@@ -97,6 +103,7 @@ class Event(models.Model):
                         instance = cls.upsert_from_oris(event)
                     if instance.date and instance.date >= timezone.now().date():
                         instance._refresh_from_oris()  # To fetch the categories data first
+                        instance._update_exchange_rate()
                         instance.update_entries()
                         if instance.should_be_handled():
                             instance.handled = True
@@ -126,6 +133,15 @@ class Event(models.Model):
         oris_event = ORISClient.get_event(self.oris_id)
         self.upsert_from_oris(oris_event)
         self.refresh_from_db()
+
+    def _update_exchange_rate(self):
+        if self.currency == 'CZK':
+            return
+        try:
+            self.exchange_rate = get_exchange_rate_to_czk(self.currency)
+            self.save(update_fields=['exchange_rate'])
+        except Exception:
+            logger.warning(f'Failed to fetch exchange rate for event {self}', exc_info=True)
 
     @classmethod
     def send_payment_info_emails(cls):
