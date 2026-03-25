@@ -1,5 +1,6 @@
 import logging
 import typing
+from datetime import date
 
 import redis
 from django.conf import settings
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+
+    def add_arguments(self, parser):
+        parser.add_argument('--date', type=str, help='Date for ranking in YYYY-MM-DD format')
 
     def handle(self, **options):
 
@@ -36,7 +40,10 @@ class Command(BaseCommand):
 
             return elite_users, other_users
 
-        date_ = date_utils.get_last_date_of_previous_month()
+        if options.get('date'):
+            date_ = date.fromisoformat(options['date'])
+        else:
+            date_ = date_utils.get_last_date_of_previous_month()
         cache_key = settings.REDIS_SPRINT_RELAY_RANKING_KEY.format(date=date_.isoformat())
 
         logger.info(f'Import ranking from ORIS to date {date_}')

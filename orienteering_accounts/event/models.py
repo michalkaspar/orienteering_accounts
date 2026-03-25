@@ -96,6 +96,7 @@ class Event(models.Model):
                     except cls.DoesNotExist:
                         instance = cls.upsert_from_oris(event)
                     if instance.date and instance.date >= timezone.now().date():
+                        instance._refresh_from_oris()  # To fetch the categories data first
                         instance.update_entries()
                         if instance.should_be_handled():
                             instance.handled = True
