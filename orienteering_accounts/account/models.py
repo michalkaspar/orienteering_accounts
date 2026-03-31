@@ -391,7 +391,13 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
             return [self.email, self.email2]
         return [self.email]
 
+    @property
+    def skip_emails(self):
+        return self.registration_number in settings.EMAIL_SKIP_REGISTRATION_NUMBERS
+
     def send_payment_info_email(self):
+        if self.skip_emails:
+            return
 
         context = {
             "account": self,
@@ -407,6 +413,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
     def send_rest_payment_info_email(self):
+        if self.skip_emails:
+            return
 
         context = {
             "account": self,
@@ -424,6 +432,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
     def send_debts_payment_info_email(self):
+        if self.skip_emails:
+            return
 
         if self.balance >= 0:
             return
@@ -445,6 +455,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
     def send_entry_rights_removed_info_email(self):
+        if self.skip_emails:
+            return
+
         context = {
             "account": self,
             "club_bank_account_number": f"{settings.CLUB_BANK_ACCOUNT_NUMBER}/{settings.CLUB_BANK_CODE}",
@@ -462,6 +475,9 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         )
 
     def send_entry_rights_restored_info_email(self):
+        if self.skip_emails:
+            return
+
         context = {"account": self, "domain": settings.PROJECT_DOMAIN}
 
         html_content = render_to_string(
