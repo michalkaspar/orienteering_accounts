@@ -135,7 +135,7 @@ class Event(models.Model):
         self.refresh_from_db()
 
     def _update_exchange_rate(self):
-        if self.currency == 'CZK':
+        if not self.currency or self.currency == 'CZK':
             return
         try:
             self.exchange_rate = get_exchange_rate_to_czk(self.currency)

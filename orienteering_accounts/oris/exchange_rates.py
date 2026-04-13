@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_exchange_rate_to_czk(currency: str) -> Decimal:
-    if currency == 'CZK':
+    if not currency or currency == 'CZK':
         return Decimal('1')
 
     response = requests.get(
