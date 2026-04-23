@@ -365,6 +365,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def debts_payment_amount(self):
+        if self.balance >= 0:
+            return Decimal("0")
         return -self.balance.quantize(Decimal("1"))
 
     @property

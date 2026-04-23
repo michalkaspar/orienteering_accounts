@@ -38,6 +38,10 @@ class EventForm(forms.ModelForm):
     def save(self, commit=True):
         if 'handled' in self.changed_data and not self.cleaned_data['handled']:
             self.instance.handled_disabled = True
+            Transaction.objects.filter(
+                origin_entry__event=self.instance,
+                is_future=True,
+            ).delete()
         return super().save(commit=commit)
 
     class Meta:
