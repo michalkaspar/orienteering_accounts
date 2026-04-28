@@ -1,0 +1,12 @@
+{% extends "emails/base.html" %}
+{% load i18n event %}
+
+{% block body %}
+    {% trans "Ahoj" %}<br>
+    <br>
+    {% trans "byl jsi přiřazen jako vedoucí na" %} {{ event }}.<br>
+    <br>
+    {% trans "Seznam přihlášených závodníků nalezneš" %} <a href="{{ entries_url }}">{% trans "zde" %}</a>.<br>
+    <br>
+    {% trans "Díky!" %}
+{% endblock %}

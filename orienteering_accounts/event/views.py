@@ -52,9 +52,11 @@ class EventDetail(LoginRequiredMixin, View):
                 'form': form
             })
         event = form.save()
-        if form.cleaned_data.get('leader'):
+        if form.cleaned_data.get('leader') and not event.leader.leader_key:
             event.leader.leader_key = uuid.uuid4()
             event.leader.save()
+        if 'leader' in form.changed_data and event.leader:
+            event.send_leader_assigned_email()
         messages.add_message(
             self.request,
             messages.SUCCESS,

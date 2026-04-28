@@ -280,7 +280,8 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         transactions = []
 
         for transaction in qs.exclude(
-            purpose=Transaction.TransactionPurpose.ENTRY_OTHER
+            purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+            origin_entry__isnull=False,
         ):
             transaction.other_debts = other_debts_by_origin_entry_id.get(
                 transaction.origin_entry_id, []

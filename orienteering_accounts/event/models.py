@@ -237,6 +237,25 @@ class Event(models.Model):
             logger.info(f'Sending entries email to leader for event {event}.')
             event.send_leader_entries_email()
 
+    def send_leader_assigned_email(self):
+        assert self.leader
+        if not self.leader.email:
+            logger.warning(f'Cannot notify newly assigned leader for event {self}: leader has no email.')
+            return
+
+        context = {
+            'event': self,
+            'entries_url': f'http://{settings.PROJECT_DOMAIN}{reverse("events:entries_preview", args=[self.pk, self.leader.leader_key])}'
+        }
+
+        html_content = render_to_string('emails/event_leader_assigned.html', context)
+
+        email_utils.send_email(
+            recipient_list=[self.leader.email],
+            subject=f'{self.date.strftime("%d.%m.%Y")} {self.oris_id} {self.name} - jsi vedoucím závodu',
+            html_content=html_content
+        )
+
     def send_leader_entries_email(self):
 
         assert self.entries.exists() and self.leader

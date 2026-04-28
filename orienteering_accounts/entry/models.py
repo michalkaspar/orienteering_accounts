@@ -43,6 +43,10 @@ class Entry(models.Model):
             logger.warning(f'Entry for event {event} not created, account ORIS ID {entry.account_kwargs} does not exists.')
             return
 
+        existing = cls.objects.filter(account_id=account.pk, event_id=event.pk).first()
+        old_services_raw = existing.additional_services if existing else None
+        old_services = old_services_raw if isinstance(old_services_raw, list) else []
+
         instance, created = cls.objects.update_or_create(
             account_id=account.pk,
             event_id=event.pk,
@@ -61,17 +65,31 @@ class Entry(models.Model):
                 is_future=True
             )
 
-            if additional_services:
-                for service in additional_services:
-                    instance.transactions.create(
-                        account=account,
-                        amount=-event.to_czk(Decimal(service['TotalFee'])),
-                        purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
-                        author_name="System",
-                        note=service['Service']['NameCZ'],
-                        is_future=True
-                    )
+        new_services = additional_services or []
+        old_ids = {s['Service']['ID'] for s in old_services}
+        new_ids = {s['Service']['ID'] for s in new_services}
 
+        for service in old_services:
+            if service['Service']['ID'] not in new_ids:
+                stale = instance.transactions.filter(
+                    purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                    is_future=True,
+                    author_name="System",
+                    note=service['Service']['NameCZ'],
+                ).order_by('id').first()
+                if stale:
+                    stale.delete()
+
+        for service in new_services:
+            if service['Service']['ID'] not in old_ids:
+                instance.transactions.create(
+                    account=account,
+                    amount=-event.to_czk(Decimal(service['TotalFee'])),
+                    purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                    author_name="System",
+                    note=service['Service']['NameCZ'],
+                    is_future=True
+                )
 
         return instance
 

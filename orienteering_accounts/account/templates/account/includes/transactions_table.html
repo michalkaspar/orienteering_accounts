@@ -63,7 +63,7 @@
             <td>
                 <div class="d-flex align-items-center">
                     <div>
-                        {% if transaction.is_event %} {{ transaction.origin_entry.event }}{% else %}{{ transaction.get_purpose_display }}{% endif %}
+                        {% if transaction.is_event and transaction.origin_entry %} {{ transaction.origin_entry.event }}{% else %}{{ transaction.get_purpose_display }}{% endif %}
                     </div>
                 </div>
             </td>
