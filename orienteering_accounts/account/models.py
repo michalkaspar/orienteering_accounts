@@ -236,10 +236,10 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
         return self.balance >= Decimal(0)
 
     def add_entry_rights_in_oris(self):
-        ORISClient.set_club_entry_rights(self.oris_club_member_id, can_entry_self=True)
+        ORISClient.set_club_entry_rights(self.oris_id, self.oris_club_member_id, can_entry_self=True)
 
     def remove_entry_rights_in_oris(self):
-        ORISClient.set_club_entry_rights(self.oris_club_member_id, can_entry_self=False)
+        ORISClient.set_club_entry_rights(self.oris_id, self.oris_club_member_id, can_entry_self=False)
 
     @classmethod
     def get_accounts_to_remove_entry_rights_in_oris(cls) -> QuerySet["Account"]:

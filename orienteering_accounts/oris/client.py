@@ -180,16 +180,15 @@ class ORISClient:
         return additional_services
 
     @classmethod
-    def set_club_entry_rights(cls, user_id: int, club_key: int = settings.CLUB_KEY, can_entry_self: bool = None, can_entry_others: bool = None):
+    def set_club_entry_rights(cls, user_id: int, club_member_id: int, can_entry_self: bool, club_key: int = settings.CLUB_KEY):
         params = {
-            'clubuser': user_id,
+            'clubuser': club_member_id,
             'clubkey': club_key
         }
 
-        if can_entry_self is not None:
-            params.update(self=int(can_entry_self), other=0)
-        #if can_entry_others is not None:
-        #    params.update(other=can_entry_others)
+        club_member = cls.get_club_member(user_id)
+
+        params.update(self=int(can_entry_self), other=club_member.allow_entry_other)
 
         return cls.make_get_request('setClubEntryRights', params=params)
 
@@ -208,7 +207,7 @@ class ORISClient:
         return None
 
     @classmethod
-    def get_club_member(cls, user_id: str, club_key: int = settings.CLUB_KEY) -> typing.Optional[ClubMember]:
+    def get_club_member(cls, user_id: int, club_key: int = settings.CLUB_KEY) -> typing.Optional[ClubMember]:
         params = {
             'clubkey': club_key
         }
