@@ -38,6 +38,7 @@ class EntryUpsertFromOrisTestCase(TestCase):
             'orienteering_accounts.account.models.Account.send_entry_rights_removed_info_email',
             'orienteering_accounts.account.models.Account.remove_from_google_workspace_group',
             'orienteering_accounts.account.models.Account.remove_entry_rights_in_oris',
+            'orienteering_accounts.account.models.Account.add_entry_rights_in_oris',
         ]
         for target in signal_targets:
             patcher = patch(target)
@@ -201,7 +202,7 @@ class EntryUpsertFromOrisTestCase(TestCase):
             self._service_txns(entry).get(note='Tricko').amount, Decimal('-250')
         )
 
-    def test_stale_deletion_picks_oldest_by_id_when_notes_collide(self):
+    def test_stale_deletion_removes_all_duplicates_when_notes_collide(self):
         entry = Entry.upsert_from_oris(
             _oris_entry(user_id=1234), self.event, [_service(1, 'Tricko', '100')]
         )
@@ -218,4 +219,60 @@ class EntryUpsertFromOrisTestCase(TestCase):
         Entry.upsert_from_oris(_oris_entry(user_id=1234), self.event, [])
 
         self.assertFalse(self._service_txns(entry).filter(pk=older.pk).exists())
-        self.assertTrue(self._service_txns(entry).filter(pk=newer.pk).exists())
+        self.assertFalse(self._service_txns(entry).filter(pk=newer.pk).exists())
+
+    def test_initial_create_with_duplicate_service_id_sums_into_one_transaction(self):
+        services = [
+            _service(1, 'Ubytování v kempu', '1500'),
+            _service(1, 'Ubytování v kempu', '300'),
+        ]
+
+        entry = Entry.upsert_from_oris(_oris_entry(user_id=1234), self.event, services)
+
+        self.assertEqual(self._service_txns(entry).count(), 1)
+        self.assertEqual(
+            self._service_txns(entry).get(note='Ubytování v kempu').amount, Decimal('-1800')
+        )
+
+    def test_update_adds_second_line_for_existing_service_updates_amount(self):
+        entry = Entry.upsert_from_oris(
+            _oris_entry(user_id=1234),
+            self.event,
+            [_service(1, 'Ubytování v kempu', '1500')],
+        )
+        txn_id = self._service_txns(entry).get(note='Ubytování v kempu').pk
+
+        Entry.upsert_from_oris(
+            _oris_entry(user_id=1234),
+            self.event,
+            [
+                _service(1, 'Ubytování v kempu', '1500'),
+                _service(1, 'Ubytování v kempu', '300'),
+            ],
+        )
+
+        self.assertEqual(self._service_txns(entry).count(), 1)
+        updated = self._service_txns(entry).get(note='Ubytování v kempu')
+        self.assertEqual(updated.pk, txn_id)
+        self.assertEqual(updated.amount, Decimal('-1800'))
+
+    def test_update_removing_second_line_reduces_amount_back(self):
+        entry = Entry.upsert_from_oris(
+            _oris_entry(user_id=1234),
+            self.event,
+            [
+                _service(1, 'Ubytování v kempu', '1500'),
+                _service(1, 'Ubytování v kempu', '300'),
+            ],
+        )
+
+        Entry.upsert_from_oris(
+            _oris_entry(user_id=1234),
+            self.event,
+            [_service(1, 'Ubytování v kempu', '1500')],
+        )
+
+        self.assertEqual(self._service_txns(entry).count(), 1)
+        self.assertEqual(
+            self._service_txns(entry).get(note='Ubytování v kempu').amount, Decimal('-1500')
+        )
