@@ -157,12 +157,19 @@ class Event(models.Model):
         additional_services = ORISClient.get_event_additional_services(self.oris_id)
 
         account_ids = set()
+        claimed_user_ids = set()
 
         for entry in ORISClient.get_event_entries(self.oris_id):
 
             entry_additional_services = entry.get_additional_services(additional_services)
+            claimed_user_ids.update(int(service['UserID']) for service in entry_additional_services)
 
             entry = Entry.upsert_from_oris(entry, self, entry_additional_services)
+            if entry:
+                account_ids.add(entry.account_id)
+
+        for user_id in set(additional_services.keys()) - claimed_user_ids:
+            entry = Entry.upsert_services_only_from_oris(user_id, self, additional_services[user_id])
             if entry:
                 account_ids.add(entry.account_id)
 
@@ -232,7 +239,7 @@ class Event(models.Model):
             leader__isnull=False,
             handled=True,
             entry_date_1__lte=timezone.now(),
-            entries__isnull=False
+            entries__services_only=False
         ).distinct():
             logger.info(f'Sending entries email to leader for event {event}.')
             event.send_leader_entries_email()
@@ -258,7 +265,7 @@ class Event(models.Model):
 
     def send_leader_entries_email(self):
 
-        assert self.entries.exists() and self.leader
+        assert self.racing_entries.exists() and self.leader
 
         context = {
             'event': self,
@@ -293,6 +300,10 @@ class Event(models.Model):
     @property
     def is_relay(self):
         return True if self.discipline and self.discipline.get('oris_id') in settings.ORIS_RELAY_RACE_IDS else False
+
+    @property
+    def racing_entries(self):
+        return self.entries.filter(services_only=False)
 
     @cached_property
     def results(self) -> typing.Dict[str, Result]:

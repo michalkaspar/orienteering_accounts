@@ -276,3 +276,59 @@ class EntryUpsertFromOrisTestCase(TestCase):
         self.assertEqual(
             self._service_txns(entry).get(note='Ubytování v kempu').amount, Decimal('-1500')
         )
+
+
+class EntryUpsertServicesOnlyFromOrisTestCase(EntryUpsertFromOrisTestCase):
+
+    def test_creates_placeholder_entry_with_service_transactions(self):
+        services = [_service(1, 'Tricko', '100'), _service(2, 'Bunda', '250')]
+
+        entry = Entry.upsert_services_only_from_oris(1234, self.event, services)
+
+        self.assertIsNotNone(entry)
+        self.assertTrue(entry.services_only)
+        self.assertEqual(entry.oris_id, None)
+        self.assertEqual(entry.oris_category_id, 0)
+        self.assertEqual(entry.category_name, '')
+        self.assertEqual(entry.fee, 0)
+        self.assertEqual(self._entry_txns(entry).count(), 1)
+        self.assertEqual(self._service_txns(entry).count(), 2)
+        self.assertEqual(entry.debt_init, Decimal('350'))
+
+    def test_account_not_found_returns_none(self):
+        result = Entry.upsert_services_only_from_oris(999999, self.event, [_service(1)])
+
+        self.assertIsNone(result)
+        self.assertEqual(Entry.objects.count(), 0)
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_service_only_entry_later_matched_by_real_entry_upgrades_in_place(self):
+        placeholder = Entry.upsert_services_only_from_oris(
+            1234, self.event, [_service(1, 'Tricko', '100')]
+        )
+
+        upgraded = Entry.upsert_from_oris(
+            _oris_entry(user_id=1234), self.event, [_service(1, 'Tricko', '100')]
+        )
+
+        self.assertEqual(placeholder.pk, upgraded.pk)
+        self.assertFalse(upgraded.services_only)
+        self.assertEqual(upgraded.oris_category_id, 7)
+        self.assertEqual(upgraded.category_name, 'M21')
+        self.assertEqual(self._service_txns(upgraded).count(), 1)
+
+    def test_real_entry_that_drops_race_entry_downgrades_in_place(self):
+        real = Entry.upsert_from_oris(
+            _oris_entry(user_id=1234), self.event, [_service(1, 'Tricko', '100')]
+        )
+
+        downgraded = Entry.upsert_services_only_from_oris(
+            1234, self.event, [_service(1, 'Tricko', '100')]
+        )
+
+        self.assertEqual(real.pk, downgraded.pk)
+        self.assertTrue(downgraded.services_only)
+        self.assertEqual(downgraded.oris_category_id, 0)
+        self.assertEqual(downgraded.category_name, '')
+        self.assertEqual(downgraded.fee, 0)
+        self.assertEqual(self._service_txns(downgraded).count(), 1)

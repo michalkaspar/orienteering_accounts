@@ -6,6 +6,7 @@ from encodings import search_function
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from orienteering_accounts.account.models import Account, Transaction
 from orienteering_accounts.oris.models import BaseEntry
@@ -28,6 +29,7 @@ class Entry(models.Model):
     other_debt = models.DecimalField(decimal_places=2, max_digits=9, null=True, validators=(MinValueValidator(0),))
     debt_note = models.CharField(max_length=255, null=True, blank=True)
     oris_club_note = models.TextField(blank=True, null=True)
+    services_only = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.event} entry {self.account}'
@@ -54,6 +56,37 @@ class Entry(models.Model):
             logger.warning(f'Entry for event {event} not created, account ORIS ID {entry.account_kwargs} does not exists.')
             return
 
+        return cls._upsert(
+            account, event, additional_services,
+            entry_fields=entry.dict(exclude={'oris_user_id', 'registration_number'}),
+            services_only=False,
+        )
+
+    @classmethod
+    def upsert_services_only_from_oris(cls, oris_user_id: int, event: 'Event', additional_services: list) -> typing.Optional['Entry']:
+        try:
+            account = Account.objects.get(oris_id=oris_user_id)
+        except Account.DoesNotExist:
+            logger.warning(f'Services-only entry for event {event} not created, account ORIS ID {oris_user_id} does not exists.')
+            return
+
+        return cls._upsert(
+            account, event, additional_services,
+            entry_fields={
+                'oris_id': None,
+                'oris_category_id': 0,
+                'category_name': '',
+                'fee': 0,
+                'oris_created': timezone.now(),
+                'oris_updated': None,
+                'rent_si': False,
+                'oris_club_note': '',
+            },
+            services_only=True,
+        )
+
+    @classmethod
+    def _upsert(cls, account: Account, event: 'Event', additional_services: list, entry_fields: dict, services_only: bool) -> 'Entry':
         existing = cls.objects.filter(account_id=account.pk, event_id=event.pk).first()
         old_services_raw = existing.additional_services if existing else None
         old_services = old_services_raw if isinstance(old_services_raw, list) else []
@@ -63,7 +96,8 @@ class Entry(models.Model):
             event_id=event.pk,
             defaults={
                 'additional_services': additional_services,
-                **entry.dict(exclude={'oris_user_id', 'registration_number'})
+                'services_only': services_only,
+                **entry_fields
             }
         )
 
