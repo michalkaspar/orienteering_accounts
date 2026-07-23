@@ -1,6 +1,8 @@
 import uuid
 from datetime import timedelta
+from decimal import Decimal
 
+import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
@@ -17,6 +19,7 @@ from orienteering_accounts.event.filters import EventFilter
 from orienteering_accounts.event.forms import EventForm, EventEntryBillFormSet
 from orienteering_accounts.event.models import Event
 from orienteering_accounts.account import perms
+from orienteering_accounts.oris.client import ORISClient
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -116,13 +119,24 @@ class EventBills(View):
         
         entries_qs = event.entries.order_by(sort_field)
 
+        formset = EventEntryBillFormSet(queryset=entries_qs)
+        local_debt_sum = sum(form.initial['debt'] for form in formset.forms)
+
+        try:
+            event_balance = ORISClient.get_club_event_balance(event.oris_id)
+        except requests.RequestException:
+            event_balance = None
+
+        debt_mismatch = event_balance is not None and abs(local_debt_sum - event_balance.to_be_paid) > Decimal('1')
+
         return render(request, 'event/event_bills.html', {
             'event': event,
-            'formset': EventEntryBillFormSet(
-                queryset=entries_qs
-            ),
+            'formset': formset,
             'current_sort': sort_by,
             'current_order': order,
+            'event_balance': event_balance,
+            'local_debt_sum': local_debt_sum,
+            'debt_mismatch': debt_mismatch,
         })
 
     def post(self, request, pk, key):
