@@ -32,6 +32,17 @@ class Entry(models.Model):
     def __str__(self):
         return f'{self.event} entry {self.account}'
 
+    @staticmethod
+    def aggregate_additional_services_by_id(services: list) -> typing.Dict[int, dict]:
+        aggregated = {}
+        for service in services or []:
+            service_id = service['Service']['ID']
+            aggregated_service = aggregated.setdefault(
+                service_id, {'name': service['Service']['NameCZ'], 'total_fee': Decimal(0)}
+            )
+            aggregated_service['total_fee'] += Decimal(service['TotalFee'])
+        return aggregated
+
     @classmethod
     def upsert_from_oris(cls, entry: BaseEntry, event: 'Event', additional_services: list = None) -> typing.Optional['Entry']:
         if not entry.is_valid:
@@ -66,30 +77,39 @@ class Entry(models.Model):
             )
 
         new_services = additional_services or []
-        old_ids = {s['Service']['ID'] for s in old_services}
-        new_ids = {s['Service']['ID'] for s in new_services}
+        old_by_id = cls.aggregate_additional_services_by_id(old_services)
+        new_by_id = cls.aggregate_additional_services_by_id(new_services)
 
-        for service in old_services:
-            if service['Service']['ID'] not in new_ids:
-                stale = instance.transactions.filter(
+        for service_id, old_service in old_by_id.items():
+            if service_id not in new_by_id:
+                instance.transactions.filter(
                     purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                     is_future=True,
                     author_name="System",
-                    note=service['Service']['NameCZ'],
-                ).order_by('id').first()
-                if stale:
-                    stale.delete()
+                    note=old_service['name'],
+                ).delete()
 
-        for service in new_services:
-            if service['Service']['ID'] not in old_ids:
+        for service_id, new_service in new_by_id.items():
+            old_service = old_by_id.get(service_id)
+            if old_service is None:
                 instance.transactions.create(
                     account=account,
-                    amount=-event.to_czk(Decimal(service['TotalFee'])),
+                    amount=-event.to_czk(new_service['total_fee']),
                     purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
                     author_name="System",
-                    note=service['Service']['NameCZ'],
+                    note=new_service['name'],
                     is_future=True
                 )
+            elif old_service['total_fee'] != new_service['total_fee']:
+                existing = instance.transactions.filter(
+                    purpose=Transaction.TransactionPurpose.ENTRY_OTHER,
+                    is_future=True,
+                    author_name="System",
+                    note=new_service['name'],
+                ).order_by('id').first()
+                if existing:
+                    existing.amount = -event.to_czk(new_service['total_fee'])
+                    existing.save(update_fields=['amount'])
 
         return instance
 
