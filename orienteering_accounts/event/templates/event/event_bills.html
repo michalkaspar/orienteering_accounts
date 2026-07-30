@@ -5,6 +5,12 @@
 {% block main_content %}
     <h1>{{ event.name }} - {% trans "Vyúčtování" %}</h1>
 
+    {% if debt_mismatch %}
+    <div class="alert alert-warning" role="alert">
+        {% blocktrans with local_sum=local_debt_sum oris_sum=event_balance.to_be_paid currency=event_balance.currency %}Součet dluhů ({{ local_sum }} {{ currency }}) neodpovídá zůstatku v ORISu ({{ oris_sum }} {{ currency }}).{% endblocktrans %}
+    </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
         {{ formset.management_form }}
