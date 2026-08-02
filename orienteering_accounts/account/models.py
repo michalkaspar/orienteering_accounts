@@ -362,11 +362,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def rest_club_membership_payment_amount(self):
-        return (
-            Decimal("1000.00").quantize(Decimal(1))
-            if self.is_adult
-            else Decimal("1500.00").quantize(Decimal(1))
-        )
+        return Decimal("2500.00").quantize(Decimal(1))
 
     @property
     def debts_payment_amount(self):
@@ -380,7 +376,7 @@ class Account(PermissionsMixin, AbstractBaseUser, BaseModel):
 
     @property
     def rest_club_membership_payment_qr_url(self):
-        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.rest_club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200"
+        return f"https://api.paylibo.com/paylibo/generator/czech/image?accountNumber={settings.CLUB_BANK_ACCOUNT_NUMBER}&bankCode={settings.CLUB_BANK_CODE}&amount={self.rest_club_membership_payment_amount}&currency=CZK&message={self.club_membership_payment_message}&size=200&vs={self.club_membership_variable_symbol}"
 
     @property
     def is_adult(self):
