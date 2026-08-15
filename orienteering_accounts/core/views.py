@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.views.generic import UpdateView, TemplateView
 
-from orienteering_accounts.core.changelog_data import CHANGELOG_ENTRIES
+from orienteering_accounts.core.changelog_data import CHANGELOG_ENTRIES, changelog_sort_key
 from orienteering_accounts.core.models import Settings
 
 
@@ -31,6 +31,6 @@ class ChangelogView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['changelog_entries'] = sorted(CHANGELOG_ENTRIES, key=lambda entry: entry['date'], reverse=True)
+        context['changelog_entries'] = sorted(CHANGELOG_ENTRIES, key=changelog_sort_key, reverse=True)
         return context
 

@@ -1,5 +1,11 @@
 from datetime import date
 
+
+def changelog_sort_key(entry):
+    version_parts = tuple(int(part) for part in entry['version'].lstrip('v').split('.'))
+    return entry['date'], version_parts
+
+
 CHANGELOG_ENTRIES = [
     {
         'version': 'v0.1.0',
