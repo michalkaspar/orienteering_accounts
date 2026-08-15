@@ -254,4 +254,11 @@ CHANGELOG_ENTRIES = [
             'Přidána veřejná stránka Novinky se seznamem změn v aplikaci.',
         ],
     },
+    {
+        'version': 'v0.29.0',
+        'date': date.today(),
+        'items': [
+            'Ve patičce stránky se nyní zobrazuje aktuální verze aplikace s odkazem na Novinky.',
+        ],
+    },
 ]
