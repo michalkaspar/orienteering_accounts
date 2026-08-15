@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block title %}{% trans "Novinky" %}{% endblock %}
+
+{% block main_content %}
+    <h1>{% trans "Novinky" %}</h1>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="content-section">
+                <p class="lead">
+                    {% trans "Přehled novinek a významných změn v aplikaci pro správu účtů." %}
+                </p>
+
+                {% for entry in changelog_entries %}
+                    <h2 class="mt-4">{{ entry.version }} <small class="text-muted">({{ entry.date|date:"d.m.Y" }})</small></h2>
+                    <ul>
+                        {% for item in entry.items %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% empty %}
+                    <p>{% trans "Zatím zde nejsou žádné novinky." %}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

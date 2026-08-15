@@ -20,7 +20,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 
 from orienteering_accounts.account.views import AccountLoginView
-from orienteering_accounts.core.views import SettingsEdit, PrivacyPolicyView, TermsOfServiceView
+from orienteering_accounts.core.views import SettingsEdit, PrivacyPolicyView, TermsOfServiceView, ChangelogView
 
 
 urlpatterns = [
@@ -31,6 +31,7 @@ urlpatterns = [
     path('settings/', SettingsEdit.as_view(), name='settings_detail'),
     path('privacy-policy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('terms-of-service/', TermsOfServiceView.as_view(), name='terms_of_service'),
+    path('changelog/', ChangelogView.as_view(), name='changelog'),
     path('accounts/', include('orienteering_accounts.account.urls')),
     path('events/', include('orienteering_accounts.event.urls')),
     path('sprint-relays/', include('orienteering_accounts.sprint_relays.urls'))
