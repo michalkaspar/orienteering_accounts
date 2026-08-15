@@ -39,7 +39,10 @@ playbook).
 7. Once confirmed:
    - Prepend a new entry to `CHANGELOG_ENTRIES` in
      `orienteering_accounts/core/changelog_data.py`:
-     `{'version': '<vX.Y.Z>', 'date': date.today(), 'items': [...]}`.
+     `{'version': '<vX.Y.Z>', 'date': date(YYYY, MM, DD), 'items': [...]}`,
+     using today's actual date as a literal — **not** `date.today()`, which
+     would re-evaluate on every import and make the entry's date silently
+     drift forward every day the app runs.
      (Add `from datetime import date` to that file if it's not already
      imported.)
    - Commit: `git commit -am "Release <vX.Y.Z>"`.

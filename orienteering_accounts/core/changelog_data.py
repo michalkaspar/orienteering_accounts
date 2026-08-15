@@ -262,9 +262,16 @@ CHANGELOG_ENTRIES = [
     },
     {
         'version': 'v0.29.0',
-        'date': date.today(),
+        'date': date(2026, 8, 15),
         'items': [
             'Ve patičce stránky se nyní zobrazuje aktuální verze aplikace s odkazem na Novinky.',
+        ],
+    },
+    {
+        'version': 'v0.29.1',
+        'date': date(2026, 8, 15),
+        'items': [
+            'Přístupová práva do ORIS se nyní automaticky obnoví i po platbě členského příspěvku bankovním převodem (dříve fungovalo pouze při ručním zadání platby zaměstnancem).',
         ],
     },
 ]
