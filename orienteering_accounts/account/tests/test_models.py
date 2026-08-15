@@ -321,6 +321,57 @@ class EntryRightsRemovalSignalTestCase(TestCase):
         account.refresh_from_db()
         self.assertTrue(account.is_late_with_club_membership_payment)
 
+    @patch('orienteering_accounts.account.models.Account.send_entry_rights_restored_info_email')
+    @patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
+    def test_entry_rights_restored_on_club_membership_payment(
+        self, mock_add_oris, mock_send_restored_email
+    ):
+        """Test that entry rights are restored when a club membership transaction is created for a late account"""
+        account = baker.make(
+            'account.Account',
+            init_balance=Decimal('0'),
+            email='test@example.com',
+            oris_club_member_id=12345,
+            is_late_with_club_membership_payment=True
+        )
+
+        baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('500'),
+            purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+        )
+
+        mock_add_oris.assert_called_once()
+        mock_send_restored_email.assert_called_once()
+
+        account.refresh_from_db()
+        self.assertFalse(account.is_late_with_club_membership_payment)
+
+    @patch('orienteering_accounts.account.models.Account.send_entry_rights_restored_info_email')
+    @patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
+    def test_entry_rights_not_restored_when_not_late(
+        self, mock_add_oris, mock_send_restored_email
+    ):
+        """Test that no ORIS action is taken for club membership payment when account is not late"""
+        account = baker.make(
+            'account.Account',
+            init_balance=Decimal('0'),
+            email='test@example.com',
+            oris_club_member_id=12345,
+            is_late_with_club_membership_payment=False
+        )
+
+        baker.make(
+            'account.Transaction',
+            account=account,
+            amount=Decimal('500'),
+            purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP
+        )
+
+        mock_add_oris.assert_not_called()
+        mock_send_restored_email.assert_not_called()
+
     @patch('orienteering_accounts.account.models.Account.send_entry_rights_removed_info_email')
     @patch('orienteering_accounts.account.models.Account.remove_from_google_workspace_group')
     @patch('orienteering_accounts.account.models.Account.remove_entry_rights_in_oris')

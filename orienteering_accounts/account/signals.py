@@ -101,10 +101,32 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     Check balance and trigger appropriate actions when:
     - A new transaction is created
     - An existing transaction's amount is changed
+
+    Club membership transactions are excluded from the balance check
+    (they don't affect Account.balance) but instead restore ORIS entry
+    rights if the account was marked late on club membership payment.
     """
     account = instance.account
 
-    if instance.amount and instance.amount != Decimal(0) and not instance.is_club_membership:
+    if instance.is_club_membership:
+        if account.is_late_with_club_membership_payment:
+            try:
+                account.add_entry_rights_in_oris()
+                account.is_late_with_club_membership_payment = False
+                account.save(update_fields=['is_late_with_club_membership_payment'])
+                account.send_entry_rights_restored_info_email()
+                logger.info(
+                    f'ORIS entry rights restored for {account.full_name} '
+                    f'({account.registration_number}) after club membership payment.'
+                )
+            except Exception as e:
+                logger.error(
+                    f'Failed to restore entry rights for {account.full_name} '
+                    f'({account.registration_number}): {str(e)}'
+                )
+        return
+
+    if instance.amount and instance.amount != Decimal(0):
         check_balance(account)
 
 
