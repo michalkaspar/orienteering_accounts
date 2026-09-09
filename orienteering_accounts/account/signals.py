@@ -1,27 +1,54 @@
 import logging
 from decimal import Decimal
+from functools import partial
+
 from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_save, post_delete, pre_save, pre_delete
 from django.dispatch import receiver
-from orienteering_accounts.account.models import Transaction
+
+from orienteering_accounts.account.models import Account, Transaction
 
 logger = logging.getLogger(__name__)
 
 
-_account_old_balance = {}
+# account_id -> balance before the FIRST Transaction change for that account
+# in the current DB transaction. Popped by the on_commit callback, which both
+# deduplicates checks (one per account per commit) and cleans the dict up.
+# An entry left behind by a rollback still holds the correct pre-change
+# balance and is reused (via setdefault) and popped by the next commit.
+# Shared module-level state: same thread-safety exposure as the previous
+# implementation (fine with sync workers).
+_pending_balance_checks = {}
 
 
 @receiver(pre_save, sender=Transaction)
 def store_old_account_balance(sender, instance, **kwargs):
-    _account_old_balance[instance.account_id] = instance.account.balance
+    if instance.is_club_membership:
+        return
+    _pending_balance_checks.setdefault(instance.account_id, instance.account.balance)
 
 
 @receiver(pre_delete, sender=Transaction)
 def store_old_account_balance_on_delete(sender, instance, **kwargs):
-    _account_old_balance[instance.account_id] = instance.account.balance
+    if instance.is_club_membership:
+        return
+    _pending_balance_checks.setdefault(instance.account_id, instance.account.balance)
 
 
-def check_balance(account):
+def _run_balance_check(account_id):
+    old_balance = _pending_balance_checks.pop(account_id, None)
+    if old_balance is None:
+        # Balance already checked for this account in this commit.
+        return
+    account = Account.objects.filter(pk=account_id).first()
+    if account is None:
+        # Account deleted before commit (e.g. cascade delete).
+        return
+    check_balance(account, old_balance)
+
+
+def check_balance(account, old_balance):
     """
     Helper function to check balance and send negative balance email if needed.
     
@@ -29,7 +56,6 @@ def check_balance(account):
     threshold, as the entry rights removed email will be sent instead.
     """
     balance = account.balance
-    old_balance = _account_old_balance[account.id]
     maximum_threshold = Decimal(str(settings.MAXIMUM_NEGATIVE_BALANCE))
     
     if balance > maximum_threshold:
@@ -94,6 +120,28 @@ def check_balance(account):
             )
 
 
+def _restore_entry_rights_after_club_membership(account_id):
+    account = Account.objects.filter(pk=account_id).first()
+    if account is None or not account.is_late_with_club_membership_payment:
+        # Account deleted before commit, or the flag was already cleared by
+        # an earlier callback in this commit.
+        return
+    try:
+        account.add_entry_rights_in_oris()
+        account.is_late_with_club_membership_payment = False
+        account.save(update_fields=['is_late_with_club_membership_payment'])
+        account.send_entry_rights_restored_info_email()
+        logger.info(
+            f'ORIS entry rights restored for {account.full_name} '
+            f'({account.registration_number}) after club membership payment.'
+        )
+    except Exception as e:
+        logger.error(
+            f'Failed to restore entry rights for {account.full_name} '
+            f'({account.registration_number}): {str(e)}'
+        )
+
+
 @receiver(post_save, sender=Transaction)
 def handle_transaction_save(sender, instance, created, **kwargs):
     """
@@ -105,29 +153,21 @@ def handle_transaction_save(sender, instance, created, **kwargs):
     Club membership transactions are excluded from the balance check
     (they don't affect Account.balance) but instead restore ORIS entry
     rights if the account was marked late on club membership payment.
+
+    All side effects (ORIS calls, emails) run after the current DB
+    transaction commits, and are discarded on rollback.
     """
     account = instance.account
 
     if instance.is_club_membership:
         if account.is_late_with_club_membership_payment:
-            try:
-                account.add_entry_rights_in_oris()
-                account.is_late_with_club_membership_payment = False
-                account.save(update_fields=['is_late_with_club_membership_payment'])
-                account.send_entry_rights_restored_info_email()
-                logger.info(
-                    f'ORIS entry rights restored for {account.full_name} '
-                    f'({account.registration_number}) after club membership payment.'
-                )
-            except Exception as e:
-                logger.error(
-                    f'Failed to restore entry rights for {account.full_name} '
-                    f'({account.registration_number}): {str(e)}'
-                )
+            transaction.on_commit(
+                partial(_restore_entry_rights_after_club_membership, instance.account_id)
+            )
         return
 
     if instance.amount and instance.amount != Decimal(0):
-        check_balance(account)
+        transaction.on_commit(partial(_run_balance_check, instance.account_id))
 
 
 @receiver(post_delete, sender=Transaction)
@@ -136,6 +176,5 @@ def handle_transaction_delete(sender, instance, **kwargs):
     Handle transaction deletion.
     Check balance and trigger appropriate actions when a transaction is deleted.
     """
-    account = instance.account
     if not instance.is_club_membership:
-        check_balance(account)
+        transaction.on_commit(partial(_run_balance_check, instance.account_id))

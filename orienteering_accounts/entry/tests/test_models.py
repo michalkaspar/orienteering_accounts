@@ -5,6 +5,7 @@ from unittest.mock import PropertyMock, patch
 from django.test import TestCase
 from model_bakery import baker
 
+from orienteering_accounts.account import signals
 from orienteering_accounts.account.models import Account, Transaction
 from orienteering_accounts.entry.models import Entry
 from orienteering_accounts.oris.models import Entry as OrisEntry
@@ -33,6 +34,7 @@ def _service(id_, name='Tricko', total_fee='100'):
 class EntryUpsertFromOrisTestCase(TestCase):
 
     def setUp(self):
+        signals._pending_balance_checks.clear()
         signal_targets = [
             'orienteering_accounts.account.models.Account.send_debts_payment_info_email',
             'orienteering_accounts.account.models.Account.send_entry_rights_removed_info_email',
