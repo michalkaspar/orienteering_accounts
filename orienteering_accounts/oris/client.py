@@ -1,4 +1,5 @@
 import csv
+import time
 from collections import defaultdict
 from enum import Enum
 from io import StringIO
@@ -18,8 +19,44 @@ from orienteering_accounts.oris.models import RegisteredUser, Event, Entry, Even
 
 logger = logging.getLogger(__name__)
 
+TOO_MANY_REQUESTS = 429
+
+# ORIS throttles clients that fire too many requests in a row, retry such requests instead of failing
+ORIS_API_MAX_ATTEMPTS = 5
+ORIS_API_RETRY_BACKOFF_SECONDS = 2
+ORIS_API_RETRY_MAX_DELAY_SECONDS = 60
+
 
 class ORISClient:
+
+    @classmethod
+    def _retry_delay(cls, response, attempt: int) -> float:
+        retry_after = response.headers.get('Retry-After')
+
+        if retry_after:
+            try:
+                return min(max(float(retry_after), 0), ORIS_API_RETRY_MAX_DELAY_SECONDS)
+            except ValueError:
+                pass
+
+        return min(ORIS_API_RETRY_BACKOFF_SECONDS * 2 ** (attempt - 1), ORIS_API_RETRY_MAX_DELAY_SECONDS)
+
+    @classmethod
+    def request_with_retry(cls, request_func, *args, **kwargs):
+        for attempt in range(1, ORIS_API_MAX_ATTEMPTS + 1):
+            response = request_func(*args, **kwargs)
+
+            if response.status_code != TOO_MANY_REQUESTS or attempt == ORIS_API_MAX_ATTEMPTS:
+                return response
+
+            delay = cls._retry_delay(response, attempt)
+            logger.warning(
+                f'ORIS API throttled the request, retrying in {delay} s '
+                f'(attempt {attempt} of {ORIS_API_MAX_ATTEMPTS}).'
+            )
+            time.sleep(delay)
+
+        return response
 
     @classmethod
     def make_request(cls, method: str, endpoint: str, params: dict = None, data: dict = None, **kwargs):
@@ -34,7 +71,7 @@ class ORISClient:
         params = default_params
         request_func = getattr(requests, method.lower())
 
-        response = request_func(settings.ORIS_API_URL, params=params, json=data, **kwargs)
+        response = cls.request_with_retry(request_func, settings.ORIS_API_URL, params=params, json=data, **kwargs)
         response.raise_for_status()
 
         if not response:
@@ -224,7 +261,7 @@ class ORISClient:
     def get_ranking(cls, gender: Gender, date_: typing.Optional[date], sport: int = oris_choices.SPORT_OB) -> typing.List[UserRanking]:
         url = f'{settings.ORIS_URL}ranking_export?date={date_.isoformat()}&sport={sport}&gender={gender}&ranktype=8&csv=1'
 
-        response = requests.get(url)
+        response = cls.request_with_retry(requests.get, url)
         response.raise_for_status()
 
         csv_data = response.text.encode(response.encoding).decode('utf-8')
