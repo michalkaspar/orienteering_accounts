@@ -52,11 +52,12 @@ class EventForm(forms.ModelForm):
 class EntryBillForm(forms.ModelForm):
 
     class Meta:
-        models = Entry
+        model = Entry
         fields = ('debt', 'other_debt', 'debt_note')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['other_debt'].required = False
         if not self.is_bound:
             if self.instance.debt:
                 self.initial['debt'] = self.instance.debt
@@ -70,7 +71,7 @@ class EntryBillForm(forms.ModelForm):
                 self.initial['other_debt'] = Decimal(0)
 
     def clean_debt_note(self):
-        other_debt = self.cleaned_data['other_debt']
+        other_debt = self.cleaned_data.get('other_debt')
         debt_note = self.cleaned_data['debt_note']
         if other_debt and not debt_note:
             raise ValidationError("Je nutné vyplnit poznámku, pokud jsou vyplněny další náklady.")
