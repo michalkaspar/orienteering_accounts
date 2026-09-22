@@ -12,8 +12,9 @@
 
 ## Global Constraints
 
-- **Test command:** `docker compose run --rm web python manage.py test <target>`. The host Python is 3.13 and cannot run Django 3.2 (`No module named 'cgi'`), so tests only run in Docker.
-- **Prerequisite:** `docker-compose.yml` and `.env` are gitignored and absent from a fresh worktree. Copy both from the main checkout (`/Users/michal/projects/orienteering_accounts/`) before running anything. They must never be committed.
+- **Test command:** `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test <target>`, with `DOCKER_CONFIG` exported to the scratchpad docker dir. The host Python is 3.13 and cannot run Django 3.2 (`No module named 'cgi'`), so tests only run in Docker.
+- **Why that compose file:** the sandbox blocks every `.env*` path, so the project's own `docker-compose.yml` (which declares `env_file: - .env`) cannot start and the repo root cannot be used as a build context. The workspace copy declares no `env_file`, injects throwaway SECRET_KEY / Google credentials / ORIS identity, and builds from a minimal scratchpad context. Never commit it; it lives in the git-ignored SDD workspace.
+- **Baseline:** 103 tests, 6 errors before Task 1; 101 tests, all passing after it.
 - **No formatting-only changes.** Per `CLAUDE.md`, touch only lines that are functionally necessary. Do not reflow, reindent, or restyle surrounding code, including existing trailing whitespace.
 - **No Claude attribution in commits.** Per `CLAUDE.md`, never add a `Co-Authored-By: Claude` trailer or a "Generated with Claude Code" line.
 - **Commit style:** `type(scope): Capitalised summary`, matching recent history (`fix(oris): Retry throttled ORIS API requests instead of failing`).
@@ -34,34 +35,49 @@
 | `orienteering_accounts/event/migrations/0014_*.py` | **New.** Club entry markers and sync timestamp | 6 |
 | `orienteering_accounts/event/tests/fixtures.py` | Event payload fixtures | 6, 8 |
 | `orienteering_accounts/settings/base.py` | New cache, budget and window constants | 2, 3, 5, 8, 9 |
+| `orienteering_accounts/account/tests/test_import.py`, `account/tests/test_models.py`, `entry/tests/test_models.py` | Pre-existing test breakage repaired so later tasks have a gate | 1 |
 
 ---
 
-### Task 1: Repair the two dead event test files
+### Task 1: Get the test suite green
 
-`event/tests/test_import.py:15` and `event/tests/test_refresh.py:18` call
-`call_command('import_events_from_oris')`. That command does not exist —
-`event/management/commands/` contains only `process_events.py`. Both files
-raise `CommandError` today, before any change in this plan. Fix them first so
-later tasks have a green baseline to protect.
+The measured baseline is **103 tests, 6 errors**, all failing on the code as
+committed, independent of configuration. Every later task verifies itself with
+"the full suite passes", so that gate has to mean something first.
+
+| Failing test | Root cause |
+| --- | --- |
+| `event/tests/test_import.py` | `call_command('import_events_from_oris')` — that command does not exist; `event/management/commands/` holds only `process_events.py` |
+| `event/tests/test_refresh.py` | same |
+| `account/tests/test_import.py` | the mock returns the registration payload for *every* call, so `get_club_member` does `payload['ClubMembers']` and raises `KeyError` |
+| `account/tests/test_models.py::test_get_accounts_without_paid_club_membership` | calls `Account.get_accounts_without_paid_club_membership(deadline)`, which was removed and replaced by `get_accounts_to_remove_entry_rights_in_oris()` with different arguments and semantics |
+| `entry/tests/test_models.py::test_creates_placeholder_entry_with_service_transactions` | `debt_init` -> `did_not_start` -> `Event.results` is unmocked and issues a **live ORIS HTTP request** |
+| `event/tests/test_update_entries.py::test_orphan_service_order_creates_services_only_entry` | the same live `getEventResults` call |
 
 **Files:**
 - Modify: `orienteering_accounts/event/tests/test_import.py`
 - Delete: `orienteering_accounts/event/tests/test_refresh.py`
+- Modify: `orienteering_accounts/account/tests/test_import.py`
+- Modify: `orienteering_accounts/account/tests/test_models.py`
+- Modify: `orienteering_accounts/entry/tests/test_models.py`
+- Modify: `orienteering_accounts/event/tests/test_update_entries.py`
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: a test suite that runs end to end, so every later task can assert "all tests pass".
+- Produces: a green suite, so every later task can use "all tests pass" as its gate.
 
-- [ ] **Step 1: Confirm the baseline failure**
+- [ ] **Step 1: Confirm the baseline**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event.tests.test_import orienteering_accounts.event.tests.test_refresh`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 
-Expected: both fail with `CommandError: Unknown command: 'import_events_from_oris'`. If they fail for a different reason, stop and report it before continuing — the rest of this plan assumes this is the only pre-existing breakage.
+Expected: `Ran 103 tests`, `FAILED (errors=6)`, and the six names above. If the
+set differs, stop and report before changing anything.
 
-- [ ] **Step 2: Point the import test at the real command**
+- [ ] **Step 2: Point the event import test at the real command**
 
-`process_events` calls `Event.import_from_oris()`, then `Event.refresh_from_oris()`, then three email senders. The test only cares about the import, so call the model method directly instead of the command. Replace the whole body of `orienteering_accounts/event/tests/test_import.py`:
+`process_events` calls `Event.import_from_oris()`, then `Event.refresh_from_oris()`,
+then three email senders. The test only cares about the import, so call the model
+method directly. Replace the whole body of `orienteering_accounts/event/tests/test_import.py`:
 
 ```python
 from unittest import mock
@@ -95,35 +111,150 @@ does call `_refresh_from_oris()` even for a past event, and the single
 
 - [ ] **Step 3: Delete the refresh test**
 
-`test_refresh.py` is a single test whose assertions are entirely commented out
-behind a `# TODO mock get event entries`. It tests `refresh_events_from_oris`,
+`test_refresh.py` holds one test whose assertions are entirely commented out
+behind a `# TODO mock get event entries`. It covers `refresh_events_from_oris`,
 a command that does not exist, and Task 8 deletes the `refresh_from_oris()`
-method it was written for. Deleting it removes dead weight rather than
-migrating a test that asserts nothing. Task 9 adds real coverage for its
-replacement.
+method it was written for. Deleting it removes dead weight rather than migrating
+a test that asserts nothing.
 
 ```bash
 git rm orienteering_accounts/event/tests/test_refresh.py
 ```
 
-- [ ] **Step 4: Run the full suite to establish the baseline**
+- [ ] **Step 4: Give the account import test an endpoint-aware mock**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
-Expected: PASS. Record the test count; later tasks should only ever add to it.
+The single `return_value` feeds the registration payload to every ORIS call,
+including the `getClubUserList` inside `Account.upsert_from_oris`. Replace the
+`ImportTestCase` class in `orienteering_accounts/account/tests/test_import.py`
+(keep `ORIS_REGISTER_USERS_RESPONSE_DATA` exactly as it is):
 
-- [ ] **Step 5: Commit**
+```python
+ORIS_CLUB_USER_LIST_RESPONSE_DATA = {
+    "ClubMembers": {
+        "ClubMember_1": {
+            "ID": "11", "UserID": "390", "RegNum": "TZL6666",
+            "AllowEntrySelf": 1, "AllowEntryOther": 0,
+            "MemberFrom": "2026-01-01", "MemberTo": "2026-12-31", "Valid": 1,
+            "Username": "tzl6666", "FirstName": "Chuck", "LastName": "Norris",
+            "Email": "chuck@example.com",
+            "AddressGPSLat": 50.0, "AddressGPSLon": 14.0,
+            "Street": "Ulice 1", "City": "Praha", "Zip": "11000", "Country": "CZ",
+            "Birthday": "1970-01-01", "Phone": "+420000000000", "Gender": "M",
+            "PersNum": "700101/0000", "Nationality": "CZ",
+            "SI": "7207026", "SISport": 0, "SIType": 1,
+            "SI2": "", "SISport2": 0, "SIType2": 0,
+            "SI3": "", "SISport3": 0, "SIType3": 0,
+            "IOFID": 0, "ShowFullCalendar": 0, "MyRegionsInCalendar": "",
+            "DoNotReceiveEmailsFromORIS": 0, "NotifyAboutFeedbackByEmail": 0,
+        },
+        "ClubMember_2": {
+            "ID": "12", "UserID": "377", "RegNum": "TZL9999",
+            "AllowEntrySelf": 1, "AllowEntryOther": 0,
+            "MemberFrom": "2026-01-01", "MemberTo": "2026-12-31", "Valid": 1,
+            "Username": "tzl9999", "FirstName": "Rocky", "LastName": "Balboa",
+            "Email": "rocky@example.com",
+            "AddressGPSLat": 50.0, "AddressGPSLon": 14.0,
+            "Street": "Ulice 2", "City": "Praha", "Zip": "11000", "Country": "CZ",
+            "Birthday": "1965-01-01", "Phone": "+420000000001", "Gender": "M",
+            "PersNum": "650101/0000", "Nationality": "CZ",
+            "SI": "980377", "SISport": 0, "SIType": 1,
+            "SI2": "", "SISport2": 0, "SIType2": 0,
+            "SI3": "", "SISport3": 0, "SIType3": 0,
+            "IOFID": 0, "ShowFullCalendar": 0, "MyRegionsInCalendar": "",
+            "DoNotReceiveEmailsFromORIS": 0, "NotifyAboutFeedbackByEmail": 0,
+        },
+    }
+}
 
-```bash
-git add orienteering_accounts/event/tests/test_import.py
-git commit -m "test(event): Repair event tests calling a removed command
 
-test_import and test_refresh both called import_events_from_oris, which
-no longer exists; only process_events does. Point the import test at
-Event.import_from_oris directly and drop test_refresh, whose assertions
-were entirely commented out."
+def _oris_response(endpoint, params=None, **kwargs):
+    if endpoint == 'getClubUserList':
+        return ORIS_CLUB_USER_LIST_RESPONSE_DATA
+    return ORIS_REGISTER_USERS_RESPONSE_DATA
+
+
+class ImportTestCase(TestCase):
+
+    @mock.patch('orienteering_accounts.account.models.Account.add_to_google_workspace_group')
+    @mock.patch('orienteering_accounts.account.models.Account.send_account_created_info_email')
+    @mock.patch('orienteering_accounts.oris.client.ORISClient.make_get_request',
+                side_effect=_oris_response)
+    def test_import_accounts_from_oris(self, mock_get_registered_users, mock_email, mock_group):
+        call_command('import_accounts_from_oris')
+        mock_get_registered_users.assert_called()
+        self.assertEqual(Account.objects.count(), 2)
 ```
 
----
+`upsert_from_oris` copies the email from the club member and, when it differs,
+calls Google Workspace; new accounts also send a welcome email. Both are patched
+so the test exercises the import, not the notifications.
+
+- [ ] **Step 5: Delete the stale account model test**
+
+In `orienteering_accounts/account/tests/test_models.py`, delete the whole
+`test_get_accounts_without_paid_club_membership` method. It calls
+`Account.get_accounts_without_paid_club_membership(deadline)`, which no longer
+exists. Its nearest replacement,
+`Account.get_accounts_to_remove_entry_rights_in_oris()`, takes no deadline, reads
+`is_late_with_club_membership_payment`, and yields rather than returning a
+QuerySet — different enough that porting the assertions would mean designing new
+coverage, which is not this plan's job.
+
+Leave every other test in the file, and leave the imports alone unless deleting
+the method makes one unused (`freeze_time`, `timedelta`); remove only ones that
+are genuinely now unused.
+
+- [ ] **Step 6: Stop two tests calling the live ORIS API**
+
+`Entry.debt_init` -> `fee_after_club_discount` -> `Event.did_not_start` ->
+`Event.results` issues a real `getEventResults` request. Two tests reach it.
+
+In `orienteering_accounts/entry/tests/test_models.py`, in the
+`EntryUpsertServicesOnlyFromOrisTestCase` class, add to `setUp` (create `setUp`
+if the class has none, and call `super().setUp()` first if it does):
+
+```python
+        results_patcher = mock.patch.object(
+            Event, 'results', new_callable=PropertyMock, return_value={}
+        )
+        results_patcher.start()
+        self.addCleanup(results_patcher.stop)
+```
+
+Add whatever of `from unittest.mock import PropertyMock`, `import mock`, and
+`from orienteering_accounts.event.models import Event` that file still needs.
+
+In `orienteering_accounts/event/tests/test_update_entries.py`, add the same
+patcher to the existing `setUp` in `UpdateEntriesTestCase`, next to the
+`fee_patcher` already there. That file already imports `PropertyMock` and
+`patch`; it needs `from orienteering_accounts.event.models import Event`.
+
+An empty `results` dict makes `did_not_start()` return `True` for everyone,
+which is what the unmocked call returned anyway for these fixtures — the point
+is that no HTTP request leaves the test process.
+
+- [ ] **Step 7: Run the full suite**
+
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
+
+Expected: `OK`, with 101 tests (103 minus the two deleted). If any test still
+fails, report which and why rather than pressing on.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add orienteering_accounts/event/tests orienteering_accounts/account/tests orienteering_accounts/entry/tests
+git commit -m "test: Repair the failing test suite
+
+Six tests failed on the committed code. test_import and test_refresh
+called import_events_from_oris, a command that no longer exists; the
+account import test fed the registration payload to getClubUserList too;
+test_get_accounts_without_paid_club_membership covered a method that was
+removed; and two tests reached Event.results, issuing live ORIS requests
+from the suite. Point the event import test at Event.import_from_oris,
+give the account test an endpoint-aware mock, mock Event.results, and
+drop the two tests whose subjects no longer exist."
+```
 
 ### Task 2: Cache the club roster
 
@@ -252,7 +383,7 @@ from orienteering_accounts.oris.tests import fixtures
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.ClubMembersCacheTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.ClubMembersCacheTestCase`
 Expected: FAIL. `test_roster_is_fetched_once_for_repeated_lookups` fails with `AssertionError: 2 != 1`.
 
 - [ ] **Step 4: Add the settings**
@@ -322,12 +453,12 @@ In `set_club_entry_rights`, replace the final `return cls.make_get_request(...)`
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
 Expected: PASS, including the existing retry tests.
 
 - [ ] **Step 8: Run the full suite**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -385,7 +516,7 @@ from orienteering_accounts.account.services import process_bank_transactions_bat
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.account.tests.test_process_bank_transaction.IdleBankRunTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.account.tests.test_process_bank_transaction.IdleBankRunTestCase`
 Expected: FAIL with `Expected 'make_get_request' to not have been called. Called 2 times.`
 
 - [ ] **Step 3: Return early when there is nothing to process**
@@ -404,7 +535,7 @@ def process_bank_transactions_batch(bank_transactions, payment_period):
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.account.tests.test_process_bank_transaction.IdleBankRunTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.account.tests.test_process_bank_transaction.IdleBankRunTestCase`
 Expected: PASS.
 
 - [ ] **Step 5: Add the registration cache settings**
@@ -451,7 +582,7 @@ class RegisteredUsersCacheTestCase(TestCase):
 
 - [ ] **Step 7: Run it to verify it fails**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.RegisteredUsersCacheTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.RegisteredUsersCacheTestCase`
 Expected: FAIL with `AssertionError: 2 != 1`.
 
 - [ ] **Step 8: Implement the cache**
@@ -478,12 +609,12 @@ parameters.
 
 - [ ] **Step 9: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris orienteering_accounts.account`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris orienteering_accounts.account`
 Expected: PASS.
 
 - [ ] **Step 10: Run the full suite and commit**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 ```bash
@@ -595,7 +726,7 @@ class EntryRightsSignalTestCase(TestCase):
 
 - [ ] **Step 2: Run the tests to verify the right ones fail**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.account.tests.test_entry_rights_signal`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.account.tests.test_entry_rights_signal`
 Expected: `test_transaction_above_threshold_does_not_touch_oris` and
 `test_deleting_a_transaction_without_crossing_does_not_touch_oris` FAIL with
 `Expected 'add_entry_rights_in_oris' to not have been called`. The two crossing
@@ -626,12 +757,12 @@ branch, and leave existing trailing whitespace alone.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.account.tests.test_entry_rights_signal`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.account.tests.test_entry_rights_signal`
 Expected: PASS, all four.
 
 - [ ] **Step 5: Run the full suite**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS. `event/tests/test_update_entries.py` patches both entry-rights
 methods already, so it is unaffected.
 
@@ -724,7 +855,7 @@ Add `from django.test import override_settings` to the imports.
 
 - [ ] **Step 3: Run them to verify they fail**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.RequestBudgetTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.RequestBudgetTestCase`
 Expected: FAIL with `AttributeError: type object 'ORISClient' has no attribute 'reset_request_stats'`.
 
 - [ ] **Step 4: Implement the cap and the counters**
@@ -807,7 +938,7 @@ different URL. Leave it alone; it is six requests a day.
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
 Expected: PASS. The existing retry tests call `make_get_request` too, so they
 now consume budget; with the default of 5000 that is irrelevant.
 
@@ -827,7 +958,7 @@ Do the same in
 
 - [ ] **Step 7: Run the full suite and commit**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 ```bash
@@ -929,7 +1060,7 @@ strings because that is how ORIS returns them; pydantic coerces them.
 
 - [ ] **Step 3: Run the test to verify it fails**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event.tests.test_club_markers`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event.tests.test_club_markers`
 Expected: FAIL with `AttributeError: 'Event' object has no attribute 'oris_club_entry_count'`.
 
 - [ ] **Step 4: Add the pydantic fields**
@@ -992,12 +1123,12 @@ Expected: creates `orienteering_accounts/event/migrations/0014_club_entry_marker
 
 - [ ] **Step 8: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event.tests.test_club_markers`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event.tests.test_club_markers`
 Expected: PASS.
 
 - [ ] **Step 9: Run the full suite and commit**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 ```bash
@@ -1058,7 +1189,7 @@ Add `from datetime import date` to the test imports.
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.EventListParamsTestCase`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client.EventListParamsTestCase`
 Expected: FAIL with `TypeError: get_events() got an unexpected keyword argument 'date_from'`.
 
 - [ ] **Step 3: Implement the parameters**
@@ -1098,7 +1229,7 @@ imported at the top of the module.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.oris.tests.test_client`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1282,7 +1413,7 @@ them.
 
 - [ ] **Step 3: Run them to verify they fail**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event.tests.test_change_detection`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event.tests.test_change_detection`
 Expected: FAIL. `test_unchanged_event_fetches_nothing` fails because the current
 loop always refreshes.
 
@@ -1371,12 +1502,12 @@ lines about refreshing events. Task 9 puts a replacement in the same place.
 
 - [ ] **Step 8: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event`
 Expected: PASS.
 
 - [ ] **Step 9: Run the full suite and commit**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 ```bash
@@ -1493,7 +1624,7 @@ class ReconcileEntriesTestCase(TestCase):
 
 - [ ] **Step 3: Run them to verify they fail**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event.tests.test_reconcile_entries`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event.tests.test_reconcile_entries`
 Expected: FAIL with `AttributeError: type object 'Event' has no attribute 'reconcile_entries_from_oris'`.
 
 - [ ] **Step 4: Stamp `entries_synced_at`**
@@ -1559,12 +1690,12 @@ In `orienteering_accounts/event/management/commands/process_events.py`, where
 
 - [ ] **Step 8: Run the tests to verify they pass**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts.event`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts.event`
 Expected: PASS.
 
 - [ ] **Step 9: Run the full suite and commit**
 
-Run: `docker compose run --rm web python manage.py test orienteering_accounts`
+Run: `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts`
 Expected: PASS.
 
 ```bash
@@ -1660,7 +1791,7 @@ the settings that control it."
 
 ## Verification before handing back
 
-- [ ] `docker compose run --rm web python manage.py test orienteering_accounts` passes.
+- [ ] `docker compose -f .superpowers/sdd/2026-09-22-oris-api-traffic-reduction/docker-compose.test.yml run --rm web python manage.py test orienteering_accounts` passes.
 - [ ] `git log --oneline develop..HEAD` shows ten commits, none with a Claude co-author trailer.
 - [ ] `git diff develop --stat` contains no `docker-compose.yml` and no `.env`.
 - [ ] `grep -rn "club_entry_exists\|refresh_from_oris\|to_refresh" orienteering_accounts/` returns only `_refresh_from_oris` hits.
