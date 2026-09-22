@@ -1637,6 +1637,36 @@ In `orienteering_accounts/event/models.py`, as the last statement of
         self.save(update_fields=['entries_synced_at'])
 ```
 
+- [ ] **Step 4b: Also refresh detail for handled events outside the list window**
+
+Task 8 bounded the list window to `[today - 14, today + 120]`. The
+`refresh_from_oris()` loop it deleted was unbounded, so a handled event further
+out than 120 days used to get its detail refreshed and now gets nothing at all
+— not even a list update, so its name, date and `cancelled` flag freeze too.
+The exposure is small (`send_payment_info_emails` gates on
+`entry_date_1__lte=now`, which cannot be reached from beyond the window), but
+the old queryset was a handful of rows and restoring it is nearly free.
+
+Add this to `reconcile_entries_from_oris`, before the entry reconciliation:
+
+```python
+        # The list window stops at ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD, so handled
+        # events further out get no update at all. This restores exactly the
+        # queryset the deleted refresh_from_oris() loop covered.
+        window_end = timezone.now().date() + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
+
+        for event in cls.objects.filter(
+            handled=True,
+            processing_state=cls.ProcessingType.UNPROCESSED,
+            date__gt=window_end,
+        ):
+            event._refresh_from_oris()
+```
+
+and a test asserting that a handled UNPROCESSED event dated beyond the window
+gets `_refresh_from_oris()` called, while one inside the window does not (the
+list sync already covers those).
+
 - [ ] **Step 5: Implement the reconciliation**
 
 Add `from django.db.models import Q` to the imports in
