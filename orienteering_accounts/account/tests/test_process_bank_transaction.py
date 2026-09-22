@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from unittest import mock
 from unittest.mock import patch, MagicMock
 
 from django.core.management import call_command
@@ -689,3 +690,12 @@ class VerifyBankTransactionsCommandTestCase(TestCase):
         call_command('verify_bank_transactions')
 
         self.assertEqual(BankTransaction.objects.count(), 1)
+
+
+class IdleBankRunTestCase(TestCase):
+
+    def test_no_bank_transactions_means_no_oris_request(self):
+        with mock.patch('orienteering_accounts.oris.client.ORISClient.make_get_request') as request_mock:
+            process_bank_transactions_batch([], None)
+
+        request_mock.assert_not_called()

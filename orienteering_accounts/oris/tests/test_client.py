@@ -131,3 +131,31 @@ class ClubMembersCacheTestCase(TestCase):
 
         # roster, setClubEntryRights, roster again
         self.assertEqual(request_mock.call_count, 3)
+
+
+class RegisteredUsersCacheTestCase(TestCase):
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.response_data = {
+            'Reg_1': {
+                'RegNo': 'TZL6666', 'UserID': '390', 'Lic': 'C', 'FirstName': 'Chuck',
+                'LastName': 'Norris', 'SI': '7207026', 'Paid': '1', 'ClubID': 1,
+                'Gender': 'M', 'Born': '70', 'Fee': '60',
+            },
+        }
+
+    def test_registrations_are_fetched_once_per_sport_and_year(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=self.response_data) as request_mock:
+            ORISClient.get_registered_users(year=2026, sport=1)
+            ORISClient.get_registered_users(year=2026, sport=1, licence='C')
+
+        self.assertEqual(request_mock.call_count, 1)
+
+    def test_different_sport_is_fetched_separately(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=self.response_data) as request_mock:
+            ORISClient.get_registered_users(year=2026, sport=1)
+            ORISClient.get_registered_users(year=2026, sport=3)
+
+        self.assertEqual(request_mock.call_count, 2)

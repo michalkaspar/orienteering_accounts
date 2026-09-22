@@ -101,11 +101,15 @@ class ORISClient:
                              club_id: typing.Optional[int] = None,
                              licence: typing.Optional[str] = None,
                              ) -> typing.List[RegisteredUser]:
-        params = {
-            'year': year or datetime.now().year,
-            'sport': sport
-        }
-        response_data = cls.make_get_request('getRegistration', params=params)
+        year = year or datetime.now().year
+        cache_key = settings.ORIS_REGISTRATIONS_CACHE_KEY_PATTERN.format(sport=sport, year=year)
+        response_data = cache.get(cache_key)
+
+        if response_data is None:
+            response_data = cls.make_get_request('getRegistration', params={'year': year, 'sport': sport})
+
+            if response_data:
+                cache.set(cache_key, response_data, settings.ORIS_REGISTRATIONS_CACHE_TIMEOUT)
 
         registered_users = []
 

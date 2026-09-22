@@ -27,6 +27,9 @@ def _get_oris_registered_numbers() -> set:
 
 def process_bank_transactions_batch(bank_transactions, payment_period):
     """Process a batch of bank transactions. Each transaction in try/except."""
+    if not bank_transactions:
+        return
+
     oris_registered_numbers = _get_oris_registered_numbers()
 
     for bank_transaction in reversed(bank_transactions):
