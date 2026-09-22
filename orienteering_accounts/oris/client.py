@@ -64,7 +64,8 @@ class ORISClient:
 
     @classmethod
     def _consume_request_budget(cls, endpoint: str):
-        now = timezone.now()
+        # Local time so the "daily" budget resets at local midnight, not UTC midnight.
+        now = timezone.localtime()
 
         daily_count = cls._incr(f'oris_api_requests:{now:%Y%m%d}', 60 * 60 * 26)
 
