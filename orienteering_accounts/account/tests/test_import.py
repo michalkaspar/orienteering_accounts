@@ -1,6 +1,7 @@
 from unittest import mock
 
 from django.conf import settings
+from django.core.cache import cache
 from django.test import TestCase
 from django.core.management import call_command
 
@@ -82,6 +83,10 @@ def _oris_response(endpoint, params=None, **kwargs):
 
 
 class ImportTestCase(TestCase):
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
 
     @mock.patch('orienteering_accounts.account.models.Account.add_to_google_workspace_group')
     @mock.patch('orienteering_accounts.account.models.Account.send_account_created_info_email')
