@@ -22,3 +22,5 @@ class Command(BaseCommand):
             Account.upsert_from_oris(registered_user)
 
         logger.info(f'Import of registered users from ORIS finished')
+
+        ORISClient.log_request_stats()

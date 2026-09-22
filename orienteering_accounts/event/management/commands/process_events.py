@@ -3,6 +3,7 @@ import logging
 from django.core.management import BaseCommand
 
 from orienteering_accounts.event.models import Event
+from orienteering_accounts.oris.client import ORISClient
 
 logger = logging.getLogger(__name__)
 
@@ -40,3 +41,5 @@ class Command(BaseCommand):
         Event.send_leader_debts_emails()
 
         logger.info('Finished sending debts leader info emails')
+
+        ORISClient.log_request_stats()

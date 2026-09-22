@@ -1,7 +1,7 @@
 from unittest import mock
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from requests.exceptions import HTTPError
 
 from orienteering_accounts.oris import client as oris_client
@@ -159,3 +159,39 @@ class RegisteredUsersCacheTestCase(TestCase):
             ORISClient.get_registered_users(year=2026, sport=3)
 
         self.assertEqual(request_mock.call_count, 2)
+
+
+class RequestBudgetTestCase(TestCase):
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        ORISClient.reset_request_stats()
+        self.addCleanup(ORISClient.reset_request_stats)
+
+    @override_settings(ORIS_API_DAILY_REQUEST_BUDGET=2)
+    def test_exhausting_the_daily_budget_raises(self):
+        with mock.patch('orienteering_accounts.oris.client.requests.get', return_value=_response(200)):
+            ORISClient.make_get_request('getVersion')
+            ORISClient.make_get_request('getVersion')
+
+            with self.assertRaises(oris_client.ORISRateLimitExceeded):
+                ORISClient.make_get_request('getVersion')
+
+    @override_settings(ORIS_API_MAX_REQUESTS_PER_MINUTE=1)
+    def test_exceeding_the_per_minute_cap_sleeps_instead_of_failing(self):
+        with mock.patch('orienteering_accounts.oris.client.time.sleep') as sleep_mock:
+            with mock.patch('orienteering_accounts.oris.client.requests.get', return_value=_response(200)):
+                ORISClient.make_get_request('getVersion')
+                ORISClient.make_get_request('getVersion')
+
+        sleep_mock.assert_called_once()
+
+    def test_requests_are_counted_per_method(self):
+        with mock.patch('orienteering_accounts.oris.client.requests.get', return_value=_response(200)):
+            ORISClient.make_get_request('getEventList')
+            ORISClient.make_get_request('getEventList')
+            ORISClient.make_get_request('getEvent')
+
+        self.assertEqual(ORISClient.request_counter['getEventList'], 2)
+        self.assertEqual(ORISClient.request_counter['getEvent'], 1)

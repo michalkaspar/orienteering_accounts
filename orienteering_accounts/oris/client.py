@@ -1,6 +1,6 @@
 import csv
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from enum import Enum
 from io import StringIO
 
@@ -10,6 +10,7 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 from datetime import date, datetime
 
 from pydantic import ValidationError
@@ -28,7 +29,59 @@ ORIS_API_RETRY_BACKOFF_SECONDS = 2
 ORIS_API_RETRY_MAX_DELAY_SECONDS = 60
 
 
+class ORISRateLimitExceeded(Exception):
+    """Raised when the configured daily ORIS request budget is exhausted."""
+
+
 class ORISClient:
+
+    request_counter = Counter()
+
+    @classmethod
+    def reset_request_stats(cls):
+        cls.request_counter = Counter()
+
+    @classmethod
+    def log_request_stats(cls):
+        if not cls.request_counter:
+            return
+
+        breakdown = ', '.join(
+            f'{endpoint}={count}' for endpoint, count in sorted(cls.request_counter.items())
+        )
+        logger.info(f'ORIS API requests this run: {sum(cls.request_counter.values())} ({breakdown})')
+
+    @classmethod
+    def _incr(cls, key: str, timeout: int) -> int:
+        cache.add(key, 0, timeout)
+
+        try:
+            return cache.incr(key)
+        except ValueError:
+            # The key expired between add() and incr(); start the window again.
+            cache.set(key, 1, timeout)
+            return 1
+
+    @classmethod
+    def _consume_request_budget(cls, endpoint: str):
+        now = timezone.now()
+
+        daily_count = cls._incr(f'oris_api_requests:{now:%Y%m%d}', 60 * 60 * 26)
+
+        if daily_count > settings.ORIS_API_DAILY_REQUEST_BUDGET:
+            raise ORISRateLimitExceeded(
+                f'Daily ORIS request budget of {settings.ORIS_API_DAILY_REQUEST_BUDGET} '
+                f'is exhausted ({daily_count} requests today).'
+            )
+
+        minute_count = cls._incr(f'oris_api_requests:{now:%Y%m%d%H%M}', 120)
+
+        if minute_count > settings.ORIS_API_MAX_REQUESTS_PER_MINUTE:
+            delay = 60 - now.second
+            logger.warning(f'ORIS API per-minute cap reached, waiting {delay} s.')
+            time.sleep(delay)
+
+        cls.request_counter[endpoint] += 1
 
     @classmethod
     def _retry_delay(cls, response, attempt: int) -> float:
@@ -61,6 +114,8 @@ class ORISClient:
 
     @classmethod
     def make_request(cls, method: str, endpoint: str, params: dict = None, data: dict = None, **kwargs):
+        cls._consume_request_budget(endpoint)
+
         default_params = {
             'format': 'json',
             'method': endpoint
