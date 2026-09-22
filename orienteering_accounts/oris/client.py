@@ -9,6 +9,7 @@ import typing
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from datetime import date, datetime
 
 from pydantic import ValidationError
@@ -227,7 +228,12 @@ class ORISClient:
 
         params.update(self=int(can_entry_self), other=club_member.allow_entry_other)
 
-        return cls.make_get_request('setClubEntryRights', params=params)
+        response = cls.make_get_request('setClubEntryRights', params=params)
+
+        # AllowEntrySelf just changed, so the cached roster is stale.
+        cls.invalidate_club_members_cache()
+
+        return response
 
     @classmethod
     def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[EventBalance]:
@@ -244,18 +250,36 @@ class ORISClient:
         return None
 
     @classmethod
+    def get_club_members(cls, club_key: int = settings.CLUB_KEY) -> typing.Dict[int, ClubMember]:
+        response_data = cache.get(settings.ORIS_CLUB_USER_LIST_CACHE_KEY)
+
+        if response_data is None:
+            response_data = cls.make_get_request('getClubUserList', params={'clubkey': club_key})
+
+            if response_data:
+                # An empty payload means ORIS hiccupped; caching it would starve
+                # every caller for a full hour.
+                cache.set(
+                    settings.ORIS_CLUB_USER_LIST_CACHE_KEY,
+                    response_data,
+                    settings.ORIS_CLUB_USER_LIST_CACHE_TIMEOUT,
+                )
+
+        club_members = {}
+
+        for _, club_user_dict in (response_data or {}).get('ClubMembers', {}).items():
+            club_member = ClubMember(**club_user_dict)
+            club_members[club_member.user_id] = club_member
+
+        return club_members
+
+    @classmethod
+    def invalidate_club_members_cache(cls):
+        cache.delete(settings.ORIS_CLUB_USER_LIST_CACHE_KEY)
+
+    @classmethod
     def get_club_member(cls, user_id: int, club_key: int = settings.CLUB_KEY) -> typing.Optional[ClubMember]:
-        params = {
-            'clubkey': club_key
-        }
-        response_data = cls.make_get_request('getClubUserList', params=params)
-
-        if response_data:
-            for _, club_user_dict in response_data['ClubMembers'].items():
-                if club_user_dict['UserID'] == str(user_id):
-                    return ClubMember(**club_user_dict)
-
-        return None
+        return cls.get_club_members(club_key=club_key).get(int(user_id))
 
     @classmethod
     def get_ranking(cls, gender: Gender, date_: typing.Optional[date], sport: int = oris_choices.SPORT_OB) -> typing.List[UserRanking]:

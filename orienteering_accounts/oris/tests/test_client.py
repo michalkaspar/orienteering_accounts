@@ -1,10 +1,12 @@
 from unittest import mock
 
+from django.core.cache import cache
 from django.test import TestCase
 from requests.exceptions import HTTPError
 
 from orienteering_accounts.oris import client as oris_client
 from orienteering_accounts.oris.client import ORISClient
+from orienteering_accounts.oris.tests import fixtures
 
 
 def _response(status_code, headers=None, json_data=None):
@@ -90,3 +92,42 @@ class ORISClientRetryTestCase(TestCase):
                 ORISClient.make_get_request('getEventServiceEntries', params={'eventid': 1})
 
         self.assertEqual(get_mock.call_count, oris_client.ORIS_API_MAX_ATTEMPTS)
+
+
+class ClubMembersCacheTestCase(TestCase):
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.response_data = fixtures.club_user_list_response(
+            fixtures.club_member_payload(390, 11, 'TZL6666', 'chuck@example.com'),
+            fixtures.club_member_payload(377, 12, 'TZL9999', 'rocky@example.com'),
+        )
+
+    def test_roster_is_fetched_once_for_repeated_lookups(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=self.response_data) as request_mock:
+            first = ORISClient.get_club_member(390)
+            second = ORISClient.get_club_member(377)
+
+        self.assertEqual(request_mock.call_count, 1)
+        self.assertEqual(first.email, 'chuck@example.com')
+        self.assertEqual(second.email, 'rocky@example.com')
+
+    def test_unknown_member_returns_none(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=self.response_data):
+            self.assertIsNone(ORISClient.get_club_member(999))
+
+    def test_empty_response_is_not_cached(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value={}) as request_mock:
+            ORISClient.get_club_member(390)
+            ORISClient.get_club_member(390)
+
+        self.assertEqual(request_mock.call_count, 2)
+
+    def test_setting_entry_rights_invalidates_the_roster(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=self.response_data) as request_mock:
+            ORISClient.set_club_entry_rights(390, 11, can_entry_self=True)
+            ORISClient.get_club_member(390)
+
+        # roster, setClubEntryRights, roster again
+        self.assertEqual(request_mock.call_count, 3)
