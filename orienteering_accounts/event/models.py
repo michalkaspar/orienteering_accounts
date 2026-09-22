@@ -49,6 +49,10 @@ class Event(models.Model):
     oris_version = models.PositiveSmallIntegerField(null=True, blank=True)
     oris_classes_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
     oris_services_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
+    oris_club_entry_count = models.PositiveIntegerField(default=0)
+    oris_club_entry_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
+    oris_club_service_entry_count = models.PositiveIntegerField(default=0)
+    oris_club_service_entry_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
     oris_parent_id = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=255, blank=True, default='')
     ob_postupy = models.CharField(max_length=255, blank=True, null=True)
@@ -69,6 +73,7 @@ class Event(models.Model):
     leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     processing_state = models.CharField(max_length=50, choices=ProcessingType.choices, default=ProcessingType.UNPROCESSED)
     bills_solved_at = models.DateTimeField(null=True, blank=True)
+    entries_synced_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ("date",)
@@ -118,7 +123,7 @@ class Event(models.Model):
     def upsert_from_oris(cls, event):
         instance, _ = cls.objects.update_or_create(
             oris_id=event.oris_id,
-            defaults=event.dict()
+            defaults=event.dict(exclude_unset=True)
         )
         instance.refresh_from_db()
         return instance
