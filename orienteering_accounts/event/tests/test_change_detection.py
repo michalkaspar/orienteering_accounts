@@ -69,6 +69,16 @@ class ChangeDetectionTestCase(TestCase):
         self.refresh_from_oris_mock.assert_called_once()
         self.update_entries_mock.assert_not_called()
 
+    def test_bumped_services_timestamp_fetches_detail_only(self):
+        self._import(_future_list_payload())
+        self.refresh_from_oris_mock.reset_mock()
+        self.update_entries_mock.reset_mock()
+
+        self._import(_future_list_payload(ServicesLastModifiedTimeStamp=1769888888))
+
+        self.refresh_from_oris_mock.assert_called_once()
+        self.update_entries_mock.assert_not_called()
+
     def test_bumped_entry_timestamp_fetches_entries_only(self):
         self._import(_future_list_payload())
         self.refresh_from_oris_mock.reset_mock()
@@ -107,19 +117,30 @@ class ChangeDetectionTestCase(TestCase):
 
 class RelayHandledTestCase(TestCase):
 
-    def test_relay_handled_check_makes_no_oris_request(self):
+    def _make_relay(self, oris_club_entry_count):
         from django.conf import settings
         from model_bakery import baker
 
-        event = baker.make(
+        return baker.make(
             'event.Event',
             discipline={'oris_id': settings.ORIS_RELAY_RACE_IDS[0]},
-            oris_club_entry_count=2,
+            oris_club_entry_count=oris_club_entry_count,
             handled=False,
             handled_disabled=False,
         )
 
+    def test_relay_handled_check_makes_no_oris_request(self):
+        event = self._make_relay(2)
+
         with mock.patch('orienteering_accounts.oris.client.ORISClient.make_get_request') as request_mock:
             self.assertTrue(event.should_be_handled())
+
+        request_mock.assert_not_called()
+
+    def test_relay_without_club_entries_is_not_handled(self):
+        event = self._make_relay(0)
+
+        with mock.patch('orienteering_accounts.oris.client.ORISClient.make_get_request') as request_mock:
+            self.assertFalse(event.should_be_handled())
 
         request_mock.assert_not_called()

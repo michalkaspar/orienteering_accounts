@@ -1,5 +1,5 @@
 import typing, logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urljoin
 
@@ -18,7 +18,7 @@ from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.oris import choices as oris_choices
 from orienteering_accounts.oris.exchange_rates import get_exchange_rate_to_czk
-from orienteering_accounts.oris.models import Result
+from orienteering_accounts.oris.models import Event as OrisEvent, Result
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class Event(models.Model):
                 cls._sync_from_oris_list_item(event, today)
 
     @classmethod
-    def _sync_from_oris_list_item(cls, event, today):
+    def _sync_from_oris_list_item(cls, event: OrisEvent, today: 'date') -> None:
         with transaction.atomic():
             existing = cls.objects.filter(oris_id=event.oris_id).first()
 
@@ -121,6 +121,7 @@ class Event(models.Model):
             detail_changed = existing is None or (
                 existing.oris_version != event.oris_version
                 or existing.oris_classes_last_modified_timestamp != event.oris_classes_last_modified_timestamp
+                or existing.oris_services_last_modified_timestamp != event.oris_services_last_modified_timestamp
             )
             entries_changed = existing is None or (
                 existing.oris_club_entry_count != event.oris_club_entry_count
