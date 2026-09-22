@@ -190,13 +190,17 @@ for item in list_items:
     )
 
     event = upsert calendar fields from item          # no ORIS request
-    if event.date >= today:
-        event._update_exchange_rate()                 # no-op for CZK events
+
     if detail_changed:
         event._refresh_from_oris()                    # getEvent
+
+    if not event.date or event.date < today:
+        continue                                      # past events: detail only
+
+    event._update_exchange_rate()                     # no-op for CZK events
     if entries_changed or services_changed:
         event.update_entries()                        # entries + services, sets entries_synced_at
-    if not event.handled and event.should_be_handled():
+    if event.should_be_handled():
         event.handled = True
         event.save(update_fields=['handled'])
 ```
@@ -204,13 +208,15 @@ for item in list_items:
 Both the count and the timestamp are compared, so a change that ORIS fails to
 stamp is still caught by the count moving.
 
-The existing `if instance.date and instance.date >= timezone.now().date()`
-guard is removed: the list window now decides which events are in scope. Events
-from the last 14 days consequently get a detail refresh when their `Version`
-moves, which is exactly what the deleted `refresh_from_oris()` was for, and an
-entry re-sync when their entries change, which is new and costs nothing when
-nothing changed. `_update_exchange_rate()` keeps its future-only guard so the
-change adds no third-party rate lookups.
+**Past events get a detail refresh and nothing else.** The window reaches 14
+days backwards for one reason: to replace the deleted `refresh_from_oris()`,
+which refreshed event detail and nothing else. Running `update_entries()` over a
+past event would be new behaviour and a dangerous one — it deletes entries
+missing from the ORIS response along with their future transactions, so a
+`ClubEntryCount` that ORIS zeroes out after an event would take the bill history
+with it. Flagging past events as `handled` would likewise start the payment and
+leader email flow for races that are already over. Both stay behind the existing
+`date >= today` guard, which therefore moves rather than disappears.
 
 `update_entries()` fetches entries and services together whenever either
 changed. Splitting them would save at most one request in a rare case and would
@@ -235,19 +241,29 @@ return self.entries.exists()
 
 **Reconciliation pass against drift.** Trusting a third party's timestamps
 needs a backstop. After the list loop, force a full `update_entries()` for
-handled events whose `entries_synced_at` is older than
-`settings.ORIS_ENTRIES_RECONCILE_HOURS` (default 24), using the now-live
-`Event.to_refresh()` as the queryset base:
+handled **upcoming** events whose `entries_synced_at` is older than
+`settings.ORIS_ENTRIES_RECONCILE_HOURS` (default 24):
 
 ```python
-Event.to_refresh().filter(handled=True).filter(
+Event.objects.filter(
+    handled=True,
+    date__gte=timezone.now().date(),
+).filter(
     Q(entries_synced_at__isnull=True)
     | Q(entries_synced_at__lt=timezone.now() - timedelta(hours=settings.ORIS_ENTRIES_RECONCILE_HOURS))
 )
 ```
 
-`to_refresh()` has no upper date bound, so this also covers handled events
-sitting beyond the 120-day list window.
+There is no upper date bound, so this also covers handled events sitting beyond
+the 120-day list window. The lower bound is `today`, not
+`today - REFRESH_EVENTS_BEFORE_DAYS`, for the same reason the main loop skips
+past events: re-syncing entries of a finished race can delete bill history.
+
+`Event.to_refresh()` is therefore **deleted** rather than revived. Its
+`date__gte=today - REFRESH_EVENTS_BEFORE_DAYS` bound is the wrong one for
+reconciliation, and the list window applies that bound directly. The
+`REFRESH_EVENTS_BEFORE_DAYS` setting itself does become live, as the backward
+reach of the list window.
 
 ### 4. Schedule and the bank job
 
@@ -309,7 +325,7 @@ ORIS_ENTRIES_RECONCILE_HOURS = 24
 ```
 
 `REFRESH_EVENTS_BEFORE_DAYS = 14` already exists and becomes live for the first
-time.
+time, as the backward reach of the event list window.
 
 ## Expected request budget
 
@@ -341,8 +357,12 @@ fixtures in `event/tests/fixtures.py`. `freezegun` is available.
 `event/tests/test_refresh.py:18` call `call_command('import_events_from_oris')`,
 a command that no longer exists — `event/management/commands/` contains only
 `process_events`. Both files fail today, before any change in this spec. They
-sit in exactly the code path being rewritten and will be repaired as part of
-this work; `test_refresh.py` is largely commented out with a TODO.
+sit in exactly the code path being rewritten and are dealt with as part of this
+work. `test_import.py` is pointed at `Event.import_from_oris()` directly.
+`test_refresh.py` is deleted: its only test has every assertion commented out
+behind a `# TODO mock get event entries`, and it covers `refresh_from_oris()`,
+which this design removes. Its replacement is the reconciliation coverage
+listed below.
 
 Tests to write, ahead of the implementation:
 
