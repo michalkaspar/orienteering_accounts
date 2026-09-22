@@ -1,4 +1,5 @@
 from unittest import mock
+from datetime import date
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -195,3 +196,30 @@ class RequestBudgetTestCase(TestCase):
 
         self.assertEqual(ORISClient.request_counter['getEventList'], 2)
         self.assertEqual(ORISClient.request_counter['getEvent'], 1)
+
+
+class EventListParamsTestCase(TestCase):
+
+    def test_window_and_club_id_are_sent(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value={}) as request_mock:
+            ORISClient.get_events(
+                sport=1,
+                include_unofficial_events=1,
+                date_from=date(2026, 9, 8),
+                date_to=date(2027, 1, 20),
+                my_club_id=204,
+            )
+
+        request_mock.assert_called_once_with('getEventList', params={
+            'sport': 1,
+            'all': 1,
+            'datefrom': '2026-09-08',
+            'dateto': '2027-01-20',
+            'myClubId': 204,
+        })
+
+    def test_optional_params_are_omitted(self):
+        with mock.patch.object(ORISClient, 'make_get_request', return_value={}) as request_mock:
+            ORISClient.get_events(sport=1)
+
+        request_mock.assert_called_once_with('getEventList', params={'sport': 1, 'all': 0})

@@ -185,11 +185,28 @@ class ORISClient:
         return registered_users
 
     @classmethod
-    def get_events(cls, sport: int = oris_choices.SPORT_OB, include_unofficial_events=0) -> typing.List[Event]:
+    def get_events(
+        cls,
+        sport: int = oris_choices.SPORT_OB,
+        include_unofficial_events=0,
+        date_from: typing.Optional[date] = None,
+        date_to: typing.Optional[date] = None,
+        my_club_id: typing.Optional[int] = None,
+    ) -> typing.List[Event]:
         params = {
             'sport': sport,
             'all': include_unofficial_events
         }
+
+        if date_from:
+            params['datefrom'] = date_from.isoformat()
+
+        if date_to:
+            params['dateto'] = date_to.isoformat()
+
+        if my_club_id:
+            params['myClubId'] = my_club_id
+
         response_data = cls.make_get_request('getEventList', params=params)
 
         events = []
