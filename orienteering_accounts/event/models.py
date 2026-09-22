@@ -97,27 +97,58 @@ class Event(models.Model):
 
     @classmethod
     def import_from_oris(cls):
+        today = timezone.now().date()
+        date_from = today - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
+        date_to = today + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
+
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO, oris_choices.SPORT_LOB]:
-            for event in ORISClient.get_events(sport=sport, include_unofficial_events=1):
-                with transaction.atomic():
-                    try:
-                        instance = cls.objects.get(oris_id=event.oris_id)
-                        cls.objects.filter(oris_id=event.oris_id).update(**event.dict(exclude_unset=True))
-                        instance.refresh_from_db()
-                    except cls.DoesNotExist:
-                        instance = cls.upsert_from_oris(event)
-                    if instance.date and instance.date >= timezone.now().date():
-                        instance._refresh_from_oris()  # To fetch the categories data first
-                        instance._update_exchange_rate()
-                        instance.update_entries()
-                        if instance.should_be_handled():
-                            instance.handled = True
-                            instance.save(update_fields=['handled'])
+            for event in ORISClient.get_events(
+                sport=sport,
+                include_unofficial_events=1,
+                date_from=date_from,
+                date_to=date_to,
+                my_club_id=settings.CLUB_ID or None,
+            ):
+                cls._sync_from_oris_list_item(event, today)
 
     @classmethod
-    def refresh_from_oris(cls):
-        for event in cls.objects.filter(handled=True, processing_state=cls.ProcessingType.UNPROCESSED):
-            event._refresh_from_oris()
+    def _sync_from_oris_list_item(cls, event, today):
+        with transaction.atomic():
+            existing = cls.objects.filter(oris_id=event.oris_id).first()
+
+            # Compare before writing: the upsert below overwrites the very
+            # markers we are comparing against.
+            detail_changed = existing is None or (
+                existing.oris_version != event.oris_version
+                or existing.oris_classes_last_modified_timestamp != event.oris_classes_last_modified_timestamp
+            )
+            entries_changed = existing is None or (
+                existing.oris_club_entry_count != event.oris_club_entry_count
+                or existing.oris_club_entry_last_modified_timestamp != event.oris_club_entry_last_modified_timestamp
+            )
+            services_changed = existing is None or (
+                existing.oris_club_service_entry_count != event.oris_club_service_entry_count
+                or existing.oris_club_service_entry_last_modified_timestamp != event.oris_club_service_entry_last_modified_timestamp
+            )
+
+            instance = cls.upsert_from_oris(event)
+
+            if detail_changed:
+                instance._refresh_from_oris()
+
+            if not instance.date or instance.date < today:
+                # Past events are in the window only so their detail stays
+                # fresh; re-syncing their entries could delete bill history.
+                return
+
+            instance._update_exchange_rate()
+
+            if entries_changed or services_changed:
+                instance.update_entries()
+
+            if instance.should_be_handled():
+                instance.handled = True
+                instance.save(update_fields=['handled'])
 
     @classmethod
     def upsert_from_oris(cls, event):
@@ -333,6 +364,6 @@ class Event(models.Model):
             return False
 
         if self.is_relay:
-            return ORISClient.club_entry_exists(self.oris_id)
+            return self.oris_club_entry_count > 0
 
         return self.entries.exists()
