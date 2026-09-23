@@ -274,4 +274,15 @@ CHANGELOG_ENTRIES = [
             'Přístupová práva do ORIS se nyní automaticky obnoví i po platbě členského příspěvku bankovním převodem (dříve fungovalo pouze při ručním zadání platby zaměstnancem).',
         ],
     },
+    {
+        'version': 'v0.30.0',
+        'date': date(2026, 9, 23),
+        'items': [
+            'Přihlášky a závody se z ORIS synchronizují rychleji a spolehlivěji – aplikace stahuje jen to, co se opravdu změnilo, a jednou denně vše zkontroluje.',
+            'Aplikace se už nezasekne, když ORIS omezí počet požadavků – dotazy se automaticky opakují a jsou denně limitované.',
+            'Závody se z ORIS načítají až 210 dní dopředu.',
+            'Import členů oddílu se nezastaví kvůli jednomu chybnému řádku v ORIS.',
+            'Opraven pád formuláře vyúčtování, když zůstal jiný dluh nevyplněný.',
+        ],
+    },
 ]
