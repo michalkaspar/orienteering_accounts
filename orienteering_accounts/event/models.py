@@ -167,25 +167,20 @@ class Event(models.Model):
         """Re-sync entries of handled upcoming events whose markers we may have missed.
 
         Change detection trusts timestamps ORIS sets for us; this is the
-        backstop. It also covers handled events sitting beyond the list window.
+        backstop, gated on staleness so it runs at most once per
+        ORIS_ENTRIES_RECONCILE_HOURS per event. Handled events sitting beyond
+        the list window get their own detail refreshed here too, since this
+        pass is the only thing that still touches them once
+        ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD stops covering them - so that
+        refresh inherits the same staleness bound instead of firing on every
+        five-minute run.
         """
-        # The list window stops at ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD, so handled
-        # events further out get no update at all. This restores exactly the
-        # queryset the deleted refresh_from_oris() loop covered.
-        window_end = timezone.now().date() + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
-
-        for event in cls.objects.filter(
-            handled=True,
-            processing_state=cls.ProcessingType.UNPROCESSED,
-            date__gt=window_end,
-        ):
-            event._refresh_from_oris()
-
+        window_end = timezone.localdate() + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
         stale_before = timezone.now() - timedelta(hours=settings.ORIS_ENTRIES_RECONCILE_HOURS)
 
         events = cls.objects.filter(
             handled=True,
-            date__gte=timezone.now().date(),
+            date__gte=timezone.localdate(),
         ).filter(
             Q(entries_synced_at__isnull=True) | Q(entries_synced_at__lt=stale_before)
         )
@@ -193,6 +188,12 @@ class Event(models.Model):
         for event in events:
             with transaction.atomic():
                 event.update_entries()
+
+            if event.date > window_end:
+                # Beyond the list window this is the only thing that refreshes
+                # the event's own fields, so it inherits the staleness bound
+                # above rather than firing on every five-minute run.
+                event._refresh_from_oris()
 
     def _refresh_from_oris(self):
         oris_event = ORISClient.get_event(self.oris_id)
