@@ -10,15 +10,12 @@ from orienteering_accounts.account import signals
 from orienteering_accounts.account.models import Transaction
 
 
-class AccountTestCase(TestCase):
-    pass
-
-
 class TransactionSignalTestCase(TestCase):
 
     def setUp(self):
-        # add_entry_rights_in_oris is called whenever the committed balance is
-        # above the maximum negative threshold - keep it away from ORIS.
+        # add_entry_rights_in_oris is called when the committed balance
+        # crosses back above the maximum negative threshold - keep it away
+        # from ORIS.
         patcher = patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -251,8 +248,9 @@ class TransactionSignalTestCase(TestCase):
 class EntryRightsRemovalSignalTestCase(TestCase):
 
     def setUp(self):
-        # add_entry_rights_in_oris is called whenever the committed balance is
-        # above the maximum negative threshold - keep it away from ORIS.
+        # add_entry_rights_in_oris is called when the committed balance
+        # crosses back above the maximum negative threshold - keep it away
+        # from ORIS.
         patcher = patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
         patcher.start()
         self.addCleanup(patcher.stop)
