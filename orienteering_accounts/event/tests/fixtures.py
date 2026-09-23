@@ -53,6 +53,10 @@ ORIS_EVENTS_RESPONSE_DATA = {
         "Version": "14",
         "ClassesLastModifiedTimeStamp": 1601400337,
         "ServicesLastModifiedTimeStamp": 0,
+        "ClubEntryCount": "3",
+        "ClubEntryLastModifiedTimeStamp": 1769371100,
+        "ClubServiceEntryCount": "1",
+        "ClubServiceEntryLastModifiedTimeStamp": 1769371200,
         "ParentID": 0,
         "Status": "E",
         "OBPostupy": ""

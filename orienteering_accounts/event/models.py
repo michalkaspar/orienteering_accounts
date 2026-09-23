@@ -1,11 +1,11 @@
 import typing, logging
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models, transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -18,7 +18,7 @@ from orienteering_accounts.oris.client import ORISClient
 from orienteering_accounts.core.utils import emails as email_utils
 from orienteering_accounts.oris import choices as oris_choices
 from orienteering_accounts.oris.exchange_rates import get_exchange_rate_to_czk
-from orienteering_accounts.oris.models import Result
+from orienteering_accounts.oris.models import Event as OrisEvent, Result
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,10 @@ class Event(models.Model):
     oris_version = models.PositiveSmallIntegerField(null=True, blank=True)
     oris_classes_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
     oris_services_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
+    oris_club_entry_count = models.PositiveIntegerField(default=0)
+    oris_club_entry_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
+    oris_club_service_entry_count = models.PositiveIntegerField(default=0)
+    oris_club_service_entry_last_modified_timestamp = models.PositiveIntegerField(null=True, blank=True)
     oris_parent_id = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=255, blank=True, default='')
     ob_postupy = models.CharField(max_length=255, blank=True, null=True)
@@ -69,6 +73,7 @@ class Event(models.Model):
     leader = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     processing_state = models.CharField(max_length=50, choices=ProcessingType.choices, default=ProcessingType.UNPROCESSED)
     bills_solved_at = models.DateTimeField(null=True, blank=True)
+    entries_synced_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ("date",)
@@ -92,42 +97,103 @@ class Event(models.Model):
 
     @classmethod
     def import_from_oris(cls):
+        today = timezone.localdate()
+        date_from = today - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
+        date_to = today + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
+
         for sport in [oris_choices.SPORT_OB, oris_choices.SPORT_MTBO, oris_choices.SPORT_LOB]:
-            for event in ORISClient.get_events(sport=sport, include_unofficial_events=1):
-                with transaction.atomic():
-                    try:
-                        instance = cls.objects.get(oris_id=event.oris_id)
-                        cls.objects.filter(oris_id=event.oris_id).update(**event.dict(exclude_unset=True))
-                        instance.refresh_from_db()
-                    except cls.DoesNotExist:
-                        instance = cls.upsert_from_oris(event)
-                    if instance.date and instance.date >= timezone.now().date():
-                        instance._refresh_from_oris()  # To fetch the categories data first
-                        instance._update_exchange_rate()
-                        instance.update_entries()
-                        if instance.should_be_handled():
-                            instance.handled = True
-                            instance.save(update_fields=['handled'])
+            for event in ORISClient.get_events(
+                sport=sport,
+                include_unofficial_events=1,
+                date_from=date_from,
+                date_to=date_to,
+                my_club_id=settings.CLUB_ID or None,
+            ):
+                cls._sync_from_oris_list_item(event, today)
 
     @classmethod
-    def refresh_from_oris(cls):
-        for event in cls.objects.filter(handled=True, processing_state=cls.ProcessingType.UNPROCESSED):
-            event._refresh_from_oris()
+    # 'date' is quoted: Event.date above is a model field, so an unquoted
+    # annotation would silently bind to it instead of the datetime.date type.
+    def _sync_from_oris_list_item(cls, event: OrisEvent, today: 'date') -> None:
+        with transaction.atomic():
+            existing = cls.objects.filter(oris_id=event.oris_id).first()
+
+            # Compare before writing: the upsert below overwrites the very
+            # markers we are comparing against.
+            detail_changed = existing is None or (
+                existing.oris_version != event.oris_version
+                or existing.oris_classes_last_modified_timestamp != event.oris_classes_last_modified_timestamp
+                or existing.oris_services_last_modified_timestamp != event.oris_services_last_modified_timestamp
+            )
+            entries_changed = existing is None or (
+                existing.oris_club_entry_count != event.oris_club_entry_count
+                or existing.oris_club_entry_last_modified_timestamp != event.oris_club_entry_last_modified_timestamp
+            )
+            services_changed = existing is None or (
+                existing.oris_club_service_entry_count != event.oris_club_service_entry_count
+                or existing.oris_club_service_entry_last_modified_timestamp != event.oris_club_service_entry_last_modified_timestamp
+            )
+
+            instance = cls.upsert_from_oris(event)
+
+            if detail_changed:
+                instance._refresh_from_oris()
+
+            if not instance.date or instance.date < today:
+                # Past events are in the window only so their detail stays
+                # fresh; re-syncing their entries could delete bill history.
+                return
+
+            instance._update_exchange_rate()
+
+            if entries_changed or services_changed:
+                instance.update_entries()
+
+            if instance.should_be_handled():
+                instance.handled = True
+                instance.save(update_fields=['handled'])
 
     @classmethod
     def upsert_from_oris(cls, event):
         instance, _ = cls.objects.update_or_create(
             oris_id=event.oris_id,
-            defaults=event.dict()
+            defaults=event.dict(exclude_unset=True)
         )
         instance.refresh_from_db()
         return instance
 
     @classmethod
-    def to_refresh(cls):
-        return cls.objects.filter(
-            date__gte=datetime.today() - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
+    def reconcile_entries_from_oris(cls):
+        """Re-sync entries of handled upcoming events whose markers we may have missed.
+
+        Change detection trusts timestamps ORIS sets for us; this is the
+        backstop, gated on staleness so it runs at most once per
+        ORIS_ENTRIES_RECONCILE_HOURS per event. Handled events sitting beyond
+        the list window get their own detail refreshed here too, since this
+        pass is the only thing that still touches them once
+        ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD stops covering them - so that
+        refresh inherits the same staleness bound instead of firing on every
+        five-minute run.
+        """
+        window_end = timezone.localdate() + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
+        stale_before = timezone.now() - timedelta(hours=settings.ORIS_ENTRIES_RECONCILE_HOURS)
+
+        events = cls.objects.filter(
+            handled=True,
+            date__gte=timezone.localdate(),
+        ).filter(
+            Q(entries_synced_at__isnull=True) | Q(entries_synced_at__lt=stale_before)
         )
+
+        for event in events:
+            with transaction.atomic():
+                event.update_entries()
+
+            if event.date > window_end:
+                # Beyond the list window this is the only thing that refreshes
+                # the event's own fields, so it inherits the staleness bound
+                # above rather than firing on every five-minute run.
+                event._refresh_from_oris()
 
     def _refresh_from_oris(self):
         oris_event = ORISClient.get_event(self.oris_id)
@@ -177,6 +243,9 @@ class Event(models.Model):
             entry.transactions.filter(is_future=True).delete()
             entry.delete()
 
+        self.entries_synced_at = timezone.now()
+        self.save(update_fields=['entries_synced_at'])
+
     def send_payment_info_email(self):
 
         event_balance = ORISClient.get_club_event_balance(self.oris_id)
@@ -207,7 +276,7 @@ class Event(models.Model):
             processing_state=cls.ProcessingType.LEADER_EMAIL_SENT,
             leader__isnull=False,
             handled=True,
-            date__lt=timezone.now().date()
+            date__lt=timezone.localdate()
         ):
             logger.info(f'Sending debts email to leader for event {event}.')
             event.send_leader_debts_email()
@@ -328,6 +397,6 @@ class Event(models.Model):
             return False
 
         if self.is_relay:
-            return ORISClient.club_entry_exists(self.oris_id)
+            return self.oris_club_entry_count > 0
 
         return self.entries.exists()

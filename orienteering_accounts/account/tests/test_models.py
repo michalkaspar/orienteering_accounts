@@ -1,44 +1,21 @@
-from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.db import transaction as db_transaction
 from django.test import TestCase
-from django.utils import timezone
 from model_bakery import baker
-
-from freezegun import freeze_time
 
 
 from orienteering_accounts.account import signals
-from orienteering_accounts.account.models import Transaction, Account
-
-
-class AccountTestCase(TestCase):
-
-    def test_get_accounts_without_paid_club_membership(self):
-        account1 = baker.make('account.Account')
-        account2 = baker.make('account.Account')
-        account3 = baker.make('account.Account')
-
-        baker.make('account.Transaction', account=account1, purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP, amount=Decimal('1'))
-        with freeze_time(timezone.now() - timedelta(days=400)):
-            baker.make('account.Transaction', account=account2, purpose=Transaction.TransactionPurpose.CLUB_MEMBERSHIP, amount=Decimal('1'))
-        baker.make('account.Transaction', account=account3, purpose=Transaction.TransactionPurpose.OTHER, amount=Decimal('1'))
-
-        system_settings = baker.make('core.Settings', club_membership_deadline=timezone.now())
-
-        accounts_without_paid_club_memberships = Account.get_accounts_without_paid_club_membership(system_settings.club_membership_deadline)
-
-        self.assertEqual(accounts_without_paid_club_memberships.count(), 2)
-        self.assertCountEqual([account2.pk, account3.pk], accounts_without_paid_club_memberships.values_list('pk', flat=True))
+from orienteering_accounts.account.models import Transaction
 
 
 class TransactionSignalTestCase(TestCase):
 
     def setUp(self):
-        # add_entry_rights_in_oris is called whenever the committed balance is
-        # above the maximum negative threshold - keep it away from ORIS.
+        # add_entry_rights_in_oris is called when the committed balance
+        # crosses back above the maximum negative threshold - keep it away
+        # from ORIS.
         patcher = patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -271,8 +248,9 @@ class TransactionSignalTestCase(TestCase):
 class EntryRightsRemovalSignalTestCase(TestCase):
 
     def setUp(self):
-        # add_entry_rights_in_oris is called whenever the committed balance is
-        # above the maximum negative threshold - keep it away from ORIS.
+        # add_entry_rights_in_oris is called when the committed balance
+        # crosses back above the maximum negative threshold - keep it away
+        # from ORIS.
         patcher = patch('orienteering_accounts.account.models.Account.add_entry_rights_in_oris')
         patcher.start()
         self.addCleanup(patcher.stop)

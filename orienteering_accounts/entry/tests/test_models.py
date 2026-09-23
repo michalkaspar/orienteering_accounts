@@ -8,6 +8,7 @@ from model_bakery import baker
 from orienteering_accounts.account import signals
 from orienteering_accounts.account.models import Account, Transaction
 from orienteering_accounts.entry.models import Entry
+from orienteering_accounts.event.models import Event
 from orienteering_accounts.oris.models import Entry as OrisEntry
 
 
@@ -281,6 +282,14 @@ class EntryUpsertFromOrisTestCase(TestCase):
 
 
 class EntryUpsertServicesOnlyFromOrisTestCase(EntryUpsertFromOrisTestCase):
+
+    def setUp(self):
+        super().setUp()
+        results_patcher = patch.object(
+            Event, 'results', new_callable=PropertyMock, return_value={}
+        )
+        results_patcher.start()
+        self.addCleanup(results_patcher.stop)
 
     def test_creates_placeholder_entry_with_service_transactions(self):
         services = [_service(1, 'Tricko', '100'), _service(2, 'Bunda', '250')]

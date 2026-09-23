@@ -13,12 +13,15 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
 
     def handle(self, **options):
-        logger.info(f'Import of registered users from ORIS started')
+        try:
+            logger.info(f'Import of registered users from ORIS started')
 
-        registered_ob_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_OB, club_id=settings.CLUB_ID)
-        registered_mtbo_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_MTBO, club_id=settings.CLUB_ID)
+            registered_ob_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_OB, club_id=settings.CLUB_ID)
+            registered_mtbo_users = ORISClient.get_registered_users(sport=oris_choices.SPORT_MTBO, club_id=settings.CLUB_ID)
 
-        for registered_user in registered_ob_users + registered_mtbo_users:
-            Account.upsert_from_oris(registered_user)
+            for registered_user in registered_ob_users + registered_mtbo_users:
+                Account.upsert_from_oris(registered_user)
 
-        logger.info(f'Import of registered users from ORIS finished')
+            logger.info(f'Import of registered users from ORIS finished')
+        finally:
+            ORISClient.log_request_stats()

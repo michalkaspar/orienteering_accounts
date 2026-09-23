@@ -1,11 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import PropertyMock, patch
 
 from django.test import TestCase
+from django.utils import timezone
 from model_bakery import baker
 
 from orienteering_accounts.entry.models import Entry
+from orienteering_accounts.event.models import Event
 from orienteering_accounts.oris.models import Entry as OrisEntry, LegEntry
 
 
@@ -64,6 +66,12 @@ class UpdateEntriesTestCase(TestCase):
         )
         fee_patcher.start()
         self.addCleanup(fee_patcher.stop)
+
+        results_patcher = patch.object(
+            Event, 'results', new_callable=PropertyMock, return_value={}
+        )
+        results_patcher.start()
+        self.addCleanup(results_patcher.stop)
 
         self.event = baker.make('event.Event', exchange_rate=Decimal('1'))
 
@@ -153,3 +161,29 @@ class UpdateEntriesTestCase(TestCase):
             self.event.update_entries()
 
         self.assertEqual(self.event.entries.count(), 0)
+
+    def test_update_entries_stamp_prevents_immediate_reconcile_resync(self):
+        """Closes the loop between the entries_synced_at writer (here, at the
+        end of update_entries) and its reader (reconcile_entries_from_oris'
+        staleness filter). Without the stamp, reconcile would treat this
+        event as never-synced and re-sync it again right away."""
+        self.event.handled = True
+        self.event.date = timezone.now().date() + timedelta(days=7)
+        self.event.save(update_fields=['handled', 'date'])
+
+        with patch(
+            'orienteering_accounts.oris.client.ORISClient.get_event_entries',
+            return_value=[],
+        ), patch(
+            'orienteering_accounts.oris.client.ORISClient.get_event_additional_services',
+            return_value={},
+        ):
+            self.event.update_entries()
+
+        self.event.refresh_from_db()
+        self.assertIsNotNone(self.event.entries_synced_at)
+
+        with patch('orienteering_accounts.event.models.Event.update_entries') as update_entries_mock:
+            Event.reconcile_entries_from_oris()
+
+        update_entries_mock.assert_not_called()

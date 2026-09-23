@@ -1,6 +1,6 @@
 import csv
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from enum import Enum
 from io import StringIO
 
@@ -9,6 +9,8 @@ import typing
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
+from django.utils import timezone
 from datetime import date, datetime
 
 from pydantic import ValidationError
@@ -27,7 +29,60 @@ ORIS_API_RETRY_BACKOFF_SECONDS = 2
 ORIS_API_RETRY_MAX_DELAY_SECONDS = 60
 
 
+class ORISRateLimitExceeded(Exception):
+    """Raised when the configured daily ORIS request budget is exhausted."""
+
+
 class ORISClient:
+
+    request_counter = Counter()
+
+    @classmethod
+    def reset_request_stats(cls):
+        cls.request_counter = Counter()
+
+    @classmethod
+    def log_request_stats(cls):
+        if not cls.request_counter:
+            return
+
+        breakdown = ', '.join(
+            f'{endpoint}={count}' for endpoint, count in sorted(cls.request_counter.items())
+        )
+        logger.info(f'ORIS API requests this run: {sum(cls.request_counter.values())} ({breakdown})')
+
+    @classmethod
+    def _incr(cls, key: str, timeout: int) -> int:
+        cache.add(key, 0, timeout)
+
+        try:
+            return cache.incr(key)
+        except ValueError:
+            # The key expired between add() and incr(); start the window again.
+            cache.set(key, 1, timeout)
+            return 1
+
+    @classmethod
+    def _consume_request_budget(cls, endpoint: str):
+        # Local time so the "daily" budget resets at local midnight, not UTC midnight.
+        now = timezone.localtime()
+
+        daily_count = cls._incr(f'oris_api_requests:{now:%Y%m%d}', 60 * 60 * 26)
+
+        if daily_count > settings.ORIS_API_DAILY_REQUEST_BUDGET:
+            raise ORISRateLimitExceeded(
+                f'Daily ORIS request budget of {settings.ORIS_API_DAILY_REQUEST_BUDGET} '
+                f'is exhausted ({daily_count} requests today).'
+            )
+
+        minute_count = cls._incr(f'oris_api_requests:{now:%Y%m%d%H%M}', 120)
+
+        if minute_count > settings.ORIS_API_MAX_REQUESTS_PER_MINUTE:
+            delay = 60 - now.second
+            logger.warning(f'ORIS API per-minute cap reached, waiting {delay} s.')
+            time.sleep(delay)
+
+        cls.request_counter[endpoint] += 1
 
     @classmethod
     def _retry_delay(cls, response, attempt: int) -> float:
@@ -60,6 +115,8 @@ class ORISClient:
 
     @classmethod
     def make_request(cls, method: str, endpoint: str, params: dict = None, data: dict = None, **kwargs):
+        cls._consume_request_budget(endpoint)
+
         default_params = {
             'format': 'json',
             'method': endpoint
@@ -100,11 +157,15 @@ class ORISClient:
                              club_id: typing.Optional[int] = None,
                              licence: typing.Optional[str] = None,
                              ) -> typing.List[RegisteredUser]:
-        params = {
-            'year': year or datetime.now().year,
-            'sport': sport
-        }
-        response_data = cls.make_get_request('getRegistration', params=params)
+        year = year or datetime.now().year
+        cache_key = settings.ORIS_REGISTRATIONS_CACHE_KEY_PATTERN.format(sport=sport, year=year)
+        response_data = cache.get(cache_key)
+
+        if response_data is None:
+            response_data = cls.make_get_request('getRegistration', params={'year': year, 'sport': sport})
+
+            if response_data:
+                cache.set(cache_key, response_data, settings.ORIS_REGISTRATIONS_CACHE_TIMEOUT)
 
         registered_users = []
 
@@ -124,11 +185,28 @@ class ORISClient:
         return registered_users
 
     @classmethod
-    def get_events(cls, sport: int = oris_choices.SPORT_OB, include_unofficial_events=0) -> typing.List[Event]:
+    def get_events(
+        cls,
+        sport: int = oris_choices.SPORT_OB,
+        include_unofficial_events=0,
+        date_from: typing.Optional[date] = None,
+        date_to: typing.Optional[date] = None,
+        my_club_id: typing.Optional[int] = None,
+    ) -> typing.List[Event]:
         params = {
             'sport': sport,
             'all': include_unofficial_events
         }
+
+        if date_from:
+            params['datefrom'] = date_from.isoformat()
+
+        if date_to:
+            params['dateto'] = date_to.isoformat()
+
+        if my_club_id:
+            params['myClubId'] = my_club_id
+
         response_data = cls.make_get_request('getEventList', params=params)
 
         events = []
@@ -174,17 +252,6 @@ class ORISClient:
         return entries
 
     @classmethod
-    def club_entry_exists(cls, event_id: int, club_id: int = settings.CLUB_ID) -> bool:
-        params = {
-            'eventid': event_id,
-            'clubid': club_id
-        }
-        response_data = cls.make_get_request('getEventEntries', params=params)
-
-        return bool(response_data)
-
-
-    @classmethod
     def get_event_results(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Dict[str, Result]:
         params = {
             'eventid': event_id,
@@ -227,7 +294,12 @@ class ORISClient:
 
         params.update(self=int(can_entry_self), other=club_member.allow_entry_other)
 
-        return cls.make_get_request('setClubEntryRights', params=params)
+        response = cls.make_get_request('setClubEntryRights', params=params)
+
+        # AllowEntrySelf just changed, so the cached roster is stale.
+        cls.invalidate_club_members_cache()
+
+        return response
 
     @classmethod
     def get_club_event_balance(cls, event_id: int, club_id: int = settings.CLUB_ID) -> typing.Optional[EventBalance]:
@@ -244,18 +316,40 @@ class ORISClient:
         return None
 
     @classmethod
+    def get_club_members(cls, club_key: int = settings.CLUB_KEY) -> typing.Dict[int, ClubMember]:
+        response_data = cache.get(settings.ORIS_CLUB_USER_LIST_CACHE_KEY)
+
+        if response_data is None:
+            response_data = cls.make_get_request('getClubUserList', params={'clubkey': club_key})
+
+            if response_data:
+                # An empty payload means ORIS hiccupped; caching it would starve
+                # every caller for a full hour.
+                cache.set(
+                    settings.ORIS_CLUB_USER_LIST_CACHE_KEY,
+                    response_data,
+                    settings.ORIS_CLUB_USER_LIST_CACHE_TIMEOUT,
+                )
+
+        club_members = {}
+
+        for _, club_user_dict in (response_data or {}).get('ClubMembers', {}).items():
+            try:
+                club_member = ClubMember(**club_user_dict)
+            except ValidationError:
+                logger.warning('Invalid ORIS club member, skipping', exc_info=True)
+                continue
+            club_members[club_member.user_id] = club_member
+
+        return club_members
+
+    @classmethod
+    def invalidate_club_members_cache(cls):
+        cache.delete(settings.ORIS_CLUB_USER_LIST_CACHE_KEY)
+
+    @classmethod
     def get_club_member(cls, user_id: int, club_key: int = settings.CLUB_KEY) -> typing.Optional[ClubMember]:
-        params = {
-            'clubkey': club_key
-        }
-        response_data = cls.make_get_request('getClubUserList', params=params)
-
-        if response_data:
-            for _, club_user_dict in response_data['ClubMembers'].items():
-                if club_user_dict['UserID'] == str(user_id):
-                    return ClubMember(**club_user_dict)
-
-        return None
+        return cls.get_club_members(club_key=club_key).get(int(user_id))
 
     @classmethod
     def get_ranking(cls, gender: Gender, date_: typing.Optional[date], sport: int = oris_choices.SPORT_OB) -> typing.List[UserRanking]:
