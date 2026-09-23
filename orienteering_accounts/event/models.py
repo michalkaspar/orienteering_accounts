@@ -97,7 +97,7 @@ class Event(models.Model):
 
     @classmethod
     def import_from_oris(cls):
-        today = timezone.now().date()
+        today = timezone.localdate()
         date_from = today - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
         date_to = today + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
 
@@ -276,7 +276,7 @@ class Event(models.Model):
             processing_state=cls.ProcessingType.LEADER_EMAIL_SENT,
             leader__isnull=False,
             handled=True,
-            date__lt=timezone.now().date()
+            date__lt=timezone.localdate()
         ):
             logger.info(f'Sending debts email to leader for event {event}.')
             event.send_leader_debts_email()
