@@ -41,7 +41,7 @@ numbers.
 | --- | --- | --- |
 | `ORIS_API_MAX_REQUESTS_PER_MINUTE` | 60 | Per-minute cap; the client waits out the window when hit |
 | `ORIS_API_DAILY_REQUEST_BUDGET` | 5000 | Daily budget; raises `ORISRateLimitExceeded` when exhausted, which fails the cron run and misses its heartbeat |
-| `ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD` | 120 | How far ahead the calendar is polled; the main lever on payload size |
+| `ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD` | 210 | How far ahead the calendar is polled; the main lever on payload size. Widening it costs no extra requests — still exactly three `getEventList` calls per run — only a bigger payload, so it's the right knob to reach for if events are going missing from the calendar, and the wrong one if the request *count* is too high |
 | `REFRESH_EVENTS_BEFORE_DAYS` | 14 | How far back the window reaches, keeping recent events' detail fresh |
 | `ORIS_ENTRIES_RECONCILE_HOURS` | 24 | How stale a handled event's entries may get before a forced re-sync |
 | `ORIS_CLUB_USER_LIST_CACHE_TIMEOUT` | 3600 | Club roster cache lifetime |
@@ -85,8 +85,8 @@ miss their heartbeats, and the swallowed exception is logged at ERROR level,
 which Sentry reports.
 
 **Event detail beyond the list window refreshes only for handled events.**
-The event list is fetched for `[today - 14, today + 120]` days. A handled
-event further out than 120 days gets its detail refreshed as part of the
+The event list is fetched for `[today - 14, today + 210]` days. A handled
+event further out than 210 days gets its detail refreshed as part of the
 same staleness-gated reconciliation pass that resyncs its entries (so at
 most once per `ORIS_ENTRIES_RECONCILE_HOURS`), but an unhandled one gets no
 update at all until it enters the window — its name, date and cancelled flag
