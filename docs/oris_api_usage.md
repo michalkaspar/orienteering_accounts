@@ -85,11 +85,28 @@ miss their heartbeats, and the swallowed exception is logged at ERROR level,
 which Sentry reports.
 
 **Event detail beyond the list window refreshes only for handled events.**
-The event list is fetched for `[today - 14, today + 120]` days. A handled,
-unprocessed event further out than 120 days gets a daily detail refresh via
-the reconciliation pass, but an unhandled one gets no update at all until it
-enters the window — its name, date and cancelled flag will be whatever they
-were when last seen.
+The event list is fetched for `[today - 14, today + 120]` days. A handled
+event further out than 120 days gets its detail refreshed as part of the
+same staleness-gated reconciliation pass that resyncs its entries (so at
+most once per `ORIS_ENTRIES_RECONCILE_HOURS`), but an unhandled one gets no
+update at all until it enters the window — its name, date and cancelled flag
+will be whatever they were when last seen. An event beyond the window that
+is not already in the database is not stored at all: it does not appear in
+the event list, no entries are ever recorded for it, and `handled` is never
+set for it — until it enters the window.
+
+**Entry-rights restoration has no retry.** Before this work,
+`add_entry_rights_in_oris()` was called on every transaction save while the
+balance was above the maximum negative threshold — that repeated call was
+the bug this branch fixes, but it also meant a failed ORIS call got retried
+by the next transaction. Now the call happens only on the crossing itself,
+inside a `try/except` that logs and swallows. So if that one ORIS call fails
+— outage, throttling, budget exhaustion — the member stays blocked from
+entering races indefinitely, with only an ERROR log ("Failed to restore
+entry rights...", which Sentry reports) to show for it. An operator seeing
+that log line must restore the member's rights by hand, either directly in
+ORIS or by re-saving a transaction on the account (which re-triggers the
+balance check).
 
 ## How to verify it worked
 
@@ -118,6 +135,11 @@ If the numbers are much higher than that, check in this order:
    288x.
 3. Sustained 429s — the logged count can undercount real traffic by up to 5x
    while retries are in play (see Known gaps above).
+
+Note that `import_ranking_from_oris` and `remove_entry_rights_in_oris` do NOT
+log this per-run request breakdown — only `process_events` and
+`import_accounts_from_oris` do — so the logged totals do not cover every
+ORIS-touching command.
 
 The test suite no longer makes live ORIS calls either: two tests used to issue
 real `getEventResults` requests against the actual API; they now mock
