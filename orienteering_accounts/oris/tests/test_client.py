@@ -133,6 +133,20 @@ class ClubMembersCacheTestCase(TestCase):
         # roster, setClubEntryRights, roster again
         self.assertEqual(request_mock.call_count, 3)
 
+    def test_malformed_row_is_skipped_but_valid_members_are_still_returned(self):
+        malformed_member = fixtures.club_member_payload(391, 13, 'TZL0000', 'malformed@example.com')
+        del malformed_member['Email']
+        response_data = fixtures.club_user_list_response(
+            fixtures.club_member_payload(390, 11, 'TZL6666', 'chuck@example.com'),
+            malformed_member,
+        )
+
+        with mock.patch.object(ORISClient, 'make_get_request', return_value=response_data):
+            club_members = ORISClient.get_club_members()
+
+        self.assertEqual(list(club_members.keys()), [390])
+        self.assertEqual(club_members[390].email, 'chuck@example.com')
+
 
 class RegisteredUsersCacheTestCase(TestCase):
 

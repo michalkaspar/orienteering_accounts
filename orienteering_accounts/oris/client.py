@@ -334,7 +334,11 @@ class ORISClient:
         club_members = {}
 
         for _, club_user_dict in (response_data or {}).get('ClubMembers', {}).items():
-            club_member = ClubMember(**club_user_dict)
+            try:
+                club_member = ClubMember(**club_user_dict)
+            except ValidationError:
+                logger.warning('Invalid ORIS club member, skipping', exc_info=True)
+                continue
             club_members[club_member.user_id] = club_member
 
         return club_members
