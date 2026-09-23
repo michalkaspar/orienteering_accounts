@@ -18,6 +18,12 @@ class Command(BaseCommand):
 
             logger.info('Finished importing events from ORIS')
 
+            logger.info('Started reconciling event entries from ORIS')
+
+            Event.reconcile_entries_from_oris()
+
+            logger.info('Finished reconciling event entries from ORIS')
+
             logger.info('Started sending payment info emails')
 
             Event.send_payment_info_emails()

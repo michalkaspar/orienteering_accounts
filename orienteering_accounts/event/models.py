@@ -1,11 +1,11 @@
 import typing, logging
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models, transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -112,6 +112,8 @@ class Event(models.Model):
                 cls._sync_from_oris_list_item(event, today)
 
     @classmethod
+    # 'date' is quoted: Event.date above is a model field, so an unquoted
+    # annotation would silently bind to it instead of the datetime.date type.
     def _sync_from_oris_list_item(cls, event: OrisEvent, today: 'date') -> None:
         with transaction.atomic():
             existing = cls.objects.filter(oris_id=event.oris_id).first()
@@ -161,10 +163,36 @@ class Event(models.Model):
         return instance
 
     @classmethod
-    def to_refresh(cls):
-        return cls.objects.filter(
-            date__gte=datetime.today() - timedelta(days=settings.REFRESH_EVENTS_BEFORE_DAYS)
+    def reconcile_entries_from_oris(cls):
+        """Re-sync entries of handled upcoming events whose markers we may have missed.
+
+        Change detection trusts timestamps ORIS sets for us; this is the
+        backstop. It also covers handled events sitting beyond the list window.
+        """
+        # The list window stops at ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD, so handled
+        # events further out get no update at all. This restores exactly the
+        # queryset the deleted refresh_from_oris() loop covered.
+        window_end = timezone.now().date() + timedelta(days=settings.ORIS_EVENT_LIST_WINDOW_DAYS_AHEAD)
+
+        for event in cls.objects.filter(
+            handled=True,
+            processing_state=cls.ProcessingType.UNPROCESSED,
+            date__gt=window_end,
+        ):
+            event._refresh_from_oris()
+
+        stale_before = timezone.now() - timedelta(hours=settings.ORIS_ENTRIES_RECONCILE_HOURS)
+
+        events = cls.objects.filter(
+            handled=True,
+            date__gte=timezone.now().date(),
+        ).filter(
+            Q(entries_synced_at__isnull=True) | Q(entries_synced_at__lt=stale_before)
         )
+
+        for event in events:
+            with transaction.atomic():
+                event.update_entries()
 
     def _refresh_from_oris(self):
         oris_event = ORISClient.get_event(self.oris_id)
@@ -213,6 +241,9 @@ class Event(models.Model):
         for entry in self.entries.exclude(account_id__in=account_ids):
             entry.transactions.filter(is_future=True).delete()
             entry.delete()
+
+        self.entries_synced_at = timezone.now()
+        self.save(update_fields=['entries_synced_at'])
 
     def send_payment_info_email(self):
 
